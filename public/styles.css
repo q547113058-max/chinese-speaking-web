@@ -134,7 +134,7 @@ h1 {
   box-shadow: 0 14px 36px rgba(33, 48, 45, 0.14);
 }
 
-.difficulty-panel.open,
+.level-control.expanded .difficulty-panel,
 .level-control:focus-within .difficulty-panel {
   display: grid;
 }
@@ -182,20 +182,20 @@ h1 {
 .practice-area {
   min-height: 0;
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
+  grid-template-columns: 190px minmax(0, 1fr);
   overflow: hidden;
 }
 
 .persona-card {
-  padding: 18px;
+  padding: 14px;
   border-right: 1px solid var(--line);
   background: #fff;
   overflow: auto;
 }
 
 .persona-photo {
-  width: 112px;
-  height: 112px;
+  width: 92px;
+  height: 92px;
   display: block;
   object-fit: cover;
   border-radius: 50%;
@@ -211,7 +211,7 @@ h1 {
 
 .persona-card h2 {
   margin: 0 0 10px;
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: 0;
 }
 
