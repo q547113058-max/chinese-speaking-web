@@ -4,6 +4,7 @@ const sendButton = document.querySelector("#sendButton");
 const recordButton = document.querySelector("#recordButton");
 const aiStatus = document.querySelector("#aiStatus");
 const level = document.querySelector("#level");
+const levelControl = document.querySelector(".level-control");
 const difficultyPanel = document.querySelector("#difficultyPanel");
 const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
@@ -32,6 +33,10 @@ let sourceNode = null;
 let processorNode = null;
 let micStream = null;
 let pcmChunks = [];
+let currentAudio = null;
+let currentAudioUrl = null;
+let currentUtterance = null;
+let playbackSerial = 0;
 
 const settings = () => ({
   level: level.value,
@@ -226,6 +231,8 @@ async function requestPractice(text) {
 
 async function playChinese(text) {
   if (!text) return;
+  stopPlayback();
+  const serial = ++playbackSerial;
   setBusy(true);
   try {
     const response = await fetch("/api/tts", {
@@ -237,18 +244,25 @@ async function playChinese(text) {
     if (response.headers.get("content-type")?.includes("application/json")) {
       const data = await response.json();
       if (data.fallback) {
-        speakWithBrowser(text);
+        if (serial === playbackSerial) speakWithBrowser(text);
         return;
       }
     }
 
     if (!response.ok) throw new Error("\u8bed\u97f3\u751f\u6210\u5931\u8d25");
     const blob = await response.blob();
-    const audio = new Audio(URL.createObjectURL(blob));
+    if (serial !== playbackSerial) return;
+    currentAudioUrl = URL.createObjectURL(blob);
+    const audio = new Audio(currentAudioUrl);
+    currentAudio = audio;
     audio.playbackRate = settings().speed;
-    audio.addEventListener("ended", () => setBusy(false), { once: true });
+    audio.addEventListener("ended", () => {
+      if (currentAudio === audio) stopPlayback();
+      setBusy(false);
+    }, { once: true });
     await audio.play();
   } catch (error) {
+    if (serial !== playbackSerial) return;
     if ("speechSynthesis" in window) {
       speakWithBrowser(text);
       return;
@@ -258,11 +272,35 @@ async function playChinese(text) {
   }
 }
 
+function stopPlayback() {
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
+  }
+
+  if (currentAudioUrl) {
+    URL.revokeObjectURL(currentAudioUrl);
+    currentAudioUrl = null;
+  }
+
+  if ("speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+  }
+
+  currentUtterance = null;
+}
+
 function speakWithBrowser(text) {
+  stopPlayback();
   const utterance = new SpeechSynthesisUtterance(text);
+  currentUtterance = utterance;
   utterance.lang = "zh-CN";
   utterance.rate = settings().speed;
-  utterance.addEventListener("end", () => setBusy(false));
+  utterance.addEventListener("end", () => {
+    if (currentUtterance === utterance) currentUtterance = null;
+    setBusy(false);
+  });
   window.speechSynthesis.speak(utterance);
 }
 
@@ -350,10 +388,10 @@ recordButton.addEventListener("click", () => {
   else startRecording();
 });
 level.addEventListener("change", updateDifficultyPanel);
-level.addEventListener("focus", () => difficultyPanel.classList.add("open"));
-level.addEventListener("click", () => difficultyPanel.classList.add("open"));
+level.addEventListener("focus", () => levelControl.classList.add("expanded"));
+level.addEventListener("click", () => levelControl.classList.add("expanded"));
 document.addEventListener("click", (event) => {
-  if (!event.target.closest(".level-control")) difficultyPanel.classList.remove("open");
+  if (!event.target.closest(".level-control")) levelControl.classList.remove("expanded");
 });
 
 fetch("/api/health")
