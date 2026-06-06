@@ -15,3 +15,4 @@
 - Add MiniMax Speech 2.8 server-side TTS support through `TTS_PROVIDER=minimax`, `TTS_BASE_URL=https://api.minimaxi.com/v1`, `TTS_MODEL=speech-2.8-hd`, and `TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice`.
 - Add Qwen realtime STT support with `qwen3.5-livetranslate-flash-realtime-2026-05-19`, DashScope WebSocket auth, and browser-side 16 kHz PCM recording.
 - Add a floating typing indicator while a reply is being generated, auto-play generated Chinese replies, and make beginner/intermediate/advanced response behavior explicit in the model prompt.
+- Add visible difficulty descriptions, generated coach personas, and browser-local conversation context stored in `localStorage["chinese-speaking-coach-state"]`.
