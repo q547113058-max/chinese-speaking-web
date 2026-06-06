@@ -1,4 +1,4 @@
-import http from "node:http";
+﻿import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
@@ -51,12 +51,12 @@ const mimeTypes = {
 };
 
 const fixedPersona = {
-  name: "苏棠",
-  role: "中文系本科生，专门陪外国学习者练中文的对话伙伴",
-  personality: "讨喜可爱、温柔耐心、真诚好奇，有一点书卷气，会自然鼓励对方继续说",
+  name: "\u82cf\u68e0",
+  role: "\u4e2d\u6587\u7cfb\u672c\u79d1\u751f\uff0c\u4e13\u95e8\u966a\u5916\u56fd\u5b66\u4e60\u8005\u7ec3\u4e2d\u6587\u7684\u5bf9\u8bdd\u4f19\u4f34",
+  personality: "\u8ba8\u559c\u53ef\u7231\u3001\u6e29\u67d4\u8010\u5fc3\u3001\u771f\u8bda\u597d\u5947\uff0c\u6709\u4e00\u70b9\u4e66\u5377\u6c14\uff0c\u4f1a\u81ea\u7136\u9f13\u52b1\u5bf9\u65b9\u7ee7\u7eed\u8bf4",
   speakingStyle:
-    "像真实中文系女生聊天一样接话；不翻译用户的话；用自然口语回应含义；偶尔带一点中文文学和生活化例子；纠错要轻柔，不打断对话。",
-  scenario: "面向想学中文的外国人，进行轻松、可持续的中文口语陪练"
+    "\u50cf\u771f\u5b9e\u4e2d\u6587\u7cfb\u5973\u751f\u804a\u5929\u4e00\u6837\u63a5\u8bdd\uff1b\u4e0d\u7ffb\u8bd1\u7528\u6237\u7684\u8bdd\uff1b\u7528\u81ea\u7136\u53e3\u8bed\u56de\u5e94\u542b\u4e49\uff1b\u5076\u5c14\u5e26\u4e00\u70b9\u4e2d\u6587\u6587\u5b66\u548c\u751f\u6d3b\u5316\u4f8b\u5b50\uff1b\u7ea0\u9519\u8981\u8f7b\u67d4\uff0c\u4e0d\u6253\u65ad\u5bf9\u8bdd\u3002",
+  scenario: "\u9762\u5411\u60f3\u5b66\u4e2d\u6587\u7684\u5916\u56fd\u4eba\uff0c\u8fdb\u884c\u8f7b\u677e\u3001\u53ef\u6301\u7eed\u7684\u4e2d\u6587\u53e3\u8bed\u966a\u7ec3"
 };
 
 function sendJson(res, status, payload) {
@@ -104,38 +104,32 @@ function parseMultipart(buffer, contentType) {
 function fallbackLesson(inputText = "I want to order coffee.", settings = {}) {
   const text = inputText.trim() || "I want to order coffee.";
   const lower = text.toLowerCase();
-  let chinese = "我想练习中文。";
-  let pinyin = "Wo xiang lianxi Zhongwen.";
-  let explanation = "This means: I want to practice Chinese.";
-  let suggestion = "Try repeating the Chinese sentence slowly, then say it once at normal speed.";
+  let chinese = "\u6211\u4eec\u6162\u6162\u6765\uff0c\u4f60\u5df2\u7ecf\u5f00\u59cb\u8bf4\u4e86\u3002";
+  let pinyin = "W\u01d2men m\u00e0n m\u00e0n l\u00e1i, n\u01d0 y\u01d0j\u012bng k\u0101ish\u01d0 shu\u014d le.";
+  let explanation = "Let's take it slowly. You have already started speaking.";
+  let suggestion = "Try answering with one short English sentence, and I will continue in Chinese.";
 
   if (lower.includes("coffee")) {
-    chinese = "我想点一杯咖啡。";
-    pinyin = "Wo xiang dian yi bei kafei.";
-    explanation = "Use this when you want to order a cup of coffee.";
-    suggestion = "In Chinese, '点' is commonly used when ordering food or drinks.";
+    chinese = "\u54e6\uff0c\u4f60\u60f3\u559d\u5496\u5561\u5440\uff1f\u4f60\u559c\u6b22\u70ed\u7684\u8fd8\u662f\u51b0\u7684\uff1f";
+    pinyin = "\u00d3, n\u01d0 xi\u01ceng h\u0113 k\u0101f\u0113i ya? N\u01d0 x\u01d0huan r\u00e8 de h\u00e1ishi b\u012bng de?";
+    explanation = "I respond naturally and ask whether you like hot or iced coffee.";
+    suggestion = "Practice saying re de and bing de clearly.";
   } else if (lower.includes("hello") || lower.includes("hi")) {
-    chinese = "你好，很高兴认识你。";
-    pinyin = "Ni hao, hen gaoxing renshi ni.";
-    explanation = "This is a friendly way to say hello and nice to meet you.";
-    suggestion = "Say '你好' with a clear falling-rising tone on '你'.";
-  } else if (lower.includes("where") || lower.includes("direction")) {
-    chinese = "请问，地铁站在哪里？";
-    pinyin = "Qingwen, ditiezhan zai nali?";
-    explanation = "This asks: Excuse me, where is the subway station?";
-    suggestion = "'请问' makes the question sound polite.";
+    chinese = "\u4f60\u597d\u5440\uff0c\u5f88\u9ad8\u5174\u89c1\u5230\u4f60\u3002\u4eca\u5929\u60f3\u804a\u4ec0\u4e48\uff1f";
+    pinyin = "N\u01d0 h\u01ceo ya, h\u011bn g\u0101ox\u00ecng ji\u00e0n d\u00e0o n\u01d0. J\u012bnti\u0101n xi\u01ceng li\u00e1o sh\u00e9nme?";
+    explanation = "I greet you and ask what you want to talk about today.";
+    suggestion = "Try replying with a topic, like food, work, or weather.";
   }
 
   if (settings.level === "advanced") {
-    chinese += " 你可以帮我推荐一下吗？";
-    pinyin += " Ni keyi bang wo tuijian yixia ma?";
+    chinese += " \u4f60\u53ef\u4ee5\u591a\u8bf4\u4e00\u70b9\uff0c\u6211\u4f1a\u63a5\u7740\u804a\u3002";
+    pinyin += " N\u01d0 k\u011by\u01d0 du\u014d shu\u014d y\u00ec di\u01cen, w\u01d2 hu\u00ec ji\u0113zhe li\u00e1o.";
   }
 
   return {
     transcript: text,
     chinese,
     pinyin,
-    ipa: "",
     explanation,
     suggestion
   };
@@ -167,7 +161,7 @@ function levelGuide(level = "beginner") {
 function fallbackPersona(settings = {}) {
   const level = settings.level || "beginner";
   return {
-    name: level === "advanced" ? "林安" : level === "intermediate" ? "小周" : "小雨",
+    name: level === "advanced" ? "鏋楀畨" : level === "intermediate" ? "灏忓懆" : "灏忛洦",
     role: "A patient Mandarin conversation partner",
     personality: "Warm, curious, and concise",
     speakingStyle: levelGuide(level),
@@ -207,7 +201,7 @@ async function generatePersona(settings = {}) {
   try {
     const parsed = extractJson(content);
     return {
-      name: parsed.name || "小雨",
+      name: parsed.name || "灏忛洦",
       role: parsed.role || "A Mandarin conversation partner",
       personality: parsed.personality || "Warm and patient",
       speakingStyle: parsed.speakingStyle || levelGuide(settings.level),
@@ -250,7 +244,7 @@ async function generatePracticeReply(text, settings, context = {}) {
         {
           role: "system",
           content:
-            "You are 苏棠, a likable and cute Chinese Literature undergraduate student. You are a Mandarin conversation partner for foreigners who want to learn Chinese. Always stay in this persona: warm, patient, bookish, sincere, gently playful, and naturally encouraging. The learner may speak English, but you should reply as another person in a natural conversation, not as a translator. Do not translate the learner's sentence. Respond to the meaning, ask a natural follow-up question when useful, and keep the Chinese reply to one or two short spoken Mandarin sentences. Also provide pinyin without tone marks, IPA pronunciation for the Chinese reply, a concise English explanation of your reply, and one short speaking suggestion. Return strict JSON with keys: chinese, pinyin, ipa, explanation, suggestion."
+            "You are Su Tang, a likable and cute Chinese Literature undergraduate student. You are a Mandarin conversation partner for foreigners who want to learn Chinese. Always stay in this persona: warm, patient, bookish, sincere, gently playful, and naturally encouraging. The learner may speak English, but you should reply as another person in a natural conversation, not as a translator. Do not translate the learner's sentence. Respond to the meaning, ask a natural follow-up question when useful, and keep the Chinese reply to one or two short spoken Mandarin sentences. Also provide pinyin with tone marks such as ni3 -> nǐ and hao3 -> hǎo, a concise English explanation of your reply, and one short speaking suggestion. Return strict JSON with keys: chinese, pinyin, explanation, suggestion."
         },
         {
           role: "user",
@@ -274,7 +268,6 @@ Learner just said: ${text}`
     transcript: text,
     chinese: parsed.chinese || "",
     pinyin: parsed.pinyin || "",
-    ipa: parsed.ipa || "",
     explanation: parsed.explanation || "",
     suggestion: parsed.suggestion || ""
   };
@@ -577,3 +570,5 @@ server.listen(port, () => {
   console.log(`Chinese speaking coach running at http://localhost:${port}`);
   console.log(chatApiKey ? `AI mode enabled with ${chatModel}.` : "No CHAT_API_KEY or OPENAI_API_KEY found. Using mock practice replies.");
 });
+
+
