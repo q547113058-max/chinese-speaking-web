@@ -82,16 +82,12 @@ function scrollToBottom() {
 }
 
 function setupLevelDescription() {
-  const description = document.createElement("p");
-  description.className = "level-description";
-  level.insertAdjacentElement("afterend", description);
-
-  const update = () => {
-    description.textContent = levelDescriptions[level.value] || levelDescriptions.beginner;
-  };
-
-  level.addEventListener("change", update);
-  update();
+  level.title = levelDescriptions[level.value] || levelDescriptions.beginner;
+  level.addEventListener("change", () => {
+    const description = levelDescriptions[level.value] || levelDescriptions.beginner;
+    level.title = description;
+    setState(description);
+  });
 }
 
 function addPersonaMessage(persona) {
