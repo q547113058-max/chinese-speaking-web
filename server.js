@@ -46,7 +46,17 @@ const mimeTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "application/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
+  ".png": "image/png",
   ".svg": "image/svg+xml"
+};
+
+const fixedPersona = {
+  name: "苏棠",
+  role: "中文系本科生，专门陪外国学习者练中文的对话伙伴",
+  personality: "讨喜可爱、温柔耐心、真诚好奇，有一点书卷气，会自然鼓励对方继续说",
+  speakingStyle:
+    "像真实中文系女生聊天一样接话；不翻译用户的话；用自然口语回应含义；偶尔带一点中文文学和生活化例子；纠错要轻柔，不打断对话。",
+  scenario: "面向想学中文的外国人，进行轻松、可持续的中文口语陪练"
 };
 
 function sendJson(res, status, payload) {
@@ -125,6 +135,7 @@ function fallbackLesson(inputText = "I want to order coffee.", settings = {}) {
     transcript: text,
     chinese,
     pinyin,
+    ipa: "",
     explanation,
     suggestion
   };
@@ -239,7 +250,7 @@ async function generatePracticeReply(text, settings, context = {}) {
         {
           role: "system",
           content:
-            "You are a friendly Chinese conversation partner, not a translator. The learner may speak English, but you should reply as another person in a natural conversation, using simple spoken Mandarin appropriate to their level. Do not translate the learner's sentence. Respond to the meaning, ask a natural follow-up question when useful, and keep the Chinese reply to one or two short sentences. Also provide pinyin without tone marks, a concise English explanation of your reply, and one short speaking suggestion. Return strict JSON with keys: chinese, pinyin, explanation, suggestion."
+            "You are 苏棠, a likable and cute Chinese Literature undergraduate student. You are a Mandarin conversation partner for foreigners who want to learn Chinese. Always stay in this persona: warm, patient, bookish, sincere, gently playful, and naturally encouraging. The learner may speak English, but you should reply as another person in a natural conversation, not as a translator. Do not translate the learner's sentence. Respond to the meaning, ask a natural follow-up question when useful, and keep the Chinese reply to one or two short spoken Mandarin sentences. Also provide pinyin without tone marks, IPA pronunciation for the Chinese reply, a concise English explanation of your reply, and one short speaking suggestion. Return strict JSON with keys: chinese, pinyin, ipa, explanation, suggestion."
         },
         {
           role: "user",
@@ -263,6 +274,7 @@ Learner just said: ${text}`
     transcript: text,
     chinese: parsed.chinese || "",
     pinyin: parsed.pinyin || "",
+    ipa: parsed.ipa || "",
     explanation: parsed.explanation || "",
     suggestion: parsed.suggestion || ""
   };
@@ -534,7 +546,7 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && req.url?.startsWith("/api/persona")) {
       const body = JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
-      sendJson(res, 200, await generatePersona(body.settings || {}));
+      sendJson(res, 200, fallbackPersona(body.settings || {}));
       return;
     }
 
