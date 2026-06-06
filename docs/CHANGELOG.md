@@ -16,3 +16,4 @@
 - Add Qwen realtime STT support with `qwen3.5-livetranslate-flash-realtime-2026-05-19`, DashScope WebSocket auth, and browser-side 16 kHz PCM recording.
 - Add a floating typing indicator while a reply is being generated, auto-play generated Chinese replies, and make beginner/intermediate/advanced response behavior explicit in the model prompt.
 - Add visible difficulty descriptions, generated coach personas, and browser-local conversation context stored in `localStorage["chinese-speaking-coach-state"]`.
+- Initialize the coach from the supplied fixed persona, add a generated avatar asset, greet users as the persona on entry, add IPA pronunciation output, remove the bottom status bar, and show difficulty descriptions inside the selected difficulty text.
