@@ -76,3 +76,19 @@ powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说
 - 用户可见功能、运行方式、接口、环境变量变化：更新 `README.md` 和 `docs/PROJECT.md`
 - 行为变化、修复、已知限制变化：更新 `docs/CHANGELOG.md`
 - 新增 GitHub 管理流程或发布方式：更新本文档的维护约定
+
+## MiniMax / OpenAI-compatible chat
+
+The chat coach can use any OpenAI-compatible chat completions API.
+
+Recommended MiniMax settings:
+
+```env
+CHAT_API_KEY=your_minimax_api_key
+CHAT_BASE_URL=https://api.minimaxi.com/v1
+CHAT_MODEL=MiniMax-M3
+```
+
+`CHAT_API_KEY` is secret and must stay in local `.env`, GitHub Secrets, or your deployment platform environment variables. Do not commit the real key to this public repository.
+
+Speech transcription and server-side TTS still use OpenAI audio variables when `OPENAI_API_KEY` is configured. Without an OpenAI audio key, text practice still works with `CHAT_*`, transcription uses the mock fallback, and the browser can fall back to built-in speech synthesis.
