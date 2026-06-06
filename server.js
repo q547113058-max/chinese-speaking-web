@@ -1,12 +1,33 @@
 import http from "node:http";
 import { readFile } from "node:fs/promises";
-import { createReadStream, existsSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(__dirname, "public");
+
+function loadLocalEnv() {
+  const envPath = join(__dirname, ".env");
+  if (!existsSync(envPath)) return;
+
+  for (const line of readFileSync(envPath, "utf8").split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) continue;
+    const key = trimmed.slice(0, separator).trim();
+    const value = trimmed.slice(separator + 1).trim().replace(/^['"]|['"]$/g, "");
+    if (key && process.env[key] === undefined) process.env[key] = value;
+  }
+}
+
+loadLocalEnv();
+
 const port = Number(process.env.PORT || 5173);
+const chatApiKey = process.env.CHAT_API_KEY || process.env.OPENAI_API_KEY;
+const chatBaseUrl = (process.env.CHAT_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+const chatModel = process.env.CHAT_MODEL || process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -109,17 +130,17 @@ function extractJson(text) {
 }
 
 async function generatePracticeReply(text, settings) {
-  if (!process.env.OPENAI_API_KEY) return fallbackLesson(text, settings);
+  if (!chatApiKey) return fallbackLesson(text, settings);
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${chatApiKey}`,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini",
-      input: [
+      model: chatModel,
+      messages: [
         {
           role: "system",
           content:
@@ -135,11 +156,11 @@ async function generatePracticeReply(text, settings) {
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`OpenAI response failed: ${error}`);
+    throw new Error(`Chat model response failed: ${error}`);
   }
 
   const data = await response.json();
-  const content = data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
+  const content = data.choices?.[0]?.message?.content || data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
   const parsed = extractJson(content || "");
   return {
     transcript: text,
@@ -221,7 +242,7 @@ async function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === "GET" && req.url?.startsWith("/api/health")) {
-      sendJson(res, 200, { ok: true, aiEnabled: Boolean(process.env.OPENAI_API_KEY) });
+      sendJson(res, 200, { ok: true, aiEnabled: Boolean(chatApiKey) });
       return;
     }
 
@@ -261,5 +282,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, () => {
   console.log(`Chinese speaking coach running at http://localhost:${port}`);
-  console.log(process.env.OPENAI_API_KEY ? "AI mode enabled." : "No OPENAI_API_KEY found. Using mock practice replies.");
+  console.log(chatApiKey ? `AI mode enabled with ${chatModel}.` : "No CHAT_API_KEY or OPENAI_API_KEY found. Using mock practice replies.");
 });
