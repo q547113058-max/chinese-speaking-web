@@ -76,3 +76,17 @@ powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说
 ```
 
 脚本会跳过 `.env`、`.git/`、`node_modules/` 和 `.log` 文件，并通过 GitHub API 创建或更新远端文件。
+
+## MiniMax / OpenAI-compatible chat
+
+Chat replies are generated through an OpenAI-compatible chat completions endpoint when `CHAT_API_KEY` is set.
+
+```env
+CHAT_API_KEY=your_minimax_api_key
+CHAT_BASE_URL=https://api.minimaxi.com/v1
+CHAT_MODEL=MiniMax-M3
+```
+
+The real key is stored only in local `.env` or runtime secrets. `.env` is excluded from GitHub sync.
+
+OpenAI audio transcription and TTS remain controlled by `OPENAI_API_KEY`, `OPENAI_TRANSCRIBE_MODEL`, `OPENAI_TTS_MODEL`, and `OPENAI_TTS_VOICE`.
