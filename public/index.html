@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>中文口语陪练</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="coach-panel" aria-label="中文口语陪练">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Chinese Speaking Coach</p>
+            <h1>中文口语陪练</h1>
+          </div>
+          <div class="status-pill" id="aiStatus">检查中</div>
+        </header>
+
+        <section class="settings" aria-label="练习设置">
+          <label>
+            难度
+            <select id="level">
+              <option value="beginner">初级</option>
+              <option value="intermediate">中级</option>
+              <option value="advanced">高级</option>
+            </select>
+          </label>
+          <label>
+            语速
+            <input id="speed" type="range" min="0.75" max="1.25" step="0.05" value="0.95" />
+          </label>
+          <label class="toggle">
+            <input id="showPinyin" type="checkbox" checked />
+            拼音
+          </label>
+          <label class="toggle">
+            <input id="showExplanation" type="checkbox" checked />
+            英文解释
+          </label>
+        </section>
+
+        <section class="conversation" id="conversation" aria-live="polite">
+          <article class="message assistant">
+            <div class="avatar">中</div>
+            <div class="bubble">
+              <p class="chinese">你好！用英文说一句话，我会用中文陪你练习。</p>
+              <p class="pinyin">Ni hao! Yong Yingwen shuo yi ju hua, wo hui yong Zhongwen pei ni lianxi.</p>
+              <p class="explanation">Say something in English. I will answer in Chinese with pinyin and a short explanation.</p>
+            </div>
+          </article>
+        </section>
+
+        <section class="composer" aria-label="输入区">
+          <textarea id="textInput" rows="2" placeholder="也可以直接输入英文，例如：I want to order coffee."></textarea>
+          <div class="actions">
+            <button class="icon-button secondary" id="recordButton" type="button" title="录音" aria-label="录音">
+              <span class="mic-mark" aria-hidden="true"></span>
+            </button>
+            <button class="primary-button" id="sendButton" type="button">发送</button>
+          </div>
+          <p class="hint" id="stateText">准备好了。点击麦克风录音，或输入英文后发送。</p>
+        </section>
+      </section>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
