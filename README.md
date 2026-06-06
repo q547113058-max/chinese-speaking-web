@@ -102,7 +102,7 @@ Server-side TTS now supports MiniMax Speech 2.8 over the MiniMax T2A API:
 TTS_PROVIDER=minimax
 TTS_BASE_URL=https://api.minimaxi.com/v1
 TTS_MODEL=speech-2.8-hd
-TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice
+TTS_VOICE=Chinese (Mandarin)_Warm_Girl
 ```
 
 `TTS_API_KEY` is optional. When it is not set, the server reuses `CHAT_API_KEY`, so the same MiniMax key can drive both MiniMax-M3 chat and MiniMax Speech 2.8 TTS. Speech recognition is still not MiniMax-backed because MiniMax Speech 2.8 is a text-to-speech model, not a speech-to-text model.
