@@ -4,13 +4,14 @@
 
 ## 功能
 
-- 英文文字输入，生成中文陪练回复
-- 浏览器录音上传和语音识别
-- 中文、拼音、英文解释、口语建议
-- 中文朗读，优先使用 OpenAI TTS，无 API key 时回退到浏览器朗读
-- 初级、中级、高级难度
-- 语速、拼音、英文解释显示开关
-- 无 `OPENAI_API_KEY` 时使用模拟回复，便于先测试界面和流程
+- 英文文字输入，生成中文陪练回复。
+- 浏览器录音上传和语音识别。
+- 中文、拼音、英文解释、口语建议展示。
+- 中文朗读，优先使用 OpenAI TTS；没有音频 API key 时回退到浏览器朗读。
+- 初级、中级、高级三档难度。
+- 语速、拼音、英文解释显示开关。
+- 无 `OPENAI_API_KEY` 时使用模拟回复，便于先测试界面和流程。
+- 可通过 OpenAI-compatible Chat Completions 接口接入 MiniMax 等模型。
 
 ## 技术栈
 
@@ -18,6 +19,7 @@
 - 原生 HTTP server
 - 原生 HTML/CSS/JavaScript
 - OpenAI Responses API、Audio Transcriptions API、Text-to-Speech API
+- OpenAI-compatible Chat Completions API
 
 ## 运行
 
@@ -43,8 +45,11 @@ npm start
 
 参考 [.env.example](./.env.example)：
 
-- `OPENAI_API_KEY`：OpenAI API key。缺省时进入模拟模式。
-- `OPENAI_CHAT_MODEL`：中文陪练回复模型，默认 `gpt-4.1-mini`。
+- `CHAT_API_KEY`：OpenAI-compatible chat API key，例如 MiniMax key。真实密钥只能放在本地 `.env`、GitHub Secrets 或部署平台环境变量中。
+- `CHAT_BASE_URL`：chat completions 接口地址，MiniMax 示例为 `https://api.minimaxi.com/v1`。
+- `CHAT_MODEL`：聊天模型，MiniMax 示例为 `MiniMax-M3`。
+- `OPENAI_API_KEY`：OpenAI API key。缺省时进入模拟模式；配置后可用于音频能力。
+- `OPENAI_CHAT_MODEL`：OpenAI 回复模型，默认 `gpt-4.1-mini`。
 - `OPENAI_TRANSCRIBE_MODEL`：语音识别模型，默认 `gpt-4o-mini-transcribe`。
 - `OPENAI_TTS_MODEL`：中文朗读模型，默认 `gpt-4o-mini-tts`。
 - `OPENAI_TTS_VOICE`：朗读音色，默认 `coral`。
@@ -55,40 +60,37 @@ npm start
 - [项目说明](./docs/PROJECT.md)
 - [变更日志](./docs/CHANGELOG.md)
 
-## GitHub 同步
+## GitHub 管理
 
-当前项目已配置为同步到私有仓库：
+当前项目已关联 GitHub 仓库：
 
 ```text
 https://github.com/q547113058-max/chinese-speaking-web
 ```
 
-如果本机没有可用的 `git` 命令，可以使用 GitHub CLI 脚本同步：
+本机 Git 已安装并可用，默认使用标准 Git 工作流：
+
+```powershell
+git status
+git add .
+git commit -m "说明本次修改"
+git push
+```
+
+如果将来遇到没有 `git` 命令的环境，可以使用 GitHub CLI 备用同步脚本：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说明本次修改"
 ```
 
+备用脚本会跳过 `.env`、`.git/`、`node_modules/` 和 `.log` 文件，通过 GitHub API 创建或更新远端文件。只在标准 Git 不可用时使用它。
+
 ## 维护约定
 
 每次修改代码时，必须同步检查并更新相关文档：
 
-- 用户可见功能、运行方式、接口、环境变量变化：更新 `README.md` 和 `docs/PROJECT.md`
-- 行为变化、修复、已知限制变化：更新 `docs/CHANGELOG.md`
-- 新增 GitHub 管理流程或发布方式：更新本文档的维护约定
+- 用户可见功能、运行方式、接口、环境变量变化：更新 `README.md` 和 `docs/PROJECT.md`。
+- 行为变化、修复、已知限制变化：更新 `docs/CHANGELOG.md`。
+- GitHub 管理流程或发布方式变化：更新本文档的 GitHub 管理和维护约定。
 
-## MiniMax / OpenAI-compatible chat
-
-The chat coach can use any OpenAI-compatible chat completions API.
-
-Recommended MiniMax settings:
-
-```env
-CHAT_API_KEY=your_minimax_api_key
-CHAT_BASE_URL=https://api.minimaxi.com/v1
-CHAT_MODEL=MiniMax-M3
-```
-
-`CHAT_API_KEY` is secret and must stay in local `.env`, GitHub Secrets, or your deployment platform environment variables. Do not commit the real key to this public repository.
-
-Speech transcription and server-side TTS still use OpenAI audio variables when `OPENAI_API_KEY` is configured. Without an OpenAI audio key, text practice still works with `CHAT_*`, transcription uses the mock fallback, and the browser can fall back to built-in speech synthesis.
+每次完成一组代码或文档修改后，都要提交并推送到 GitHub。

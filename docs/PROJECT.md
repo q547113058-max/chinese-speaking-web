@@ -6,18 +6,20 @@
 
 ## 当前能力
 
-- 文字练习：用户输入英文句子，服务端调用 OpenAI 生成中文回复。
-- 语音练习：浏览器录音后上传到服务端，服务端调用 OpenAI 语音识别得到英文转写。
-- 中文朗读：服务端调用 OpenAI TTS 生成中文音频；没有 API key 或 TTS 失败时，前端使用浏览器 `speechSynthesis` 回退朗读。
+- 文字练习：用户输入英文句子，服务端生成中文回复。
+- 语音练习：浏览器录音后上传到服务端，服务端调用语音识别得到英文转写。
+- 中文朗读：服务端可调用 OpenAI TTS 生成中文音频；没有 API key 或 TTS 失败时，前端使用浏览器 `speechSynthesis` 回退朗读。
 - 难度控制：支持 `beginner`、`intermediate`、`advanced` 三档。
 - 显示控制：前端可开关拼音和英文解释。
 - 本地模拟：没有 `OPENAI_API_KEY` 时，后端返回固定示例，方便调试 UI 和交互流程。
+- Chat 模型：配置 `CHAT_API_KEY` 后，可使用 OpenAI-compatible Chat Completions 接口生成回复，例如 MiniMax-M3。
 
 ## 目录结构
 
 ```text
 chinese-speaking-web/
   .env.example
+  .gitignore
   package.json
   README.md
   server.js
@@ -60,33 +62,21 @@ chinese-speaking-web/
 
 ## GitHub 管理规则
 
-项目应托管在 GitHub 仓库中。每次完成一组代码或文档修改后：
+项目托管在 GitHub 仓库：
 
-1. 检查变更范围。
-2. 确认文档已经同步更新。
-3. 提交本地变更。
-4. 推送到 GitHub。
+```text
+https://github.com/q547113058-max/chinese-speaking-web
+```
 
-当前本机环境说明：GitHub CLI 已安装并已登录，但 `git` 命令当前不在 PATH 中。若要使用标准 Git 工作流，需要安装 Git 或修复 PATH。
-
-在 Git 不可用时，可以使用项目脚本同步到 GitHub：
+当前本机 Git 已安装并可用，后续默认使用标准 Git 工作流：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说明本次修改"
+git status
+git add .
+git commit -m "说明本次修改"
+git push
 ```
 
-脚本会跳过 `.env`、`.git/`、`node_modules/` 和 `.log` 文件，并通过 GitHub API 创建或更新远端文件。
+如遇国外下载或 GitHub 连接不稳定，先启动 `vpn-mihomo` 本地代理，再执行下载、安装或推送相关命令。当前代理地址为 `http://127.0.0.1:17890`。
 
-## MiniMax / OpenAI-compatible chat
-
-Chat replies are generated through an OpenAI-compatible chat completions endpoint when `CHAT_API_KEY` is set.
-
-```env
-CHAT_API_KEY=your_minimax_api_key
-CHAT_BASE_URL=https://api.minimaxi.com/v1
-CHAT_MODEL=MiniMax-M3
-```
-
-The real key is stored only in local `.env` or runtime secrets. `.env` is excluded from GitHub sync.
-
-OpenAI audio transcription and TTS remain controlled by `OPENAI_API_KEY`, `OPENAI_TRANSCRIBE_MODEL`, `OPENAI_TTS_MODEL`, and `OPENAI_TTS_VOICE`.
+`scripts/sync-github.ps1` 是备用方案，只在 `git` 不可用时通过 GitHub API 同步文件。脚本会跳过 `.env`、`.git/`、`node_modules/` 和 `.log` 文件。
