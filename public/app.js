@@ -4,36 +4,26 @@ const sendButton = document.querySelector("#sendButton");
 const recordButton = document.querySelector("#recordButton");
 const aiStatus = document.querySelector("#aiStatus");
 const level = document.querySelector("#level");
+const difficultyPanel = document.querySelector("#difficultyPanel");
 const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
 
 const storageKey = "chinese-speaking-coach-state";
 const targetSampleRate = 16000;
-const simpleLevelLabels = {
-  beginner: "初级",
-  intermediate: "中级",
-  advanced: "高级"
-};
-const levelDescriptions = {
-  beginner: "短句、常用词、简单语法",
-  intermediate: "自然日常表达、简单复合句",
-  advanced: "更地道、更像真实聊天"
-};
 const defaultPersona = {
-  name: "苏棠",
-  role: "中文系本科生，专门陪外国学习者练中文的对话伙伴",
-  personality: "讨喜可爱、温柔耐心、真诚好奇，有一点书卷气，会自然鼓励你继续说",
-  speakingStyle: "像真实中文系女生聊天一样接话，不翻译你的话，用自然口语回应含义",
-  scenario: "面向想学中文的外国人，进行轻松、可持续的中文口语陪练",
+  name: "\u82cf\u68e0",
+  role: "\u4e2d\u6587\u7cfb\u672c\u79d1\u751f\uff0c\u4e13\u95e8\u966a\u5916\u56fd\u5b66\u4e60\u8005\u7ec3\u4e2d\u6587\u7684\u5bf9\u8bdd\u4f19\u4f34",
+  personality: "\u8ba8\u559c\u53ef\u7231\u3001\u6e29\u67d4\u8010\u5fc3\u3001\u771f\u8bda\u597d\u5947\uff0c\u6709\u4e00\u70b9\u4e66\u5377\u6c14",
+  speakingStyle: "\u50cf\u771f\u5b9e\u4e2d\u6587\u7cfb\u5973\u751f\u804a\u5929\u4e00\u6837\u63a5\u8bdd\uff0c\u4e0d\u7ffb\u8bd1\u7528\u6237\u7684\u8bdd\uff0c\u7528\u81ea\u7136\u53e3\u8bed\u56de\u5e94\u542b\u4e49",
+  scenario: "\u9762\u5411\u60f3\u5b66\u4e2d\u6587\u7684\u5916\u56fd\u4eba\uff0c\u8fdb\u884c\u8f7b\u677e\u3001\u53ef\u6301\u7eed\u7684\u4e2d\u6587\u53e3\u8bed\u966a\u7ec3",
   avatar: "/coach-avatar.png"
 };
 const greeting = {
-  chinese: "你好呀，我是苏棠。你可以用英语跟我说一句话，我会像朋友一样用中文接着聊。",
-  pinyin: "Ni hao ya, wo shi Su Tang. Ni keyi yong Yingwen gen wo shuo yi ju hua, wo hui xiang pengyou yiyang yong Zhongwen jiezhe liao.",
-  ipa: "[ni xaʊ ja | wɔ ʂɨ su tʰɑŋ | ni kʰɤ ji jʊŋ iŋ wən kən wɔ ʂwɔ i tɕy xwa | wɔ xweɪ ɕjɑŋ pʰəŋ joʊ i jɑŋ jʊŋ ʈʂʊŋ wən tɕjɛ ʈʂɤ ljɑʊ]",
+  chinese: "\u4f60\u597d\u5440\uff0c\u6211\u662f\u82cf\u68e0\u3002\u4f60\u53ef\u4ee5\u7528\u82f1\u8bed\u8ddf\u6211\u8bf4\u4e00\u53e5\u8bdd\uff0c\u6211\u4f1a\u50cf\u670b\u53cb\u4e00\u6837\u7528\u4e2d\u6587\u63a5\u7740\u804a\u3002",
+  pinyin: "N\u01d0 h\u01ceo ya, w\u01d2 sh\u00ec S\u016b T\u00e1ng. N\u01d0 k\u011by\u01d0 y\u00f2ng Y\u012bngw\u00e9n g\u0113n w\u01d2 shu\u014d y\u00ed j\u00f9 hu\u00e0, w\u01d2 hu\u00ec xi\u00e0ng p\u00e9ngyou y\u00edy\u00e0ng y\u00f2ng Zh\u014dngw\u00e9n ji\u0113zhe li\u00e1o.",
   explanation: "Hi, I'm Su Tang. Say something in English, and I will continue the conversation in Chinese like a friend.",
-  suggestion: "先随便说一句今天发生的事就可以。"
+  suggestion: "\u5148\u968f\u4fbf\u8bf4\u4e00\u53e5\u4eca\u5929\u53d1\u751f\u7684\u4e8b\u5c31\u53ef\u4ee5\u3002"
 };
 
 let isRecording = false;
@@ -105,13 +95,11 @@ function avatarHtml(kind = "assistant") {
   if (kind === "assistant") {
     return `<img class="avatar avatar-img" src="${defaultPersona.avatar}" alt="${defaultPersona.name}" />`;
   }
-  return `<div class="avatar">英</div>`;
+  return `<div class="avatar">\u82f1</div>`;
 }
 
 function renderAssistantMessage(article, payload) {
-  const pinyinBlock = showPinyin.checked
-    ? `<p class="pinyin">${escapeHtml(payload.pinyin || "")}</p><p class="ipa">${escapeHtml(payload.ipa || "")}</p>`
-    : "";
+  const pinyinBlock = showPinyin.checked && payload.pinyin ? `<p class="pinyin">${escapeHtml(payload.pinyin)}</p>` : "";
   const explanationHtml = showExplanation.checked && payload.explanation ? `<p class="explanation">${escapeHtml(payload.explanation)}</p>` : "";
   const suggestionHtml = payload.suggestion ? `<p class="suggestion">${escapeHtml(payload.suggestion)}</p>` : "";
 
@@ -119,10 +107,10 @@ function renderAssistantMessage(article, payload) {
     ${avatarHtml("assistant")}
     <div class="bubble">
       <div class="reply-head">
-        <p class="label">${escapeHtml(defaultPersona.name)} 回复</p>
-        <button class="play-button" type="button" aria-label="播放中文">播放</button>
+        <p class="label">${escapeHtml(defaultPersona.name)} \u56de\u590d</p>
+        <button class="play-button" type="button" aria-label="\u64ad\u653e\u4e2d\u6587">\u64ad\u653e</button>
       </div>
-      <p class="chinese">${escapeHtml(payload.chinese)}</p>
+      <p class="chinese">${escapeHtml(payload.chinese || "")}</p>
       ${pinyinBlock}
       ${explanationHtml}
       ${suggestionHtml}
@@ -139,7 +127,7 @@ function addMessage(kind, payload) {
     article.innerHTML = `
       ${avatarHtml("user")}
       <div class="bubble">
-        <p class="label">你说</p>
+        <p class="label">\u4f60\u8bf4</p>
         <p>${escapeHtml(payload.text)}</p>
       </div>
     `;
@@ -157,7 +145,7 @@ function addTypingMessage() {
   article.className = "message assistant typing";
   article.innerHTML = `
     ${avatarHtml("assistant")}
-    <div class="bubble typing-bubble" aria-label="正在生成">
+    <div class="bubble typing-bubble" aria-label="\u6b63\u5728\u751f\u6210">
       <span class="typing-dot"></span>
       <span class="typing-dot"></span>
       <span class="typing-dot"></span>
@@ -180,7 +168,7 @@ function addError(error) {
   article.innerHTML = `
     <div class="avatar error">!</div>
     <div class="bubble error-bubble">
-      <p class="label">出错了</p>
+      <p class="label">\u51fa\u9519\u4e86</p>
       <p>${escapeHtml(error)}</p>
     </div>
   `;
@@ -188,28 +176,23 @@ function addError(error) {
   scrollToBottom();
 }
 
-function addGreeting() {
+function renderStoredConversation() {
   if (appState.turns.length === 0) {
     addMessage("assistant", greeting);
     rememberTurn({ role: "assistant", ...greeting });
-  } else {
-    addMessage("assistant", {
-      chinese: "我回来啦。我们接着刚才的话题聊吧。",
-      pinyin: "Wo huilai la. Women jiezhe gangcai de huati liao ba.",
-      ipa: "[wɔ xweɪ laɪ la | wɔ mən tɕjɛ ʈʂɤ kɑŋ tsʰaɪ tɤ xwa tʰi ljɑʊ pa]",
-      explanation: "I'm back. Let's continue from where we left off.",
-      suggestion: "你可以直接说下一句英文，我会接着聊。"
-    });
+    return;
+  }
+
+  for (const turn of appState.turns) {
+    if (turn.role === "user") addMessage("user", { text: turn.text || "" });
+    if (turn.role === "assistant") addMessage("assistant", turn);
   }
 }
 
-function updateLevelText() {
-  for (const option of level.options) {
-    option.textContent = simpleLevelLabels[option.value];
-  }
-  const selected = level.options[level.selectedIndex];
-  selected.textContent = `${simpleLevelLabels[level.value]}：${levelDescriptions[level.value]}`;
-  level.title = selected.textContent;
+function updateDifficultyPanel() {
+  difficultyPanel.querySelectorAll("[data-level]").forEach((item) => {
+    item.classList.toggle("active", item.dataset.level === level.value);
+  });
 }
 
 async function requestPractice(text) {
@@ -228,14 +211,14 @@ async function requestPractice(text) {
       body: JSON.stringify({ text: cleanText, settings: settings(), context: recentContext() })
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "生成失败");
+    if (!response.ok) throw new Error(data.error || "\u751f\u6210\u5931\u8d25");
     replaceTypingMessage(typingMessage, data);
     rememberTurn({ role: "user", text: cleanText });
-    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, ipa: data.ipa, explanation: data.explanation });
+    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, explanation: data.explanation, suggestion: data.suggestion });
     await playChinese(data.chinese);
   } catch (error) {
     typingMessage.remove();
-    addError(error.message || "网络失败，请重试。");
+    addError(error.message || "\u7f51\u7edc\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5\u3002");
   } finally {
     setBusy(false);
   }
@@ -259,7 +242,7 @@ async function playChinese(text) {
       }
     }
 
-    if (!response.ok) throw new Error("语音生成失败");
+    if (!response.ok) throw new Error("\u8bed\u97f3\u751f\u6210\u5931\u8d25");
     const blob = await response.blob();
     const audio = new Audio(URL.createObjectURL(blob));
     audio.playbackRate = settings().speed;
@@ -270,7 +253,7 @@ async function playChinese(text) {
       speakWithBrowser(text);
       return;
     }
-    addError(error.message || "播放失败");
+    addError(error.message || "\u64ad\u653e\u5931\u8d25");
     setBusy(false);
   }
 }
@@ -286,7 +269,7 @@ function speakWithBrowser(text) {
 async function startRecording() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) {
-    addError("当前浏览器不支持录音。请使用新版 Chrome、Edge 或 Safari。");
+    addError("\u5f53\u524d\u6d4f\u89c8\u5668\u4e0d\u652f\u6301\u5f55\u97f3\u3002");
     return;
   }
 
@@ -305,7 +288,7 @@ async function startRecording() {
     isRecording = true;
     recordButton.classList.add("recording");
   } catch {
-    addError("无法使用麦克风。请允许麦克风权限后重试。");
+    addError("\u65e0\u6cd5\u4f7f\u7528\u9ea6\u514b\u98ce\u3002\u8bf7\u5141\u8bb8\u6743\u9650\u540e\u91cd\u8bd5\u3002");
   }
 }
 
@@ -347,10 +330,10 @@ async function uploadRecording() {
 
     const response = await fetch("/api/transcribe", { method: "POST", body: formData });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "识别失败");
+    if (!response.ok) throw new Error(data.error || "\u8bc6\u522b\u5931\u8d25");
     await requestPractice(data.transcript);
   } catch (error) {
-    addError(error.message || "语音识别失败。");
+    addError(error.message || "\u8bed\u97f3\u8bc6\u522b\u5931\u8d25\u3002");
     setBusy(false);
   }
 }
@@ -366,18 +349,23 @@ recordButton.addEventListener("click", () => {
   if (isRecording) stopRecording();
   else startRecording();
 });
-level.addEventListener("change", updateLevelText);
+level.addEventListener("change", updateDifficultyPanel);
+level.addEventListener("focus", () => difficultyPanel.classList.add("open"));
+level.addEventListener("click", () => difficultyPanel.classList.add("open"));
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".level-control")) difficultyPanel.classList.remove("open");
+});
 
 fetch("/api/health")
   .then((response) => response.json())
   .then((data) => {
-    aiStatus.textContent = data.aiEnabled ? "AI 已连接" : "模拟模式";
+    aiStatus.textContent = data.aiEnabled ? "AI connected" : "Mock mode";
     aiStatus.classList.toggle("mock", !data.aiEnabled);
   })
   .catch(() => {
-    aiStatus.textContent = "离线";
+    aiStatus.textContent = "Offline";
     aiStatus.classList.add("mock");
   });
 
-updateLevelText();
-addGreeting();
+updateDifficultyPanel();
+renderStoredConversation();
