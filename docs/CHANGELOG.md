@@ -12,3 +12,4 @@
 - 增加 OpenAI-compatible chat 配置：`CHAT_API_KEY`、`CHAT_BASE_URL`、`CHAT_MODEL`，并以 MiniMax-M3 作为示例模型。
 - 通过 `vpn-mihomo` 本地代理完成 Git for Windows 下载，安装本机 Git，并将项目切换为标准 Git 管理流程。
 - 更新文档，明确标准 Git 工作流为主，GitHub API 同步脚本仅作为 `git` 不可用时的备用方案。
+- Add MiniMax Speech 2.8 server-side TTS support through `TTS_PROVIDER=minimax`, `TTS_BASE_URL=https://api.minimaxi.com/v1`, `TTS_MODEL=speech-2.8-hd`, and `TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice`.
