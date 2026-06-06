@@ -2,7 +2,6 @@ const conversation = document.querySelector("#conversation");
 const textInput = document.querySelector("#textInput");
 const sendButton = document.querySelector("#sendButton");
 const recordButton = document.querySelector("#recordButton");
-const stateText = document.querySelector("#stateText");
 const aiStatus = document.querySelector("#aiStatus");
 const level = document.querySelector("#level");
 const speed = document.querySelector("#speed");
@@ -10,10 +9,31 @@ const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
 
 const storageKey = "chinese-speaking-coach-state";
+const targetSampleRate = 16000;
+const simpleLevelLabels = {
+  beginner: "初级",
+  intermediate: "中级",
+  advanced: "高级"
+};
 const levelDescriptions = {
-  beginner: "初级：短句、常用词、简单语法，适合刚开始开口。",
-  intermediate: "中级：日常表达更自然，会加入简单复合句和追问。",
-  advanced: "高级：更像真实成年人聊天，词汇更丰富，表达更地道。"
+  beginner: "短句、常用词、简单语法",
+  intermediate: "自然日常表达、简单复合句",
+  advanced: "更地道、更像真实聊天"
+};
+const defaultPersona = {
+  name: "苏棠",
+  role: "中文系本科生，专门陪外国学习者练中文的对话伙伴",
+  personality: "讨喜可爱、温柔耐心、真诚好奇，有一点书卷气，会自然鼓励你继续说",
+  speakingStyle: "像真实中文系女生聊天一样接话，不翻译你的话，用自然口语回应含义",
+  scenario: "面向想学中文的外国人，进行轻松、可持续的中文口语陪练",
+  avatar: "/coach-avatar.png"
+};
+const greeting = {
+  chinese: "你好呀，我是苏棠。你可以用英语跟我说一句话，我会像朋友一样用中文接着聊。",
+  pinyin: "Ni hao ya, wo shi Su Tang. Ni keyi yong Yingwen gen wo shuo yi ju hua, wo hui xiang pengyou yiyang yong Zhongwen jiezhe liao.",
+  ipa: "[ni xaʊ ja | wɔ ʂɨ su tʰɑŋ | ni kʰɤ ji jʊŋ iŋ wən kən wɔ ʂwɔ i tɕy xwa | wɔ xweɪ ɕjɑŋ pʰəŋ joʊ i jɑŋ jʊŋ ʈʂʊŋ wən tɕjɛ ʈʂɤ ljɑʊ]",
+  explanation: "Hi, I'm Su Tang. Say something in English, and I will continue the conversation in Chinese like a friend.",
+  suggestion: "先随便说一句今天发生的事就可以。"
 };
 
 let isRecording = false;
@@ -22,13 +42,6 @@ let sourceNode = null;
 let processorNode = null;
 let micStream = null;
 let pcmChunks = [];
-const targetSampleRate = 16000;
-
-const setState = (text, busy = false) => {
-  stateText.textContent = text;
-  sendButton.disabled = busy;
-  recordButton.disabled = busy && !isRecording;
-};
 
 const settings = () => ({
   level: level.value,
@@ -38,16 +51,23 @@ const settings = () => ({
 });
 
 const appState = loadState();
+appState.persona = defaultPersona;
+saveState();
+
+function setBusy(busy = false) {
+  sendButton.disabled = busy;
+  recordButton.disabled = busy && !isRecording;
+}
 
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
     return {
-      persona: saved.persona || null,
+      persona: saved.persona || defaultPersona,
       turns: Array.isArray(saved.turns) ? saved.turns.slice(-40) : []
     };
   } catch {
-    return { persona: null, turns: [] };
+    return { persona: defaultPersona, turns: [] };
   }
 }
 
@@ -81,75 +101,29 @@ function scrollToBottom() {
   conversation.scrollTop = conversation.scrollHeight;
 }
 
-function setupLevelDescription() {
-  level.title = levelDescriptions[level.value] || levelDescriptions.beginner;
-  level.addEventListener("change", () => {
-    const description = levelDescriptions[level.value] || levelDescriptions.beginner;
-    level.title = description;
-    setState(description);
-  });
-}
-
-function addPersonaMessage(persona) {
-  if (!persona) return;
-  const article = document.createElement("article");
-  article.className = "message assistant persona-message";
-  article.innerHTML = `
-    <div class="avatar">中</div>
-    <div class="bubble persona-bubble">
-      <p class="label">陪练人设</p>
-      <p class="chinese">${escapeHtml(persona.name || "中文陪练")}</p>
-      <p class="explanation">${escapeHtml(persona.role || "")}</p>
-      <p class="suggestion">${escapeHtml(`${persona.personality || ""} ${persona.scenario || ""}`.trim())}</p>
-    </div>
-  `;
-  conversation.appendChild(article);
-  scrollToBottom();
-}
-
-async function ensurePersona() {
-  if (appState.persona) {
-    addPersonaMessage(appState.persona);
-    return;
+function avatarHtml(kind = "assistant") {
+  if (kind === "assistant") {
+    return `<img class="avatar avatar-img" src="${defaultPersona.avatar}" alt="${defaultPersona.name}" />`;
   }
-
-  try {
-    setState("正在生成陪练人设...", true);
-    const response = await fetch("/api/persona", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ settings: settings() })
-    });
-    appState.persona = await response.json();
-  } catch {
-    appState.persona = {
-      name: "小雨",
-      role: "耐心的中文对话伙伴",
-      personality: "温和、好奇、会自然追问",
-      speakingStyle: levelDescriptions[level.value],
-      scenario: "日常闲聊"
-    };
-  }
-
-  saveState();
-  addPersonaMessage(appState.persona);
-  setState("准备好了。点击麦克风录音，或输入英文后发送。");
+  return `<div class="avatar">英</div>`;
 }
 
 function renderAssistantMessage(article, payload) {
-  const pinyinHtml = showPinyin.checked && payload.pinyin ? `<p class="pinyin">${escapeHtml(payload.pinyin)}</p>` : "";
+  const pinyinBlock = showPinyin.checked
+    ? `<p class="pinyin">${escapeHtml(payload.pinyin || "")}</p><p class="ipa">${escapeHtml(payload.ipa || "")}</p>`
+    : "";
   const explanationHtml = showExplanation.checked && payload.explanation ? `<p class="explanation">${escapeHtml(payload.explanation)}</p>` : "";
   const suggestionHtml = payload.suggestion ? `<p class="suggestion">${escapeHtml(payload.suggestion)}</p>` : "";
 
   article.innerHTML = `
-    <div class="avatar">中</div>
+    ${avatarHtml("assistant")}
     <div class="bubble">
       <div class="reply-head">
-        <p class="label">中文回复</p>
+        <p class="label">${escapeHtml(defaultPersona.name)} 回复</p>
         <button class="play-button" type="button" aria-label="播放中文">播放</button>
       </div>
       <p class="chinese">${escapeHtml(payload.chinese)}</p>
-      ${pinyinHtml}
+      ${pinyinBlock}
       ${explanationHtml}
       ${suggestionHtml}
     </div>
@@ -163,7 +137,7 @@ function addMessage(kind, payload) {
 
   if (kind === "user") {
     article.innerHTML = `
-      <div class="avatar">英</div>
+      ${avatarHtml("user")}
       <div class="bubble">
         <p class="label">你说</p>
         <p>${escapeHtml(payload.text)}</p>
@@ -182,7 +156,7 @@ function addTypingMessage() {
   const article = document.createElement("article");
   article.className = "message assistant typing";
   article.innerHTML = `
-    <div class="avatar">中</div>
+    ${avatarHtml("assistant")}
     <div class="bubble typing-bubble" aria-label="正在生成">
       <span class="typing-dot"></span>
       <span class="typing-dot"></span>
@@ -214,6 +188,30 @@ function addError(error) {
   scrollToBottom();
 }
 
+function addGreeting() {
+  if (appState.turns.length === 0) {
+    addMessage("assistant", greeting);
+    rememberTurn({ role: "assistant", ...greeting });
+  } else {
+    addMessage("assistant", {
+      chinese: "我回来啦。我们接着刚才的话题聊吧。",
+      pinyin: "Wo huilai la. Women jiezhe gangcai de huati liao ba.",
+      ipa: "[wɔ xweɪ laɪ la | wɔ mən tɕjɛ ʈʂɤ kɑŋ tsʰaɪ tɤ xwa tʰi ljɑʊ pa]",
+      explanation: "I'm back. Let's continue from where we left off.",
+      suggestion: "你可以直接说下一句英文，我会接着聊。"
+    });
+  }
+}
+
+function updateLevelText() {
+  for (const option of level.options) {
+    option.textContent = simpleLevelLabels[option.value];
+  }
+  const selected = level.options[level.selectedIndex];
+  selected.textContent = `${simpleLevelLabels[level.value]}：${levelDescriptions[level.value]}`;
+  level.title = selected.textContent;
+}
+
 async function requestPractice(text) {
   const cleanText = text.trim();
   if (!cleanText) return;
@@ -221,7 +219,7 @@ async function requestPractice(text) {
   addMessage("user", { text: cleanText });
   const typingMessage = addTypingMessage();
   textInput.value = "";
-  setState("正在生成中文回复...", true);
+  setBusy(true);
 
   try {
     const response = await fetch("/api/practice", {
@@ -233,19 +231,19 @@ async function requestPractice(text) {
     if (!response.ok) throw new Error(data.error || "生成失败");
     replaceTypingMessage(typingMessage, data);
     rememberTurn({ role: "user", text: cleanText });
-    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, explanation: data.explanation });
-    setState("回复已生成，正在自动播放...", true);
+    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, ipa: data.ipa, explanation: data.explanation });
     await playChinese(data.chinese);
   } catch (error) {
     typingMessage.remove();
     addError(error.message || "网络失败，请重试。");
-    setState("失败了，请重试。");
+  } finally {
+    setBusy(false);
   }
 }
 
 async function playChinese(text) {
   if (!text) return;
-  setState("正在准备中文发音...", true);
+  setBusy(true);
   try {
     const response = await fetch("/api/tts", {
       method: "POST",
@@ -265,16 +263,15 @@ async function playChinese(text) {
     const blob = await response.blob();
     const audio = new Audio(URL.createObjectURL(blob));
     audio.playbackRate = settings().speed;
-    audio.addEventListener("ended", () => setState("播放完成，可以继续说下一句。"), { once: true });
+    audio.addEventListener("ended", () => setBusy(false), { once: true });
     await audio.play();
-    setState("正在播放中文。", true);
   } catch (error) {
     if ("speechSynthesis" in window) {
       speakWithBrowser(text);
       return;
     }
     addError(error.message || "播放失败");
-    setState("播放失败。");
+    setBusy(false);
   }
 }
 
@@ -282,9 +279,8 @@ function speakWithBrowser(text) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "zh-CN";
   utterance.rate = settings().speed;
-  utterance.addEventListener("end", () => setState("播放完成，可以继续说下一句。"));
+  utterance.addEventListener("end", () => setBusy(false));
   window.speechSynthesis.speak(utterance);
-  setState("正在使用浏览器朗读。", true);
 }
 
 async function startRecording() {
@@ -308,10 +304,8 @@ async function startRecording() {
     processorNode.connect(audioContext.destination);
     isRecording = true;
     recordButton.classList.add("recording");
-    setState("正在录音。再点一次停止。");
   } catch {
     addError("无法使用麦克风。请允许麦克风权限后重试。");
-    setState("麦克风权限被拒绝。");
   }
 }
 
@@ -327,7 +321,6 @@ function stopRecording() {
   micStream = null;
   audioContext = null;
   recordButton.classList.remove("recording");
-  setState("正在上传并识别语音...", true);
   uploadRecording();
 }
 
@@ -347,6 +340,7 @@ function floatTo16KhzPcm(input, sourceSampleRate) {
 
 async function uploadRecording() {
   try {
+    setBusy(true);
     const blob = new Blob(pcmChunks, { type: "application/octet-stream" });
     const formData = new FormData();
     formData.append("audio", blob, "speech.pcm");
@@ -354,11 +348,10 @@ async function uploadRecording() {
     const response = await fetch("/api/transcribe", { method: "POST", body: formData });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "识别失败");
-    setState("语音识别完成，正在生成回复...", true);
     await requestPractice(data.transcript);
   } catch (error) {
     addError(error.message || "语音识别失败。");
-    setState("语音识别失败，请重试。");
+    setBusy(false);
   }
 }
 
@@ -373,15 +366,7 @@ recordButton.addEventListener("click", () => {
   if (isRecording) stopRecording();
   else startRecording();
 });
-
-for (const control of [showPinyin, showExplanation]) {
-  control.addEventListener("change", () => {
-    setState("显示设置已更新。新回复会按当前设置展示。");
-  });
-}
-
-setupLevelDescription();
-ensurePersona();
+level.addEventListener("change", updateLevelText);
 
 fetch("/api/health")
   .then((response) => response.json())
@@ -393,3 +378,6 @@ fetch("/api/health")
     aiStatus.textContent = "离线";
     aiStatus.classList.add("mock");
   });
+
+updateLevelText();
+addGreeting();
