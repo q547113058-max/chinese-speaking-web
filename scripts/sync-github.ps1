@@ -23,11 +23,19 @@ function Convert-ToRepoPath([string]$Path) {
 
 function Get-RemoteSha([string]$RepoPath) {
   $encodedPath = ($RepoPath -split "/" | ForEach-Object { [System.Uri]::EscapeDataString($_) }) -join "/"
-  try {
-    $json = gh api "repos/$Owner/$Repo/contents/$encodedPath" -F ref=$Branch | ConvertFrom-Json
-    return $json.sha
-  } catch {
+  $output = gh api "repos/$Owner/$Repo/contents/$encodedPath`?ref=$Branch" 2>$null
+  if ($LASTEXITCODE -ne 0) {
     return $null
+  }
+
+  $json = $output | ConvertFrom-Json
+  return $json.sha
+}
+
+function Invoke-GitHubPut([string]$RepoPath, [string]$Json) {
+  $Json | gh api -X PUT "repos/$Owner/$Repo/contents/$RepoPath" --input - | Out-Null
+  if ($LASTEXITCODE -ne 0) {
+    throw "Failed to sync $RepoPath"
   }
 }
 
@@ -35,7 +43,8 @@ $files = Get-ChildItem -LiteralPath $root -Recurse -File -Force | Where-Object {
   $relative = $_.FullName.Substring($rootPath.Length).TrimStart([System.IO.Path]::DirectorySeparatorChar, [System.IO.Path]::AltDirectorySeparatorChar)
   $parts = $relative -split "[\\/]"
   -not ($parts | Where-Object { $skipDirs -contains $_ }) -and
-  -not ($skipFiles -contains $_.Name)
+  -not ($skipFiles -contains $_.Name) -and
+  $_.Extension -ne ".log"
 }
 
 foreach ($file in $files) {
@@ -53,6 +62,6 @@ foreach ($file in $files) {
   }
 
   $json = $body | ConvertTo-Json -Compress
-  $json | gh api -X PUT "repos/$Owner/$Repo/contents/$repoPath" --input - | Out-Null
+  Invoke-GitHubPut $repoPath $json
   Write-Output "synced $repoPath"
 }
