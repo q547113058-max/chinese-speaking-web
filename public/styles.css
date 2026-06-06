@@ -60,6 +60,22 @@ input {
   border-bottom: 1px solid var(--line);
 }
 
+.coach-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.coach-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #c5ddd4;
+  background: var(--soft);
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: var(--muted);
@@ -172,6 +188,12 @@ h1 {
   font-size: 14px;
 }
 
+.avatar-img {
+  object-fit: cover;
+  border: 1px solid #c5ddd4;
+  background: var(--soft);
+}
+
 .avatar.error {
   background: var(--accent);
 }
@@ -256,6 +278,12 @@ h1 {
 
 .pinyin {
   color: var(--primary-dark);
+}
+
+.ipa {
+  color: #3e5960;
+  font-family: "Segoe UI", "Arial Unicode MS", sans-serif;
+  font-size: 14px;
 }
 
 .explanation,
@@ -403,13 +431,6 @@ button:focus-visible {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-.hint {
-  min-height: 20px;
-  margin: 10px 0 0;
-  color: var(--muted);
-  font-size: 13px;
 }
 
 .error-bubble {
