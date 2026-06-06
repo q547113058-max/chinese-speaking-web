@@ -94,3 +94,15 @@ powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说
 - GitHub 管理流程或发布方式变化：更新本文档的 GitHub 管理和维护约定。
 
 每次完成一组代码或文档修改后，都要提交并推送到 GitHub。
+## MiniMax Speech 2.8 TTS
+
+Server-side TTS now supports MiniMax Speech 2.8 over the MiniMax T2A API:
+
+```env
+TTS_PROVIDER=minimax
+TTS_BASE_URL=https://api.minimaxi.com/v1
+TTS_MODEL=speech-2.8-hd
+TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice
+```
+
+`TTS_API_KEY` is optional. When it is not set, the server reuses `CHAT_API_KEY`, so the same MiniMax key can drive both MiniMax-M3 chat and MiniMax Speech 2.8 TTS. Speech recognition is still not MiniMax-backed because MiniMax Speech 2.8 is a text-to-speech model, not a speech-to-text model.
