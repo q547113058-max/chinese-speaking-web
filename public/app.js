@@ -4,8 +4,6 @@ const sendButton = document.querySelector("#sendButton");
 const recordButton = document.querySelector("#recordButton");
 const aiStatus = document.querySelector("#aiStatus");
 const level = document.querySelector("#level");
-const levelControl = document.querySelector(".level-control");
-const difficultyPanel = document.querySelector("#difficultyPanel");
 const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
@@ -192,12 +190,6 @@ function renderStoredConversation() {
     if (turn.role === "user") addMessage("user", { text: turn.text || "" });
     if (turn.role === "assistant") addMessage("assistant", turn);
   }
-}
-
-function updateDifficultyPanel() {
-  difficultyPanel.querySelectorAll("[data-level]").forEach((item) => {
-    item.classList.toggle("active", item.dataset.level === level.value);
-  });
 }
 
 async function requestPractice(text) {
@@ -387,13 +379,6 @@ recordButton.addEventListener("click", () => {
   if (isRecording) stopRecording();
   else startRecording();
 });
-level.addEventListener("change", updateDifficultyPanel);
-level.addEventListener("focus", () => levelControl.classList.add("expanded"));
-level.addEventListener("click", () => levelControl.classList.add("expanded"));
-document.addEventListener("click", (event) => {
-  if (!event.target.closest(".level-control")) levelControl.classList.remove("expanded");
-});
-
 fetch("/api/health")
   .then((response) => response.json())
   .then((data) => {
@@ -405,5 +390,4 @@ fetch("/api/health")
     aiStatus.classList.add("mock");
   });
 
-updateDifficultyPanel();
 renderStoredConversation();
