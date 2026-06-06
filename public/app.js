@@ -12,6 +12,12 @@ const showExplanation = document.querySelector("#showExplanation");
 let mediaRecorder = null;
 let chunks = [];
 let isRecording = false;
+let audioContext = null;
+let sourceNode = null;
+let processorNode = null;
+let micStream = null;
+let pcmChunks = [];
+const targetSampleRate = 16000;
 
 const setState = (text, busy = false) => {
   stateText.textContent = text;
@@ -153,7 +159,7 @@ async function playChinese(text) {
   }
 }
 
-async function startRecording() {
+async function startRecordingMediaRecorderLegacy() {
   if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
     addError("当前浏览器不支持录音。请换用新版 Chrome、Edge 或 Safari。");
     return;
@@ -180,7 +186,7 @@ async function startRecording() {
   }
 }
 
-function stopRecording() {
+function stopRecordingMediaRecorderLegacy() {
   if (!mediaRecorder || mediaRecorder.state === "inactive") return;
   mediaRecorder.stop();
   isRecording = false;
@@ -188,7 +194,7 @@ function stopRecording() {
   setState("正在上传和识别语音...", true);
 }
 
-async function uploadRecording() {
+async function uploadRecordingMediaRecorderLegacy() {
   try {
     const blob = new Blob(chunks, { type: mediaRecorder?.mimeType || "audio/webm" });
     const formData = new FormData();
@@ -202,6 +208,80 @@ async function uploadRecording() {
   } catch (error) {
     addError(error.message || "语音识别失败。");
     setState("语音识别失败，请重试。");
+  }
+}
+
+async function startRecording() {
+  if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext) {
+    addError("Recording is not supported by this browser.");
+    return;
+  }
+
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new AudioContext();
+    sourceNode = audioContext.createMediaStreamSource(micStream);
+    processorNode = audioContext.createScriptProcessor(4096, 1, 1);
+    pcmChunks = [];
+    processorNode.onaudioprocess = (event) => {
+      if (!isRecording) return;
+      pcmChunks.push(floatTo16KhzPcm(event.inputBuffer.getChannelData(0), audioContext.sampleRate));
+    };
+    sourceNode.connect(processorNode);
+    processorNode.connect(audioContext.destination);
+    isRecording = true;
+    recordButton.classList.add("recording");
+    setState("Recording. Click again to stop.");
+  } catch {
+    addError("Cannot access the microphone. Allow microphone permission and try again.");
+    setState("Microphone permission denied.");
+  }
+}
+
+function stopRecording() {
+  if (!isRecording) return;
+  isRecording = false;
+  processorNode?.disconnect();
+  sourceNode?.disconnect();
+  micStream?.getTracks().forEach((track) => track.stop());
+  audioContext?.close();
+  processorNode = null;
+  sourceNode = null;
+  micStream = null;
+  audioContext = null;
+  recordButton.classList.remove("recording");
+  setState("Uploading and transcribing audio...", true);
+  uploadRecording();
+}
+
+function floatTo16KhzPcm(input, sourceSampleRate) {
+  const ratio = sourceSampleRate / targetSampleRate;
+  const length = Math.floor(input.length / ratio);
+  const output = new Int16Array(length);
+
+  for (let i = 0; i < length; i += 1) {
+    const sourceIndex = Math.floor(i * ratio);
+    const sample = Math.max(-1, Math.min(1, input[sourceIndex]));
+    output[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
+  }
+
+  return output;
+}
+
+async function uploadRecording() {
+  try {
+    const blob = new Blob(pcmChunks, { type: "application/octet-stream" });
+    const formData = new FormData();
+    formData.append("audio", blob, "speech.pcm");
+
+    const response = await fetch("/api/transcribe", { method: "POST", body: formData });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Transcription failed");
+    setState("Transcription complete. Generating reply...", true);
+    await requestPractice(data.transcript);
+  } catch (error) {
+    addError(error.message || "Transcription failed.");
+    setState("Transcription failed. Try again.");
   }
 }
 
