@@ -106,3 +106,18 @@ TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice
 ```
 
 `TTS_API_KEY` is optional. When it is not set, the server reuses `CHAT_API_KEY`, so the same MiniMax key can drive both MiniMax-M3 chat and MiniMax Speech 2.8 TTS. Speech recognition is still not MiniMax-backed because MiniMax Speech 2.8 is a text-to-speech model, not a speech-to-text model.
+## Qwen Realtime STT
+
+Speech recognition can use Alibaba Cloud Model Studio / DashScope realtime WebSocket:
+
+```env
+STT_PROVIDER=qwen
+DASHSCOPE_API_KEY=your_dashscope_api_key
+STT_WS_URL=wss://dashscope.aliyuncs.com/api-ws/v1/realtime
+STT_MODEL=qwen3.5-livetranslate-flash-realtime-2026-05-19
+STT_TRANSCRIPTION_MODEL=qwen3-asr-flash-realtime
+STT_SOURCE_LANGUAGE=en
+STT_TARGET_LANGUAGE=zh
+```
+
+The browser records 16 kHz mono PCM and uploads it to `/api/transcribe`. The server streams that PCM to Qwen realtime and returns the source-language transcript.
