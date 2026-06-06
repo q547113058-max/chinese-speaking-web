@@ -33,6 +33,13 @@ const ttsApiKey = process.env.TTS_API_KEY || process.env.CHAT_API_KEY || process
 const minimaxTtsBaseUrl = (process.env.TTS_BASE_URL || "https://api.minimaxi.com/v1").replace(/\/+$/, "");
 const minimaxTtsModel = process.env.TTS_MODEL || "speech-2.8-hd";
 const minimaxTtsVoice = process.env.TTS_VOICE || "Chinese (Mandarin)_Lyrical_Voice";
+const sttProvider = (process.env.STT_PROVIDER || (process.env.DASHSCOPE_API_KEY ? "qwen" : "openai")).toLowerCase();
+const qwenSttApiKey = process.env.DASHSCOPE_API_KEY || process.env.QWEN_API_KEY;
+const qwenSttBaseUrl = process.env.STT_WS_URL || "wss://dashscope.aliyuncs.com/api-ws/v1/realtime";
+const qwenSttModel = process.env.STT_MODEL || "qwen3.5-livetranslate-flash-realtime-2026-05-19";
+const qwenAsrModel = process.env.STT_TRANSCRIPTION_MODEL || "qwen3-asr-flash-realtime";
+const sttSourceLanguage = process.env.STT_SOURCE_LANGUAGE || "en";
+const sttTargetLanguage = process.env.STT_TARGET_LANGUAGE || "zh";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -178,13 +185,18 @@ async function generatePracticeReply(text, settings) {
 
 async function transcribeAudio(req) {
   const body = await readRequestBody(req);
-  if (!process.env.OPENAI_API_KEY) {
-    return { transcript: "I want to order coffee." };
-  }
-
   const parts = parseMultipart(body, req.headers["content-type"] || "");
   const file = parts.find((part) => part.name === "audio");
   if (!file) throw new Error("No audio file received.");
+
+  if (sttProvider === "qwen") {
+    if (!qwenSttApiKey) return { transcript: "I want to order coffee." };
+    return { transcript: await transcribeQwenAudio(file.data) };
+  }
+
+  if (!process.env.OPENAI_API_KEY) {
+    return { transcript: "I want to order coffee." };
+  }
 
   const formData = new FormData();
   formData.append("model", process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe");
@@ -203,6 +215,127 @@ async function transcribeAudio(req) {
 
   const data = await response.json();
   return { transcript: data.text || "" };
+}
+
+function sendWsJson(ws, payload) {
+  ws.send(JSON.stringify({
+    event_id: `event_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+    ...payload
+  }));
+}
+
+function readTranscriptFromEvent(event) {
+  return event.transcript || event.text || event.delta || event.content || event.item?.transcript || event.item?.content?.[0]?.transcript || "";
+}
+
+function transcribeQwenAudio(audioBuffer) {
+  return new Promise((resolve, reject) => {
+    const url = `${qwenSttBaseUrl}?model=${encodeURIComponent(qwenSttModel)}`;
+    const ws = new WebSocket(url, {
+      headers: {
+        Authorization: `Bearer ${qwenSttApiKey}`
+      }
+    });
+    let finalTranscript = "";
+    let streamingTranscript = "";
+    let settled = false;
+    const timeout = setTimeout(() => finish(new Error("Qwen STT timed out.")), 30000);
+
+    function finish(error, transcript = "") {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      try {
+        ws.close();
+      } catch {
+        // Ignore close errors after a completed request.
+      }
+      if (error) reject(error);
+      else resolve(transcript.trim());
+    }
+
+    async function sendAudio() {
+      sendWsJson(ws, {
+        type: "session.update",
+        session: {
+          modalities: ["text"],
+          input_audio_format: "pcm16",
+          sample_rate: 16000,
+          input_audio_transcription: {
+            model: qwenAsrModel,
+            language: sttSourceLanguage
+          },
+          translation: {
+            language: sttTargetLanguage
+          },
+          turn_detection: null
+        }
+      });
+
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 250));
+
+      for (let offset = 0; offset < audioBuffer.length; offset += 3200) {
+        const chunk = audioBuffer.subarray(offset, Math.min(offset + 3200, audioBuffer.length));
+        sendWsJson(ws, {
+          type: "input_audio_buffer.append",
+          audio: chunk.toString("base64")
+        });
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, 10));
+      }
+
+      sendWsJson(ws, { type: "session.finish" });
+    }
+
+    ws.addEventListener("open", () => {
+      sendAudio().catch((error) => finish(error));
+    });
+
+    ws.addEventListener("message", (message) => {
+      let event;
+      try {
+        event = JSON.parse(String(message.data));
+      } catch {
+        return;
+      }
+
+      if (event.type === "error") {
+        finish(new Error(event.error?.message || event.message || "Qwen STT failed."));
+        return;
+      }
+
+      if (event.type === "conversation.item.input_audio_transcription.text") {
+        streamingTranscript += readTranscriptFromEvent(event);
+      }
+
+      if (event.type === "conversation.item.input_audio_transcription.completed") {
+        finalTranscript = readTranscriptFromEvent(event) || streamingTranscript;
+      }
+
+      if (event.type === "response.text.done" && !finalTranscript) {
+        finalTranscript = readTranscriptFromEvent(event);
+      }
+
+      if (event.type === "response.done" && (finalTranscript || streamingTranscript)) {
+        finish(null, finalTranscript || streamingTranscript);
+      }
+
+      if (event.type === "session.finished") {
+        finish(null, finalTranscript || streamingTranscript);
+      }
+    });
+
+    ws.addEventListener("error", () => {
+      finish(new Error("Qwen STT WebSocket connection failed."));
+    });
+
+    ws.addEventListener("close", () => {
+      if (!settled && (finalTranscript || streamingTranscript)) {
+        finish(null, finalTranscript || streamingTranscript);
+      } else if (!settled) {
+        finish(new Error("Qwen STT closed before returning a transcript."));
+      }
+    });
+  });
 }
 
 function normalizeSpeechSpeed(speed) {
