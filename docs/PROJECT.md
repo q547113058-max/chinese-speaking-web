@@ -92,3 +92,18 @@ TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice
 ```
 
 The server reuses `CHAT_API_KEY` for TTS unless `TTS_API_KEY` is set. Speech recognition remains OpenAI/mock because MiniMax Speech 2.8 is TTS, not STT.
+## Qwen Realtime STT
+
+Speech recognition uses DashScope realtime WebSocket when `STT_PROVIDER=qwen`.
+
+```env
+STT_PROVIDER=qwen
+DASHSCOPE_API_KEY=your_dashscope_api_key
+STT_WS_URL=wss://dashscope.aliyuncs.com/api-ws/v1/realtime
+STT_MODEL=qwen3.5-livetranslate-flash-realtime-2026-05-19
+STT_TRANSCRIPTION_MODEL=qwen3-asr-flash-realtime
+STT_SOURCE_LANGUAGE=en
+STT_TARGET_LANGUAGE=zh
+```
+
+The frontend records 16 kHz mono PCM for compatibility with Qwen realtime audio input. The real DashScope key is stored only in `.env`, GitHub Secrets, or deployment environment variables.
