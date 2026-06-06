@@ -153,7 +153,78 @@ function levelGuide(level = "beginner") {
   return "Beginner: use very simple spoken Mandarin, short sentences, high-frequency words, and avoid idioms or complex grammar.";
 }
 
-async function generatePracticeReply(text, settings) {
+function fallbackPersona(settings = {}) {
+  const level = settings.level || "beginner";
+  return {
+    name: level === "advanced" ? "林安" : level === "intermediate" ? "小周" : "小雨",
+    role: "A patient Mandarin conversation partner",
+    personality: "Warm, curious, and concise",
+    speakingStyle: levelGuide(level),
+    scenario: "Everyday casual conversation"
+  };
+}
+
+async function generatePersona(settings = {}) {
+  if (!chatApiKey) return fallbackPersona(settings);
+
+  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${chatApiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: chatModel,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Create one suitable persona for a Mandarin speaking practice partner. The learner speaks English and wants conversational Chinese practice. Return strict JSON with keys: name, role, personality, speakingStyle, scenario. Keep values concise."
+        },
+        {
+          role: "user",
+          content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)}`
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) return fallbackPersona(settings);
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content || "";
+  try {
+    const parsed = extractJson(content);
+    return {
+      name: parsed.name || "小雨",
+      role: parsed.role || "A Mandarin conversation partner",
+      personality: parsed.personality || "Warm and patient",
+      speakingStyle: parsed.speakingStyle || levelGuide(settings.level),
+      scenario: parsed.scenario || "Everyday conversation"
+    };
+  } catch {
+    return fallbackPersona(settings);
+  }
+}
+
+function summarizeContext(context = {}) {
+  const persona = context.persona;
+  const personaText = persona
+    ? `Persona: name=${persona.name}; role=${persona.role}; personality=${persona.personality}; speakingStyle=${persona.speakingStyle}; scenario=${persona.scenario}.`
+    : "Persona: friendly Mandarin conversation partner.";
+  const turns = Array.isArray(context.turns) ? context.turns.slice(-8) : [];
+  const history = turns
+    .map((turn) => {
+      if (turn.role === "assistant") return `Assistant Chinese: ${turn.chinese || turn.text || ""}`;
+      return `Learner English: ${turn.text || ""}`;
+    })
+    .filter(Boolean)
+    .join("\n");
+
+  return `${personaText}\nRecent conversation:\n${history || "(none yet)"}`;
+}
+
+async function generatePracticeReply(text, settings, context = {}) {
   if (!chatApiKey) return fallbackLesson(text, settings);
 
   const response = await fetch(`${chatBaseUrl}/chat/completions`, {
@@ -172,7 +243,9 @@ async function generatePracticeReply(text, settings) {
         },
         {
           role: "user",
-          content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)} Learner said: ${text}`
+          content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)}
+${summarizeContext(context)}
+Learner just said: ${text}`
         }
       ]
     })
@@ -455,7 +528,13 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === "POST" && req.url?.startsWith("/api/practice")) {
       const body = JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
-      sendJson(res, 200, await generatePracticeReply(body.text || "", body.settings || {}));
+      sendJson(res, 200, await generatePracticeReply(body.text || "", body.settings || {}, body.context || {}));
+      return;
+    }
+
+    if (req.method === "POST" && req.url?.startsWith("/api/persona")) {
+      const body = JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
+      sendJson(res, 200, await generatePersona(body.settings || {}));
       return;
     }
 
