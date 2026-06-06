@@ -121,3 +121,12 @@ STT_TARGET_LANGUAGE=zh
 ```
 
 The browser records 16 kHz mono PCM and uploads it to `/api/transcribe`. The server streams that PCM to Qwen realtime and returns the source-language transcript.
+## Local persona and context
+
+The app does not require accounts. It stores practice state in the browser:
+
+```text
+localStorage["chinese-speaking-coach-state"]
+```
+
+The stored JSON contains the generated coach persona and recent conversation turns. Each practice request sends only the latest turns to the server so the model can answer with context while keeping storage simple and local to the browser.
