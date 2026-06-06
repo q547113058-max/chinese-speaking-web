@@ -9,6 +9,13 @@ const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
 
+const storageKey = "chinese-speaking-coach-state";
+const levelDescriptions = {
+  beginner: "初级：短句、常用词、简单语法，适合刚开始开口。",
+  intermediate: "中级：日常表达更自然，会加入简单复合句和追问。",
+  advanced: "高级：更像真实成年人聊天，词汇更丰富，表达更地道。"
+};
+
 let isRecording = false;
 let audioContext = null;
 let sourceNode = null;
@@ -30,6 +37,40 @@ const settings = () => ({
   showExplanation: showExplanation.checked
 });
 
+const appState = loadState();
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    return {
+      persona: saved.persona || null,
+      turns: Array.isArray(saved.turns) ? saved.turns.slice(-40) : []
+    };
+  } catch {
+    return { persona: null, turns: [] };
+  }
+}
+
+function saveState() {
+  localStorage.setItem(storageKey, JSON.stringify({
+    persona: appState.persona,
+    turns: appState.turns.slice(-40)
+  }));
+}
+
+function rememberTurn(turn) {
+  appState.turns.push({ ...turn, at: new Date().toISOString() });
+  appState.turns = appState.turns.slice(-40);
+  saveState();
+}
+
+function recentContext() {
+  return {
+    persona: appState.persona,
+    turns: appState.turns.slice(-8)
+  };
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
@@ -38,6 +79,65 @@ function escapeHtml(value) {
 
 function scrollToBottom() {
   conversation.scrollTop = conversation.scrollHeight;
+}
+
+function setupLevelDescription() {
+  const description = document.createElement("p");
+  description.className = "level-description";
+  level.insertAdjacentElement("afterend", description);
+
+  const update = () => {
+    description.textContent = levelDescriptions[level.value] || levelDescriptions.beginner;
+  };
+
+  level.addEventListener("change", update);
+  update();
+}
+
+function addPersonaMessage(persona) {
+  if (!persona) return;
+  const article = document.createElement("article");
+  article.className = "message assistant persona-message";
+  article.innerHTML = `
+    <div class="avatar">中</div>
+    <div class="bubble persona-bubble">
+      <p class="label">陪练人设</p>
+      <p class="chinese">${escapeHtml(persona.name || "中文陪练")}</p>
+      <p class="explanation">${escapeHtml(persona.role || "")}</p>
+      <p class="suggestion">${escapeHtml(`${persona.personality || ""} ${persona.scenario || ""}`.trim())}</p>
+    </div>
+  `;
+  conversation.appendChild(article);
+  scrollToBottom();
+}
+
+async function ensurePersona() {
+  if (appState.persona) {
+    addPersonaMessage(appState.persona);
+    return;
+  }
+
+  try {
+    setState("正在生成陪练人设...", true);
+    const response = await fetch("/api/persona", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings: settings() })
+    });
+    appState.persona = await response.json();
+  } catch {
+    appState.persona = {
+      name: "小雨",
+      role: "耐心的中文对话伙伴",
+      personality: "温和、好奇、会自然追问",
+      speakingStyle: levelDescriptions[level.value],
+      scenario: "日常闲聊"
+    };
+  }
+
+  saveState();
+  addPersonaMessage(appState.persona);
+  setState("准备好了。点击麦克风录音，或输入英文后发送。");
 }
 
 function renderAssistantMessage(article, payload) {
@@ -131,11 +231,13 @@ async function requestPractice(text) {
     const response = await fetch("/api/practice", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: cleanText, settings: settings() })
+      body: JSON.stringify({ text: cleanText, settings: settings(), context: recentContext() })
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "生成失败");
     replaceTypingMessage(typingMessage, data);
+    rememberTurn({ role: "user", text: cleanText });
+    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, explanation: data.explanation });
     setState("回复已生成，正在自动播放...", true);
     await playChinese(data.chinese);
   } catch (error) {
@@ -281,6 +383,9 @@ for (const control of [showPinyin, showExplanation]) {
     setState("显示设置已更新。新回复会按当前设置展示。");
   });
 }
+
+setupLevelDescription();
+ensurePersona();
 
 fetch("/api/health")
   .then((response) => response.json())
