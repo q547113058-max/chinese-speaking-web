@@ -10,9 +10,12 @@
     <main class="shell">
       <section class="coach-panel" aria-label="中文口语陪练">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">Chinese Speaking Coach</p>
-            <h1>中文口语陪练</h1>
+          <div class="coach-title">
+            <img class="coach-photo" src="/coach-avatar.png" alt="苏棠头像" />
+            <div>
+              <p class="eyebrow">Chinese Speaking Coach</p>
+              <h1>苏棠 · 中文口语陪练</h1>
+            </div>
           </div>
           <div class="status-pill" id="aiStatus">检查中</div>
         </header>
@@ -32,7 +35,7 @@
           </label>
           <label class="toggle">
             <input id="showPinyin" type="checkbox" checked />
-            拼音
+            拼音 / 音标
           </label>
           <label class="toggle">
             <input id="showExplanation" type="checkbox" checked />
@@ -40,26 +43,16 @@
           </label>
         </section>
 
-        <section class="conversation" id="conversation" aria-live="polite">
-          <article class="message assistant">
-            <div class="avatar">中</div>
-            <div class="bubble">
-              <p class="chinese">你好！用英文说一句话，我会用中文陪你练习。</p>
-              <p class="pinyin">Ni hao! Yong Yingwen shuo yi ju hua, wo hui yong Zhongwen pei ni lianxi.</p>
-              <p class="explanation">Say something in English. I will answer in Chinese with pinyin and a short explanation.</p>
-            </div>
-          </article>
-        </section>
+        <section class="conversation" id="conversation" aria-live="polite"></section>
 
         <section class="composer" aria-label="输入区">
-          <textarea id="textInput" rows="2" placeholder="也可以直接输入英文，例如：I want to order coffee."></textarea>
+          <textarea id="textInput" rows="2" placeholder="用英语说一句话，或点击麦克风开始录音"></textarea>
           <div class="actions">
             <button class="icon-button secondary" id="recordButton" type="button" title="录音" aria-label="录音">
               <span class="mic-mark" aria-hidden="true"></span>
             </button>
             <button class="primary-button" id="sendButton" type="button">发送</button>
           </div>
-          <p class="hint" id="stateText">准备好了。点击麦克风录音，或输入英文后发送。</p>
         </section>
       </section>
     </main>
