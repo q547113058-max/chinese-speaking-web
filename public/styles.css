@@ -115,43 +115,6 @@ h1 {
   align-items: end;
 }
 
-.level-control {
-  position: relative;
-}
-
-.difficulty-panel {
-  position: absolute;
-  z-index: 4;
-  top: calc(100% + 8px);
-  left: 0;
-  width: min(360px, calc(100vw - 32px));
-  display: none;
-  gap: 6px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 14px 36px rgba(33, 48, 45, 0.14);
-}
-
-.level-control.expanded .difficulty-panel,
-.level-control:focus-within .difficulty-panel {
-  display: grid;
-}
-
-.difficulty-panel p {
-  margin: 0;
-  padding: 8px;
-  border-radius: 6px;
-  color: var(--muted);
-  line-height: 1.35;
-}
-
-.difficulty-panel p.active {
-  color: var(--primary-dark);
-  background: var(--soft);
-}
-
 .settings label {
   display: grid;
   gap: 6px;
