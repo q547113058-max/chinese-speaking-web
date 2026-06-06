@@ -118,14 +118,6 @@ h1 {
   padding: 0 10px;
 }
 
-.level-description {
-  margin: 0;
-  min-height: 34px;
-  color: var(--primary-dark);
-  font-size: 12px;
-  line-height: 1.35;
-}
-
 .toggle {
   grid-template-columns: auto auto;
   align-items: center;
