@@ -88,7 +88,7 @@ Server-side TTS uses MiniMax Speech 2.8 when `TTS_PROVIDER=minimax`.
 TTS_PROVIDER=minimax
 TTS_BASE_URL=https://api.minimaxi.com/v1
 TTS_MODEL=speech-2.8-hd
-TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice
+TTS_VOICE=Chinese (Mandarin)_Warm_Girl
 ```
 
 The server reuses `CHAT_API_KEY` for TTS unless `TTS_API_KEY` is set. Speech recognition remains OpenAI/mock because MiniMax Speech 2.8 is TTS, not STT.
