@@ -24,6 +24,8 @@ chinese-speaking-web/
   docs/
     PROJECT.md
     CHANGELOG.md
+  scripts/
+    sync-github.ps1
   public/
     index.html
     styles.css
@@ -65,4 +67,12 @@ chinese-speaking-web/
 3. 提交本地变更。
 4. 推送到 GitHub。
 
-当前本机环境说明：GitHub CLI 已安装并已登录，但 `git` 命令当前不在 PATH 中。若要使用标准 Git 工作流，需要安装 Git 或修复 PATH；在 Git 不可用时，可临时使用 GitHub API 上传文件。
+当前本机环境说明：GitHub CLI 已安装并已登录，但 `git` 命令当前不在 PATH 中。若要使用标准 Git 工作流，需要安装 Git 或修复 PATH。
+
+在 Git 不可用时，可以使用项目脚本同步到 GitHub：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说明本次修改"
+```
+
+脚本会跳过 `.env`、`.git/`、`node_modules/` 和 `.log` 文件，并通过 GitHub API 创建或更新远端文件。
