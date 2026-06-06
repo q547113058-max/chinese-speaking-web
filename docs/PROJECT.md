@@ -80,3 +80,15 @@ git push
 如遇国外下载或 GitHub 连接不稳定，先启动 `vpn-mihomo` 本地代理，再执行下载、安装或推送相关命令。当前代理地址为 `http://127.0.0.1:17890`。
 
 `scripts/sync-github.ps1` 是备用方案，只在 `git` 不可用时通过 GitHub API 同步文件。脚本会跳过 `.env`、`.git/`、`node_modules/` 和 `.log` 文件。
+## MiniMax Speech 2.8 TTS
+
+Server-side TTS uses MiniMax Speech 2.8 when `TTS_PROVIDER=minimax`.
+
+```env
+TTS_PROVIDER=minimax
+TTS_BASE_URL=https://api.minimaxi.com/v1
+TTS_MODEL=speech-2.8-hd
+TTS_VOICE=Chinese (Mandarin)_Lyrical_Voice
+```
+
+The server reuses `CHAT_API_KEY` for TTS unless `TTS_API_KEY` is set. Speech recognition remains OpenAI/mock because MiniMax Speech 2.8 is TTS, not STT.
