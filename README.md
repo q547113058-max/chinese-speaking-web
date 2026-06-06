@@ -55,6 +55,20 @@ npm start
 - [项目说明](./docs/PROJECT.md)
 - [变更日志](./docs/CHANGELOG.md)
 
+## GitHub 同步
+
+当前项目已配置为同步到私有仓库：
+
+```text
+https://github.com/q547113058-max/chinese-speaking-web
+```
+
+如果本机没有可用的 `git` 命令，可以使用 GitHub CLI 脚本同步：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\sync-github.ps1 -Message "说明本次修改"
+```
+
 ## 维护约定
 
 每次修改代码时，必须同步检查并更新相关文档：
