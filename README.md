@@ -138,6 +138,6 @@ Each reply includes:
 
 - Chinese reply
 - Pinyin
-- IPA pronunciation
+- Pinyin with tone marks
 - English explanation
 - Speaking suggestion
