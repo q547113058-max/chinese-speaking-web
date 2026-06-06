@@ -130,3 +130,14 @@ localStorage["chinese-speaking-coach-state"]
 ```
 
 The stored JSON contains the generated coach persona and recent conversation turns. Each practice request sends only the latest turns to the server so the model can answer with context while keeping storage simple and local to the browser.
+## Fixed coach persona
+
+The coach is initialized as `苏棠`: a likable, cute Chinese Literature undergraduate student who chats with foreign learners as a warm Mandarin conversation partner. The app uses `/coach-avatar.png` as her avatar, greets users as 苏棠 on entry, and sends this persona with conversation context on every practice request.
+
+Each reply includes:
+
+- Chinese reply
+- Pinyin
+- IPA pronunciation
+- English explanation
+- Speaking suggestion
