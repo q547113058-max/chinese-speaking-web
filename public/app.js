@@ -9,8 +9,6 @@ const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
 
-let mediaRecorder = null;
-let chunks = [];
 let isRecording = false;
 let audioContext = null;
 let sourceNode = null;
@@ -42,6 +40,27 @@ function scrollToBottom() {
   conversation.scrollTop = conversation.scrollHeight;
 }
 
+function renderAssistantMessage(article, payload) {
+  const pinyinHtml = showPinyin.checked && payload.pinyin ? `<p class="pinyin">${escapeHtml(payload.pinyin)}</p>` : "";
+  const explanationHtml = showExplanation.checked && payload.explanation ? `<p class="explanation">${escapeHtml(payload.explanation)}</p>` : "";
+  const suggestionHtml = payload.suggestion ? `<p class="suggestion">${escapeHtml(payload.suggestion)}</p>` : "";
+
+  article.innerHTML = `
+    <div class="avatar">中</div>
+    <div class="bubble">
+      <div class="reply-head">
+        <p class="label">中文回复</p>
+        <button class="play-button" type="button" aria-label="播放中文">播放</button>
+      </div>
+      <p class="chinese">${escapeHtml(payload.chinese)}</p>
+      ${pinyinHtml}
+      ${explanationHtml}
+      ${suggestionHtml}
+    </div>
+  `;
+  article.querySelector(".play-button").addEventListener("click", () => playChinese(payload.chinese));
+}
+
 function addMessage(kind, payload) {
   const article = document.createElement("article");
   article.className = `message ${kind}`;
@@ -55,26 +74,33 @@ function addMessage(kind, payload) {
       </div>
     `;
   } else {
-    const pinyinHtml = showPinyin.checked && payload.pinyin ? `<p class="pinyin">${escapeHtml(payload.pinyin)}</p>` : "";
-    const explanationHtml = showExplanation.checked && payload.explanation ? `<p class="explanation">${escapeHtml(payload.explanation)}</p>` : "";
-    const suggestionHtml = payload.suggestion ? `<p class="suggestion">${escapeHtml(payload.suggestion)}</p>` : "";
-    article.innerHTML = `
-      <div class="avatar">中</div>
-      <div class="bubble">
-        <div class="reply-head">
-          <p class="label">中文回复</p>
-          <button class="play-button" type="button" aria-label="播放中文">播放</button>
-        </div>
-        <p class="chinese">${escapeHtml(payload.chinese)}</p>
-        ${pinyinHtml}
-        ${explanationHtml}
-        ${suggestionHtml}
-      </div>
-    `;
-    article.querySelector(".play-button").addEventListener("click", () => playChinese(payload.chinese));
+    renderAssistantMessage(article, payload);
   }
 
   conversation.appendChild(article);
+  scrollToBottom();
+  return article;
+}
+
+function addTypingMessage() {
+  const article = document.createElement("article");
+  article.className = "message assistant typing";
+  article.innerHTML = `
+    <div class="avatar">中</div>
+    <div class="bubble typing-bubble" aria-label="正在生成">
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+      <span class="typing-dot"></span>
+    </div>
+  `;
+  conversation.appendChild(article);
+  scrollToBottom();
+  return article;
+}
+
+function replaceTypingMessage(article, payload) {
+  article.className = "message assistant";
+  renderAssistantMessage(article, payload);
   scrollToBottom();
 }
 
@@ -97,6 +123,7 @@ async function requestPractice(text) {
   if (!cleanText) return;
 
   addMessage("user", { text: cleanText });
+  const typingMessage = addTypingMessage();
   textInput.value = "";
   setState("正在生成中文回复...", true);
 
@@ -108,11 +135,13 @@ async function requestPractice(text) {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "生成失败");
-    addMessage("assistant", data);
-    setState("可以继续说下一句。");
+    replaceTypingMessage(typingMessage, data);
+    setState("回复已生成，正在自动播放...", true);
+    await playChinese(data.chinese);
   } catch (error) {
+    typingMessage.remove();
     addError(error.message || "网络失败，请重试。");
-    setState("失败了。请重试。");
+    setState("失败了，请重试。");
   }
 }
 
@@ -129,11 +158,7 @@ async function playChinese(text) {
     if (response.headers.get("content-type")?.includes("application/json")) {
       const data = await response.json();
       if (data.fallback) {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "zh-CN";
-        utterance.rate = settings().speed;
-        window.speechSynthesis.speak(utterance);
-        setState("正在使用浏览器朗读。");
+        speakWithBrowser(text);
         return;
       }
     }
@@ -142,16 +167,12 @@ async function playChinese(text) {
     const blob = await response.blob();
     const audio = new Audio(URL.createObjectURL(blob));
     audio.playbackRate = settings().speed;
-    audio.play();
-    audio.addEventListener("ended", () => setState("播放完成。"), { once: true });
-    setState("正在播放中文。");
+    audio.addEventListener("ended", () => setState("播放完成，可以继续说下一句。"), { once: true });
+    await audio.play();
+    setState("正在播放中文。", true);
   } catch (error) {
     if ("speechSynthesis" in window) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "zh-CN";
-      utterance.rate = settings().speed;
-      window.speechSynthesis.speak(utterance);
-      setState("正在使用浏览器朗读。");
+      speakWithBrowser(text);
       return;
     }
     addError(error.message || "播放失败");
@@ -159,67 +180,25 @@ async function playChinese(text) {
   }
 }
 
-async function startRecordingMediaRecorderLegacy() {
-  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
-    addError("当前浏览器不支持录音。请换用新版 Chrome、Edge 或 Safari。");
-    return;
-  }
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    chunks = [];
-    mediaRecorder = new MediaRecorder(stream);
-    mediaRecorder.addEventListener("dataavailable", (event) => {
-      if (event.data.size > 0) chunks.push(event.data);
-    });
-    mediaRecorder.addEventListener("stop", () => {
-      stream.getTracks().forEach((track) => track.stop());
-      uploadRecording();
-    });
-    mediaRecorder.start();
-    isRecording = true;
-    recordButton.classList.add("recording");
-    setState("正在录音。再点一次停止。");
-  } catch {
-    addError("无法使用麦克风。请允许浏览器麦克风权限后重试。");
-    setState("麦克风权限被拒绝。");
-  }
-}
-
-function stopRecordingMediaRecorderLegacy() {
-  if (!mediaRecorder || mediaRecorder.state === "inactive") return;
-  mediaRecorder.stop();
-  isRecording = false;
-  recordButton.classList.remove("recording");
-  setState("正在上传和识别语音...", true);
-}
-
-async function uploadRecordingMediaRecorderLegacy() {
-  try {
-    const blob = new Blob(chunks, { type: mediaRecorder?.mimeType || "audio/webm" });
-    const formData = new FormData();
-    formData.append("audio", blob, "speech.webm");
-
-    const response = await fetch("/api/transcribe", { method: "POST", body: formData });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "识别失败");
-    setState("语音识别完成，正在生成回复...", true);
-    await requestPractice(data.transcript);
-  } catch (error) {
-    addError(error.message || "语音识别失败。");
-    setState("语音识别失败，请重试。");
-  }
+function speakWithBrowser(text) {
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "zh-CN";
+  utterance.rate = settings().speed;
+  utterance.addEventListener("end", () => setState("播放完成，可以继续说下一句。"));
+  window.speechSynthesis.speak(utterance);
+  setState("正在使用浏览器朗读。", true);
 }
 
 async function startRecording() {
-  if (!navigator.mediaDevices?.getUserMedia || !window.AudioContext) {
-    addError("Recording is not supported by this browser.");
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) {
+    addError("当前浏览器不支持录音。请使用新版 Chrome、Edge 或 Safari。");
     return;
   }
 
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new AudioContext();
+    audioContext = new AudioContextClass();
     sourceNode = audioContext.createMediaStreamSource(micStream);
     processorNode = audioContext.createScriptProcessor(4096, 1, 1);
     pcmChunks = [];
@@ -231,10 +210,10 @@ async function startRecording() {
     processorNode.connect(audioContext.destination);
     isRecording = true;
     recordButton.classList.add("recording");
-    setState("Recording. Click again to stop.");
+    setState("正在录音。再点一次停止。");
   } catch {
-    addError("Cannot access the microphone. Allow microphone permission and try again.");
-    setState("Microphone permission denied.");
+    addError("无法使用麦克风。请允许麦克风权限后重试。");
+    setState("麦克风权限被拒绝。");
   }
 }
 
@@ -250,7 +229,7 @@ function stopRecording() {
   micStream = null;
   audioContext = null;
   recordButton.classList.remove("recording");
-  setState("Uploading and transcribing audio...", true);
+  setState("正在上传并识别语音...", true);
   uploadRecording();
 }
 
@@ -276,12 +255,12 @@ async function uploadRecording() {
 
     const response = await fetch("/api/transcribe", { method: "POST", body: formData });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Transcription failed");
-    setState("Transcription complete. Generating reply...", true);
+    if (!response.ok) throw new Error(data.error || "识别失败");
+    setState("语音识别完成，正在生成回复...", true);
     await requestPractice(data.transcript);
   } catch (error) {
-    addError(error.message || "Transcription failed.");
-    setState("Transcription failed. Try again.");
+    addError(error.message || "语音识别失败。");
+    setState("语音识别失败，请重试。");
   }
 }
 
