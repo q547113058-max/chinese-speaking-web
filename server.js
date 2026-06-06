@@ -141,6 +141,18 @@ function extractJson(text) {
   }
 }
 
+function levelGuide(level = "beginner") {
+  if (level === "advanced") {
+    return "Advanced: use natural adult Mandarin, richer vocabulary, optional idiomatic phrasing, and ask more open-ended follow-up questions. Keep it conversational, not textbook-like.";
+  }
+
+  if (level === "intermediate") {
+    return "Intermediate: use common everyday Mandarin with a little variety in grammar, short compound sentences, and one natural follow-up question.";
+  }
+
+  return "Beginner: use very simple spoken Mandarin, short sentences, high-frequency words, and avoid idioms or complex grammar.";
+}
+
 async function generatePracticeReply(text, settings) {
   if (!chatApiKey) return fallbackLesson(text, settings);
 
@@ -160,7 +172,7 @@ async function generatePracticeReply(text, settings) {
         },
         {
           role: "user",
-          content: `Learner level: ${settings.level || "beginner"}. Learner said: ${text}`
+          content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)} Learner said: ${text}`
         }
       ]
     })
