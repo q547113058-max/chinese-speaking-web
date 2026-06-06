@@ -9,3 +9,5 @@
 - 新增 `scripts/sync-github.ps1`，用于在本机没有 `git` 命令时通过 GitHub CLI 同步项目文件，并补充 Windows 执行策略下的运行方式。
 - 修正同步脚本的相对路径计算，使其兼容当前 Windows PowerShell 环境。
 - 修正同步脚本的远端 SHA 查询方式，并排除 `.log` 临时日志文件。
+
+- Add OpenAI-compatible chat configuration with `CHAT_API_KEY`, `CHAT_BASE_URL`, and `CHAT_MODEL`; configure MiniMax-M3 as the example model without committing the real secret.
