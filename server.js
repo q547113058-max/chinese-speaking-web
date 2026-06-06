@@ -28,6 +28,11 @@ const port = Number(process.env.PORT || 5173);
 const chatApiKey = process.env.CHAT_API_KEY || process.env.OPENAI_API_KEY;
 const chatBaseUrl = (process.env.CHAT_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
 const chatModel = process.env.CHAT_MODEL || process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini";
+const ttsProvider = (process.env.TTS_PROVIDER || (process.env.TTS_API_KEY || process.env.CHAT_API_KEY ? "minimax" : "openai")).toLowerCase();
+const ttsApiKey = process.env.TTS_API_KEY || process.env.CHAT_API_KEY || process.env.OPENAI_API_KEY;
+const minimaxTtsBaseUrl = (process.env.TTS_BASE_URL || "https://api.minimaxi.com/v1").replace(/\/+$/, "");
+const minimaxTtsModel = process.env.TTS_MODEL || "speech-2.8-hd";
+const minimaxTtsVoice = process.env.TTS_VOICE || "Chinese (Mandarin)_Lyrical_Voice";
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -200,7 +205,54 @@ async function transcribeAudio(req) {
   return { transcript: data.text || "" };
 }
 
-async function synthesizeSpeech(text, speed) {
+function normalizeSpeechSpeed(speed) {
+  const value = Number(speed || 1);
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(2, Math.max(0.5, value));
+}
+
+async function synthesizeMinimaxSpeech(text, speed) {
+  if (!ttsApiKey) return null;
+
+  const response = await fetch(`${minimaxTtsBaseUrl}/t2a_v2`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${ttsApiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: minimaxTtsModel,
+      text,
+      stream: false,
+      voice_setting: {
+        voice_id: minimaxTtsVoice,
+        speed: normalizeSpeechSpeed(speed),
+        vol: 1,
+        pitch: 0
+      },
+      audio_setting: {
+        sample_rate: 32000,
+        bitrate: 128000,
+        format: "mp3",
+        channel: 1
+      }
+    })
+  });
+
+  const body = await response.text();
+  if (!response.ok) throw new Error(`MiniMax TTS failed: ${body}`);
+
+  const data = JSON.parse(body);
+  const audioHex = data.data?.audio;
+  if (!audioHex) {
+    const message = data.base_resp?.status_msg || "MiniMax TTS returned no audio.";
+    throw new Error(message);
+  }
+
+  return Buffer.from(audioHex, "hex");
+}
+
+async function synthesizeOpenAISpeech(text, speed) {
   if (!process.env.OPENAI_API_KEY) return null;
 
   const response = await fetch("https://api.openai.com/v1/audio/speech", {
@@ -213,7 +265,7 @@ async function synthesizeSpeech(text, speed) {
       model: process.env.OPENAI_TTS_MODEL || "gpt-4o-mini-tts",
       voice: process.env.OPENAI_TTS_VOICE || "coral",
       input: text,
-      speed: Number(speed || 1)
+      speed: normalizeSpeechSpeed(speed)
     })
   });
 
@@ -223,6 +275,11 @@ async function synthesizeSpeech(text, speed) {
   }
 
   return Buffer.from(await response.arrayBuffer());
+}
+
+async function synthesizeSpeech(text, speed) {
+  if (ttsProvider === "minimax") return synthesizeMinimaxSpeech(text, speed);
+  return synthesizeOpenAISpeech(text, speed);
 }
 
 async function serveStatic(req, res) {
