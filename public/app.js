@@ -208,6 +208,14 @@ function pinyinSyllables(pinyin = "") {
     .filter(Boolean);
 }
 
+function pinyinForText(text = "", pinyin = "") {
+  const pinyinSentence = String(pinyin).split(/[\u3002\uff01\uff1f!?.]/).find(Boolean)?.trim();
+  if (pinyinSentence) return pinyinSentence;
+  const hanCount = [...String(text).matchAll(/\p{Script=Han}/gu)].length;
+  if (hanCount === 0) return "";
+  return pinyinSyllables(pinyin).slice(0, hanCount).join(" ");
+}
+
 function readingListeningItems(text = "", pinyin = "") {
   const chars = [...String(text).matchAll(/\p{Script=Han}/gu)].map((match) => match[0]).slice(0, 4);
   const syllables = pinyinSyllables(pinyin);
@@ -231,6 +239,7 @@ function shuffleItems(items = []) {
 function deriveExercise(payload = {}) {
   const chinese = String(payload.chinese || "").trim();
   const sentence = chinese.split(/[。！？!?]/).find(Boolean)?.trim() || chinese || "你好呀，我们开始练习吧";
+  const sentencePinyin = pinyinForText(sentence, payload.pinyin || "");
   const matches = sentence.match(/\p{Script=Han}{1,2}/gu) || ["你", "好"];
   const seen = new Set();
   const items = [];
@@ -244,11 +253,11 @@ function deriveExercise(payload = {}) {
     });
     if (items.length >= 3) break;
   }
-  const derived = readingListeningItems(sentence, payload.pinyin || "");
+  const derived = readingListeningItems(sentence, sentencePinyin);
   return {
     reading: { items: derived.reading },
     listening: { items: derived.listening },
-    speaking: { text: sentence, pinyin: payload.pinyin || "" },
+    speaking: { text: sentence, pinyin: sentencePinyin },
     writing: { items }
   };
 }
@@ -256,6 +265,7 @@ function deriveExercise(payload = {}) {
 function normalizeExercise(payload = {}) {
   const fallback = deriveExercise(payload);
   const exercise = payload.exercise || fallback;
+  const speakingText = exercise.speaking?.text || fallback.speaking.text;
   return {
     reading: {
       items: Array.isArray(exercise.reading?.items) && exercise.reading.items.length > 0 ? exercise.reading.items.slice(0, 4) : fallback.reading.items
@@ -264,8 +274,8 @@ function normalizeExercise(payload = {}) {
       items: Array.isArray(exercise.listening?.items) && exercise.listening.items.length > 0 ? exercise.listening.items.slice(0, 4) : fallback.listening.items
     },
     speaking: {
-      text: exercise.speaking?.text || fallback.speaking.text,
-      pinyin: exercise.speaking?.pinyin || payload.pinyin || fallback.speaking.pinyin
+      text: speakingText,
+      pinyin: pinyinForText(speakingText, exercise.speaking?.pinyin || payload.pinyin || "") || fallback.speaking.pinyin
     },
     writing: {
       items: Array.isArray(exercise.writing?.items) && exercise.writing.items.length > 0 ? exercise.writing.items.slice(0, 3) : fallback.writing.items

@@ -252,6 +252,14 @@ function pinyinSyllables(pinyin = "") {
     .filter(Boolean);
 }
 
+function pinyinForText(text = "", pinyin = "") {
+  const pinyinSentence = String(pinyin).split(/[。！？!?.]/).find(Boolean)?.trim();
+  if (pinyinSentence) return pinyinSentence;
+  const hanCount = [...String(text).matchAll(/\p{Script=Han}/gu)].length;
+  if (hanCount === 0) return "";
+  return pinyinSyllables(pinyin).slice(0, hanCount).join(" ");
+}
+
 function readingListeningItems(text = "", pinyin = "") {
   const chars = [...String(text).matchAll(/\p{Script=Han}/gu)].map((match) => match[0]).slice(0, 4);
   const syllables = pinyinSyllables(pinyin);
@@ -268,6 +276,7 @@ function readingListeningItems(text = "", pinyin = "") {
 function createExercise(reply = {}) {
   const chinese = String(reply.chinese || "").trim();
   const speakingText = chinese.split(/[。！？!?]/).find(Boolean)?.trim() || chinese || "你好呀，我们开始练习吧";
+  const speakingPinyin = pinyinForText(speakingText, reply.pinyin || "");
   const hanSegments = speakingText.match(/\p{Script=Han}{1,2}/gu) || ["你", "好"];
   const seen = new Set();
   const items = [];
@@ -283,14 +292,14 @@ function createExercise(reply = {}) {
     if (items.length >= 3) break;
   }
 
-  const derived = readingListeningItems(speakingText, reply.pinyin || "");
+  const derived = readingListeningItems(speakingText, speakingPinyin);
 
   return {
     reading: { items: derived.reading },
     listening: { items: derived.listening },
     speaking: {
       text: speakingText,
-      pinyin: reply.pinyin || ""
+      pinyin: speakingPinyin
     },
     writing: { items }
   };
@@ -299,12 +308,17 @@ function createExercise(reply = {}) {
 function withExercise(reply) {
   const fallback = createExercise(reply);
   const exercise = reply.exercise || fallback;
+  const speaking = exercise.speaking || fallback.speaking;
+  const speakingText = speaking.text || fallback.speaking.text;
   return {
     ...reply,
     exercise: {
       reading: exercise.reading || fallback.reading,
       listening: exercise.listening || fallback.listening,
-      speaking: exercise.speaking || fallback.speaking,
+      speaking: {
+        text: speakingText,
+        pinyin: pinyinForText(speakingText, speaking.pinyin || reply.pinyin || "") || fallback.speaking.pinyin
+      },
       writing: exercise.writing || fallback.writing
     }
   };

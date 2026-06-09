@@ -23,3 +23,4 @@
 - Change the frontend practice layout to mutually exclusive `聊 / 说 / 写` workspace modes so speaking and writing no longer appear as a persistent panel under the original chat flow.
 - Add first-pass reading and listening practice: `/api/practice` now includes reading/listening exercise targets, the frontend adds mutually exclusive `读` and `听` modes, reading uses Hanzi-pinyin matching, and listening uses local tone-choice scoring.
 - Show the current Hanzi during listening tone-choice practice so the learner can connect the sound and tone to the written character.
+- Fix speaking practice target pinyin so it is cropped to the same sentence as the displayed Chinese shadowing text.
