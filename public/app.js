@@ -7,6 +7,24 @@ const level = document.querySelector("#level");
 const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
+const skillTabs = document.querySelectorAll(".skill-tab");
+const skillPanes = document.querySelectorAll(".skill-pane");
+const speakingTarget = document.querySelector("#speakingTarget");
+const speakingPinyin = document.querySelector("#speakingPinyin");
+const speakingMode = document.querySelector("#speakingMode");
+const playTargetButton = document.querySelector("#playTargetButton");
+const shadowButton = document.querySelector("#shadowButton");
+const speakingScore = document.querySelector("#speakingScore");
+const writingTarget = document.querySelector("#writingTarget");
+const writingMode = document.querySelector("#writingMode");
+const traceToggle = document.querySelector("#traceToggle");
+const writingCanvas = document.querySelector("#writingCanvas");
+const traceCharacter = document.querySelector("#traceCharacter");
+const undoStrokeButton = document.querySelector("#undoStrokeButton");
+const clearCanvasButton = document.querySelector("#clearCanvasButton");
+const saveCanvasButton = document.querySelector("#saveCanvasButton");
+const evaluateWritingButton = document.querySelector("#evaluateWritingButton");
+const writingScore = document.querySelector("#writingScore");
 
 const storageKey = "chinese-speaking-coach-state";
 const targetSampleRate = 16000;
@@ -35,6 +53,16 @@ let currentAudio = null;
 let currentAudioUrl = null;
 let currentUtterance = null;
 let playbackSerial = 0;
+let shadowRecording = false;
+let shadowAudioContext = null;
+let shadowSourceNode = null;
+let shadowProcessorNode = null;
+let shadowMicStream = null;
+let shadowPcmChunks = [];
+let currentExercise = null;
+let writingCtx = null;
+let writingStrokes = [];
+let activeStroke = null;
 
 const settings = () => ({
   level: level.value,
@@ -57,23 +85,31 @@ function loadState() {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
     return {
       persona: saved.persona || defaultPersona,
-      turns: Array.isArray(saved.turns) ? saved.turns.slice(-40) : []
+      turns: Array.isArray(saved.turns) ? saved.turns.slice(-40) : [],
+      skillResults: Array.isArray(saved.skillResults) ? saved.skillResults.slice(-20) : []
     };
   } catch {
-    return { persona: defaultPersona, turns: [] };
+    return { persona: defaultPersona, turns: [], skillResults: [] };
   }
 }
 
 function saveState() {
   localStorage.setItem(storageKey, JSON.stringify({
     persona: appState.persona,
-    turns: appState.turns.slice(-40)
+    turns: appState.turns.slice(-40),
+    skillResults: appState.skillResults.slice(-20)
   }));
 }
 
 function rememberTurn(turn) {
   appState.turns.push({ ...turn, at: new Date().toISOString() });
   appState.turns = appState.turns.slice(-40);
+  saveState();
+}
+
+function rememberSkillResult(result) {
+  appState.skillResults.push({ ...result, at: new Date().toISOString() });
+  appState.skillResults = appState.skillResults.slice(-20);
   saveState();
 }
 
@@ -88,6 +124,42 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
   });
+}
+
+function deriveExercise(payload = {}) {
+  const chinese = String(payload.chinese || "").trim();
+  const sentence = chinese.split(/[。！？!?]/).find(Boolean)?.trim() || chinese || "你好呀，我们开始练习吧";
+  const matches = sentence.match(/\p{Script=Han}{1,2}/gu) || ["你", "好"];
+  const seen = new Set();
+  const items = [];
+  for (const text of matches) {
+    if (seen.has(text)) continue;
+    seen.add(text);
+    items.push({
+      text,
+      type: [...text].length === 1 ? "character" : "word",
+      hint: [...text].length === 1 ? "注意字形结构和笔画位置" : "先看整体结构，再慢慢写"
+    });
+    if (items.length >= 3) break;
+  }
+  return {
+    speaking: { text: sentence, pinyin: payload.pinyin || "" },
+    writing: { items }
+  };
+}
+
+function normalizeExercise(payload = {}) {
+  const fallback = deriveExercise(payload);
+  const exercise = payload.exercise || fallback;
+  return {
+    speaking: {
+      text: exercise.speaking?.text || fallback.speaking.text,
+      pinyin: exercise.speaking?.pinyin || payload.pinyin || fallback.speaking.pinyin
+    },
+    writing: {
+      items: Array.isArray(exercise.writing?.items) && exercise.writing.items.length > 0 ? exercise.writing.items.slice(0, 3) : fallback.writing.items
+    }
+  };
 }
 
 function scrollToBottom() {
@@ -122,6 +194,23 @@ function renderAssistantMessage(article, payload) {
   article.querySelector(".play-button").addEventListener("click", () => playChinese(payload.chinese));
 }
 
+function setCurrentExercise(payload = {}) {
+  currentExercise = normalizeExercise(payload);
+  speakingTarget.textContent = currentExercise.speaking.text;
+  speakingPinyin.textContent = currentExercise.speaking.pinyin || "";
+  writingTarget.innerHTML = "";
+  for (const item of currentExercise.writing.items) {
+    const option = document.createElement("option");
+    option.value = item.text;
+    option.textContent = item.text;
+    option.dataset.type = item.type || "character";
+    option.dataset.hint = item.hint || "";
+    writingTarget.appendChild(option);
+  }
+  updateTraceCharacter();
+  clearWritingCanvas();
+}
+
 function addMessage(kind, payload) {
   const article = document.createElement("article");
   article.className = `message ${kind}`;
@@ -136,6 +225,7 @@ function addMessage(kind, payload) {
     `;
   } else {
     renderAssistantMessage(article, payload);
+    setCurrentExercise(payload);
   }
 
   conversation.appendChild(article);
@@ -211,7 +301,7 @@ async function requestPractice(text) {
     if (!response.ok) throw new Error(data.error || "\u751f\u6210\u5931\u8d25");
     replaceTypingMessage(typingMessage, data);
     rememberTurn({ role: "user", text: cleanText });
-    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, explanation: data.explanation, suggestion: data.suggestion });
+    rememberTurn({ role: "assistant", chinese: data.chinese, pinyin: data.pinyin, explanation: data.explanation, suggestion: data.suggestion, exercise: data.exercise });
     await playChinese(data.chinese);
   } catch (error) {
     typingMessage.remove();
@@ -296,6 +386,114 @@ function speakWithBrowser(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+function renderRadar(container, result, labels) {
+  if (!result) {
+    container.innerHTML = "";
+    return;
+  }
+  const radar = result.radar || {};
+  const rows = labels.map(([key, label]) => {
+    const value = Math.max(0, Math.min(100, Number(radar[key]) || 0));
+    return `
+      <div class="radar-row">
+        <span>${escapeHtml(label)}</span>
+        <div class="radar-track"><div class="radar-fill" style="width:${value}%"></div></div>
+        <strong>${value}</strong>
+      </div>
+    `;
+  }).join("");
+  const feedback = Array.isArray(result.feedback) ? result.feedback.map((item) => `<li>${escapeHtml(item)}</li>`).join("") : "";
+  container.innerHTML = `
+    <div class="score-card">
+      <div class="score-summary">
+        <span>${escapeHtml(result.modeUsed || result.modeRequested || "")}</span>
+        <strong>${Math.round(Number(result.score) || 0)}</strong>
+      </div>
+      <div class="radar-list">${rows}</div>
+      ${result.transcript ? `<p class="transcript"><span>识别：</span>${escapeHtml(result.transcript)}</p>` : ""}
+      ${feedback ? `<ul class="feedback-list">${feedback}</ul>` : ""}
+    </div>
+  `;
+}
+
+function updateSkillBusy(busy) {
+  shadowButton.disabled = busy;
+  evaluateWritingButton.disabled = busy;
+  playTargetButton.disabled = busy;
+}
+
+async function startShadowRecording() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) {
+    addError("当前浏览器不支持录音。");
+    return;
+  }
+  try {
+    shadowMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    shadowAudioContext = new AudioContextClass();
+    shadowSourceNode = shadowAudioContext.createMediaStreamSource(shadowMicStream);
+    shadowProcessorNode = shadowAudioContext.createScriptProcessor(4096, 1, 1);
+    shadowPcmChunks = [];
+    shadowProcessorNode.onaudioprocess = (event) => {
+      if (!shadowRecording) return;
+      shadowPcmChunks.push(floatTo16KhzPcm(event.inputBuffer.getChannelData(0), shadowAudioContext.sampleRate));
+    };
+    shadowSourceNode.connect(shadowProcessorNode);
+    shadowProcessorNode.connect(shadowAudioContext.destination);
+    shadowRecording = true;
+    shadowButton.classList.add("recording");
+    shadowButton.textContent = "结束评分";
+  } catch {
+    addError("无法使用麦克风。请允许权限后重试。");
+  }
+}
+
+async function stopShadowRecording() {
+  if (!shadowRecording) return;
+  shadowRecording = false;
+  shadowProcessorNode?.disconnect();
+  shadowSourceNode?.disconnect();
+  shadowMicStream?.getTracks().forEach((track) => track.stop());
+  await shadowAudioContext?.close();
+  shadowProcessorNode = null;
+  shadowSourceNode = null;
+  shadowMicStream = null;
+  shadowAudioContext = null;
+  shadowButton.classList.remove("recording");
+  shadowButton.textContent = "录音跟读";
+  await evaluateSpeaking();
+}
+
+async function evaluateSpeaking() {
+  if (!currentExercise?.speaking?.text) return;
+  updateSkillBusy(true);
+  speakingScore.innerHTML = `<div class="score-card muted-card">正在评分...</div>`;
+  try {
+    const blob = new Blob(shadowPcmChunks, { type: "application/octet-stream" });
+    const formData = new FormData();
+    formData.append("audio", blob, "shadow.pcm");
+    formData.append("targetText", currentExercise.speaking.text);
+    formData.append("targetPinyin", currentExercise.speaking.pinyin || "");
+    formData.append("mode", speakingMode.value);
+    const response = await fetch("/api/speaking/evaluate", { method: "POST", body: formData });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "评分失败");
+    renderRadar(speakingScore, data, [
+      ["accuracy", "准确"],
+      ["completeness", "完整"],
+      ["fluency", "流利"],
+      ["tone", "声调"],
+      ["rhythm", "节奏"]
+    ]);
+    rememberSkillResult({ type: "speaking", target: currentExercise.speaking.text, result: data });
+  } catch (error) {
+    speakingScore.innerHTML = "";
+    addError(error.message || "跟读评分失败。");
+  } finally {
+    updateSkillBusy(false);
+  }
+}
+
 async function startRecording() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) {
@@ -351,6 +549,139 @@ function floatTo16KhzPcm(input, sourceSampleRate) {
   return output;
 }
 
+function setupWritingCanvas() {
+  writingCtx = writingCanvas.getContext("2d");
+  writingCtx.lineCap = "round";
+  writingCtx.lineJoin = "round";
+  writingCtx.lineWidth = 8;
+  writingCtx.strokeStyle = "#1e2528";
+  drawWritingCanvas();
+}
+
+function drawGrid() {
+  const { width, height } = writingCanvas;
+  writingCtx.clearRect(0, 0, width, height);
+  writingCtx.fillStyle = "#fff";
+  writingCtx.fillRect(0, 0, width, height);
+  writingCtx.strokeStyle = "#d9e1dc";
+  writingCtx.lineWidth = 1;
+  writingCtx.strokeRect(0.5, 0.5, width - 1, height - 1);
+  writingCtx.setLineDash([8, 8]);
+  writingCtx.beginPath();
+  writingCtx.moveTo(width / 2, 0);
+  writingCtx.lineTo(width / 2, height);
+  writingCtx.moveTo(0, height / 2);
+  writingCtx.lineTo(width, height / 2);
+  writingCtx.moveTo(0, 0);
+  writingCtx.lineTo(width, height);
+  writingCtx.moveTo(width, 0);
+  writingCtx.lineTo(0, height);
+  writingCtx.stroke();
+  writingCtx.setLineDash([]);
+}
+
+function drawWritingCanvas() {
+  if (!writingCtx) return;
+  drawGrid();
+  writingCtx.strokeStyle = "#1e2528";
+  writingCtx.lineWidth = 8;
+  for (const stroke of writingStrokes) drawStroke(stroke);
+  if (activeStroke) drawStroke(activeStroke);
+}
+
+function drawStroke(stroke) {
+  if (!stroke || stroke.length < 2) return;
+  writingCtx.beginPath();
+  writingCtx.moveTo(stroke[0].x, stroke[0].y);
+  for (const point of stroke.slice(1)) writingCtx.lineTo(point.x, point.y);
+  writingCtx.stroke();
+}
+
+function canvasPoint(event) {
+  const rect = writingCanvas.getBoundingClientRect();
+  const source = event.touches?.[0] || event;
+  return {
+    x: ((source.clientX - rect.left) / rect.width) * writingCanvas.width,
+    y: ((source.clientY - rect.top) / rect.height) * writingCanvas.height
+  };
+}
+
+function beginStroke(event) {
+  event.preventDefault();
+  activeStroke = [canvasPoint(event)];
+  writingCanvas.setPointerCapture?.(event.pointerId);
+}
+
+function moveStroke(event) {
+  if (!activeStroke) return;
+  event.preventDefault();
+  activeStroke.push(canvasPoint(event));
+  drawWritingCanvas();
+}
+
+function endStroke(event) {
+  if (!activeStroke) return;
+  event.preventDefault();
+  if (activeStroke.length > 1) writingStrokes.push(activeStroke);
+  activeStroke = null;
+  drawWritingCanvas();
+}
+
+function updateTraceCharacter() {
+  traceCharacter.textContent = traceToggle.checked ? (writingTarget.value || "") : "";
+}
+
+function clearWritingCanvas() {
+  writingStrokes = [];
+  activeStroke = null;
+  drawWritingCanvas();
+  writingScore.innerHTML = "";
+}
+
+function undoWritingStroke() {
+  writingStrokes.pop();
+  drawWritingCanvas();
+}
+
+function saveWritingImage() {
+  const link = document.createElement("a");
+  link.download = `writing-${writingTarget.value || "practice"}.png`;
+  link.href = writingCanvas.toDataURL("image/png");
+  link.click();
+}
+
+async function evaluateWriting() {
+  if (!writingTarget.value) return;
+  updateSkillBusy(true);
+  writingScore.innerHTML = `<div class="score-card muted-card">正在评分...</div>`;
+  try {
+    const response = await fetch("/api/writing/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        imageData: writingCanvas.toDataURL("image/png"),
+        targetText: writingTarget.value,
+        mode: writingMode.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "书写评分失败");
+    renderRadar(writingScore, data, [
+      ["targetMatch", "匹配"],
+      ["structure", "结构"],
+      ["proportion", "比例"],
+      ["strokeClarity", "笔画"],
+      ["neatness", "整洁"]
+    ]);
+    rememberSkillResult({ type: "writing", target: writingTarget.value, result: data });
+  } catch (error) {
+    writingScore.innerHTML = "";
+    addError(error.message || "书写评分失败。");
+  } finally {
+    updateSkillBusy(false);
+  }
+}
+
 async function uploadRecording() {
   try {
     setBusy(true);
@@ -379,6 +710,37 @@ recordButton.addEventListener("click", () => {
   if (isRecording) stopRecording();
   else startRecording();
 });
+
+skillTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    const target = tab.dataset.skill;
+    skillTabs.forEach((item) => {
+      const active = item.dataset.skill === target;
+      item.classList.toggle("active", active);
+      item.setAttribute("aria-selected", String(active));
+    });
+    skillPanes.forEach((pane) => pane.classList.toggle("active", pane.dataset.pane === target));
+  });
+});
+
+playTargetButton.addEventListener("click", () => playChinese(currentExercise?.speaking?.text || ""));
+shadowButton.addEventListener("click", () => {
+  if (shadowRecording) stopShadowRecording();
+  else startShadowRecording();
+});
+writingTarget.addEventListener("change", () => {
+  updateTraceCharacter();
+  clearWritingCanvas();
+});
+traceToggle.addEventListener("change", updateTraceCharacter);
+undoStrokeButton.addEventListener("click", undoWritingStroke);
+clearCanvasButton.addEventListener("click", clearWritingCanvas);
+saveCanvasButton.addEventListener("click", saveWritingImage);
+evaluateWritingButton.addEventListener("click", evaluateWriting);
+writingCanvas.addEventListener("pointerdown", beginStroke);
+writingCanvas.addEventListener("pointermove", moveStroke);
+writingCanvas.addEventListener("pointerup", endStroke);
+writingCanvas.addEventListener("pointercancel", endStroke);
 fetch("/api/health")
   .then((response) => response.json())
   .then((data) => {
@@ -390,4 +752,6 @@ fetch("/api/health")
     aiStatus.classList.add("mock");
   });
 
+setupWritingCanvas();
 renderStoredConversation();
+if (!currentExercise) setCurrentExercise(greeting);

@@ -42,6 +42,8 @@ chinese-speaking-web/
 - `POST /api/transcribe`：接收浏览器上传的音频，返回英文转写。
 - `POST /api/practice`：接收英文文本和练习设置，返回中文、拼音、解释和建议。
 - `POST /api/tts`：接收中文文本和语速，返回 MP3 音频；无 API key 时返回 `{ "fallback": true }`。
+- `POST /api/speaking/evaluate`：接收跟读音频和目标句，返回转写、总分、维度评分和建议；专用音频评分未配置时降级为转写评分。
+- `POST /api/writing/evaluate`：接收 Canvas 图片、目标字词和模式，返回书写评分结构；AI/OCR 未配置时降级为自查模式。
 - API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
 - JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
@@ -51,6 +53,7 @@ chinese-speaking-web/
 入口页面：[public/index.html](../public/index.html)
 
 - [public/app.js](../public/app.js)：负责录音、上传、练习请求、朗读、消息渲染和状态展示。
+- 技能练习面板包含“说”和“写”两个 tab：说用于跟读录音和评分，写用于 Canvas 手写、撤销、清空、保存和评分。
 - [public/styles.css](../public/styles.css)：负责响应式布局、对话气泡、设置区、输入区和按钮状态。
 
 ## 开发与文档同步规则

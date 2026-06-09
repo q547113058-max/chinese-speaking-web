@@ -42,6 +42,7 @@ const sttSourceLanguage = process.env.STT_SOURCE_LANGUAGE || "en";
 const sttTargetLanguage = process.env.STT_TARGET_LANGUAGE || "zh";
 const jsonBodyLimitBytes = 256 * 1024;
 const audioBodyLimitBytes = 8 * 1024 * 1024;
+const writingImageLimitBytes = 1024 * 1024;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -77,8 +78,8 @@ async function readRequestBody(req, maxBytes = jsonBodyLimitBytes) {
   return Buffer.concat(chunks);
 }
 
-async function readJsonBody(req) {
-  return JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
+async function readJsonBody(req, maxBytes = jsonBodyLimitBytes) {
+  return JSON.parse((await readRequestBody(req, maxBytes)).toString("utf8") || "{}");
 }
 
 function parseMultipart(buffer, contentType) {
@@ -137,13 +138,13 @@ function fallbackLesson(inputText = "I want to order coffee.", settings = {}) {
     pinyin += " N\u01d0 k\u011by\u01d0 du\u014d shu\u014d y\u00ec di\u01cen, w\u01d2 hu\u00ec ji\u0113zhe li\u00e1o.";
   }
 
-  return {
+  return withExercise({
     transcript: text,
     chinese,
     pinyin,
     explanation,
     suggestion
-  };
+  });
 }
 
 function extractJson(text) {
@@ -155,6 +156,184 @@ function extractJson(text) {
     if (!match) throw new Error("The model did not return JSON.");
     return JSON.parse(match[0]);
   }
+}
+
+function clampScore(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
+}
+
+function averageScores(scores) {
+  const values = Object.values(scores).map(clampScore);
+  if (values.length === 0) return 0;
+  return clampScore(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+function normalizeChineseText(text = "") {
+  return String(text).replace(/[^\p{Script=Han}a-z0-9]/giu, "").toLowerCase();
+}
+
+function textSimilarity(target = "", actual = "") {
+  const targetText = normalizeChineseText(target);
+  const actualText = normalizeChineseText(actual);
+  if (!targetText || !actualText) return 0;
+  const targetChars = [...targetText];
+  const actualChars = new Set([...actualText]);
+  const matched = targetChars.filter((char) => actualChars.has(char)).length;
+  return clampScore((matched / targetChars.length) * 100);
+}
+
+function createExercise(reply = {}) {
+  const chinese = String(reply.chinese || "").trim();
+  const speakingText = chinese.split(/[。！？!?]/).find(Boolean)?.trim() || chinese || "你好呀，我们开始练习吧";
+  const hanSegments = speakingText.match(/\p{Script=Han}{1,2}/gu) || ["你", "好"];
+  const seen = new Set();
+  const items = [];
+
+  for (const segment of hanSegments) {
+    if (seen.has(segment)) continue;
+    seen.add(segment);
+    items.push({
+      text: segment,
+      type: [...segment].length === 1 ? "character" : "word",
+      hint: [...segment].length === 1 ? "注意字形结构和笔画位置" : "先看整体结构，再慢慢写"
+    });
+    if (items.length >= 3) break;
+  }
+
+  return {
+    speaking: {
+      text: speakingText,
+      pinyin: reply.pinyin || ""
+    },
+    writing: { items }
+  };
+}
+
+function withExercise(reply) {
+  const exercise = reply.exercise || createExercise(reply);
+  return { ...reply, exercise };
+}
+
+function fallbackSpeakingScore({ targetText = "", transcript = "", mode = "transcript" }) {
+  const accuracy = textSimilarity(targetText, transcript);
+  const completeness = transcript ? Math.min(100, Math.round((normalizeChineseText(transcript).length / Math.max(1, normalizeChineseText(targetText).length)) * 100)) : 0;
+  const fluency = transcript ? Math.max(45, Math.min(92, accuracy - 5 + Math.round(normalizeChineseText(transcript).length / 2))) : 20;
+  const tone = transcript ? Math.max(40, accuracy - 8) : 20;
+  const rhythm = transcript ? Math.max(45, Math.min(90, fluency + 3)) : 20;
+  const radar = {
+    accuracy,
+    completeness: clampScore(completeness),
+    fluency: clampScore(fluency),
+    tone: clampScore(tone),
+    rhythm: clampScore(rhythm)
+  };
+
+  return {
+    modeRequested: mode,
+    modeUsed: mode === "audio" ? "transcript" : "transcript",
+    transcript,
+    score: averageScores(radar),
+    radar,
+    feedback: [
+      accuracy >= 80 ? "整体跟读很接近目标句。" : "先把目标句分成更短的两段，再逐段跟读。",
+      tone >= 75 ? "声调稳定度不错，继续保持。" : "重点放慢声调变化，尤其是第三声和轻声。",
+      "再听一遍示范音频后，用同样语速复述一次。"
+    ]
+  };
+}
+
+async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mode }) {
+  if (!chatApiKey) return fallbackSpeakingScore({ targetText, transcript, mode });
+
+  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${chatApiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: chatModel,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Score a Mandarin learner's shadowing attempt. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical."
+        },
+        {
+          role: "user",
+          content: `Target Chinese: ${targetText}\nTarget pinyin: ${targetPinyin || "(none)"}\nLearner transcript: ${transcript || "(empty)"}`
+        }
+      ]
+    })
+  });
+
+  if (!response.ok) return fallbackSpeakingScore({ targetText, transcript, mode });
+
+  try {
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || "";
+    const parsed = extractJson(content);
+    const radar = {
+      accuracy: clampScore(parsed.radar?.accuracy),
+      completeness: clampScore(parsed.radar?.completeness),
+      fluency: clampScore(parsed.radar?.fluency),
+      tone: clampScore(parsed.radar?.tone),
+      rhythm: clampScore(parsed.radar?.rhythm)
+    };
+    return {
+      modeRequested: mode,
+      modeUsed: mode === "audio" ? "transcript" : "transcript",
+      transcript,
+      score: clampScore(parsed.score || averageScores(radar)),
+      radar,
+      feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 3).map(String) : fallbackSpeakingScore({ targetText, transcript, mode }).feedback
+    };
+  } catch {
+    return fallbackSpeakingScore({ targetText, transcript, mode });
+  }
+}
+
+async function evaluateSpeaking(req) {
+  const body = await readRequestBody(req, audioBodyLimitBytes);
+  const parts = parseMultipart(body, req.headers["content-type"] || "");
+  const file = parts.find((part) => part.name === "audio");
+  const targetText = parts.find((part) => part.name === "targetText")?.data.toString("utf8") || "";
+  const targetPinyin = parts.find((part) => part.name === "targetPinyin")?.data.toString("utf8") || "";
+  const mode = parts.find((part) => part.name === "mode")?.data.toString("utf8") || "transcript";
+  if (!file) throw new Error("No audio file received.");
+
+  const transcript = (await transcribeAudioFromBuffer(file.data, file.type, file.filename)).transcript || "";
+  return scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mode });
+}
+
+function fallbackWritingScore({ mode = "self", targetText = "" }) {
+  const radar = {
+    targetMatch: mode === "ai" ? 0 : 75,
+    structure: mode === "ai" ? 0 : 75,
+    proportion: mode === "ai" ? 0 : 75,
+    strokeClarity: mode === "ai" ? 0 : 75,
+    neatness: mode === "ai" ? 0 : 75
+  };
+
+  return {
+    modeRequested: mode,
+    modeUsed: mode === "ai" ? "self-fallback" : "self",
+    score: averageScores(radar),
+    radar,
+    feedback: mode === "ai"
+      ? ["AI/OCR 判断服务尚未配置，请先使用临摹自查。", `目标：${targetText || "当前字词"}`]
+      : ["看整体结构是否居中。", "对照目标字，检查横竖比例和收笔位置。"]
+  };
+}
+
+async function evaluateWriting(req) {
+  const body = await readJsonBody(req, writingImageLimitBytes);
+  const mode = body.mode || "self";
+  const imageData = String(body.imageData || "");
+  if (imageData.length > writingImageLimitBytes) throw new Error("Writing image too large.");
+  return fallbackWritingScore({ mode, targetText: body.targetText || "" });
 }
 
 function levelGuide(level = "beginner") {
@@ -172,7 +351,7 @@ function levelGuide(level = "beginner") {
 function fallbackPersona(settings = {}) {
   const level = settings.level || "beginner";
   return {
-    name: level === "advanced" ? "鏋楀畨" : level === "intermediate" ? "灏忓懆" : "灏忛洦",
+    name: level === "advanced" ? "林安" : level === "intermediate" ? "小周" : "小雨",
     role: "A patient Mandarin conversation partner",
     personality: "Warm, curious, and concise",
     speakingStyle: levelGuide(level),
@@ -212,7 +391,7 @@ async function generatePersona(settings = {}) {
   try {
     const parsed = extractJson(content);
     return {
-      name: parsed.name || "灏忛洦",
+      name: parsed.name || "小雨",
       role: parsed.role || "A Mandarin conversation partner",
       personality: parsed.personality || "Warm and patient",
       speakingStyle: parsed.speakingStyle || levelGuide(settings.level),
@@ -275,13 +454,14 @@ Learner just said: ${text}`
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content || data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
   const parsed = extractJson(content || "");
-  return {
+  return withExercise({
     transcript: text,
     chinese: parsed.chinese || "",
     pinyin: parsed.pinyin || "",
     explanation: parsed.explanation || "",
-    suggestion: parsed.suggestion || ""
-  };
+    suggestion: parsed.suggestion || "",
+    exercise: parsed.exercise
+  });
 }
 
 async function transcribeAudio(req) {
@@ -290,9 +470,13 @@ async function transcribeAudio(req) {
   const file = parts.find((part) => part.name === "audio");
   if (!file) throw new Error("No audio file received.");
 
+  return transcribeAudioFromBuffer(file.data, file.type, file.filename);
+}
+
+async function transcribeAudioFromBuffer(audioBuffer, type = "application/octet-stream", filename = "speech.pcm") {
   if (sttProvider === "qwen") {
     if (!qwenSttApiKey) return { transcript: "I want to order coffee." };
-    return { transcript: await transcribeQwenAudio(file.data) };
+    return { transcript: await transcribeQwenAudio(audioBuffer) };
   }
 
   if (!process.env.OPENAI_API_KEY) {
@@ -301,7 +485,7 @@ async function transcribeAudio(req) {
 
   const formData = new FormData();
   formData.append("model", process.env.OPENAI_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe");
-  formData.append("file", new Blob([file.data], { type: file.type }), file.filename || "speech.webm");
+  formData.append("file", new Blob([audioBuffer], { type }), filename || "speech.webm");
 
   const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
@@ -565,6 +749,16 @@ const server = http.createServer(async (req, res) => {
       }
       res.writeHead(200, { "Content-Type": "audio/mpeg" });
       res.end(audio);
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/speaking/evaluate") {
+      sendJson(res, 200, await evaluateSpeaking(req));
+      return;
+    }
+
+    if (req.method === "POST" && pathname === "/api/writing/evaluate") {
+      sendJson(res, 200, await evaluateWriting(req));
       return;
     }
 
