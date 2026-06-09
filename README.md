@@ -54,6 +54,9 @@ npm start
 - `CHAT_MODEL`：聊天模型，MiniMax 示例为 `MiniMax-M3`。
 - `OPENAI_API_KEY`：OpenAI API key。缺省时进入模拟模式；配置后可用于音频能力。
 - `OPENAI_CHAT_MODEL`：OpenAI 回复模型，默认 `gpt-4.1-mini`。
+- `VISION_API_KEY`：手写 Canvas 图片评分使用的 OpenAI-compatible vision API key；未设置时会依次回退到 `CHAT_API_KEY`、`OPENAI_API_KEY`。
+- `VISION_BASE_URL`：vision chat completions 接口地址，默认 `https://api.openai.com/v1`。
+- `VISION_MODEL`：支持图片输入的视觉模型；未设置时会依次回退到 `OPENAI_VISION_MODEL`、`CHAT_MODEL`、`OPENAI_CHAT_MODEL`、`gpt-4.1-mini`。
 - `OPENAI_TRANSCRIBE_MODEL`：语音识别模型，默认 `gpt-4o-mini-transcribe`。
 - `OPENAI_TTS_MODEL`：中文朗读模型，默认 `gpt-4o-mini-tts`。
 - `OPENAI_TTS_VOICE`：朗读音色，默认 `coral`。
@@ -145,9 +148,9 @@ Each `/api/practice` response includes an `exercise` object:
 }
 ```
 
-`POST /api/speaking/evaluate` accepts `multipart/form-data` with `audio`, `targetText`, `targetPinyin`, and `mode`. Dedicated audio scoring is represented by an adapter path; when it is not configured, the server falls back to transcript scoring.
+`POST /api/speaking/evaluate` accepts `multipart/form-data` with `audio`, `targetText`, `targetPinyin`, and `mode`. `transcript` mode scores the STT transcript against the target text. `audio` mode now reads the uploaded 16 kHz PCM recording and scores duration fit, voiced speech ratio, pauses, loudness, and rhythm, using the transcript as an extra accuracy signal when real STT is available. The response uses `modeUsed: "audio"` and includes `audioMetrics` for the first-pass acoustic score.
 
-`POST /api/writing/evaluate` accepts `imageData`, `targetText`, and `mode`. AI/OCR checking is represented by an adapter path; when it is not configured, the server returns `self-fallback`.
+`POST /api/writing/evaluate` accepts `imageData`, `targetText`, and `mode`. `self` mode keeps the local self-check flow. `ai` mode sends the Canvas image to the configured OpenAI-compatible vision model and returns target match, structure, proportion, stroke clarity, neatness, recognized text, and feedback. When no vision service is configured or the call fails, the server returns `self-fallback` with a `fallbackReason`.
 
 The frontend uses mutually exclusive workspace modes: `聊`, `读`, `听`, `说`, and `写`. Chat mode shows the original conversation and input composer. Skill modes use the current coach reply as their practice source and replace the chat view instead of appearing as a second panel under it. Reading and listening are scored locally and stored in the latest 20 practice results.
 ## Local persona and context
