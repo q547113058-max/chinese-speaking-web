@@ -11,7 +11,7 @@
       <section class="coach-panel" aria-label="Chinese speaking coach">
         <header class="topbar">
           <div class="coach-title">
-            <img class="coach-photo" src="/coach-avatar.png" alt="Su Tang avatar" />
+            <img class="coach-photo" src="/coach-avatar.png" alt="Luming avatar" />
             <div>
               <p class="eyebrow">Chinese Speaking Coach</p>
               <h1>&#33487;&#26848; &middot; &#20013;&#25991;&#21475;&#35821;&#38506;&#32451;</h1>
@@ -45,18 +45,25 @@
 
         <section class="practice-area">
           <aside class="persona-card" aria-label="Coach persona">
-            <img class="persona-photo" src="/coach-avatar.png" alt="Su Tang avatar" />
+            <img class="persona-photo" src="/coach-avatar.png" alt="Luming avatar" />
             <p class="persona-kicker">&#38506;&#32451;&#20154;&#35774;</p>
-            <h2>&#33487;&#26848;</h2>
-            <p>&#35752;&#21916;&#21487;&#29233;&#30340;&#20013;&#25991;&#31995;&#26412;&#31185;&#29983;&#65292;&#28201;&#26580;&#12289;&#32784;&#24515;&#12289;&#30495;&#35802;&#22909;&#22855;&#12290;</p>
+            <h2>Luming</h2>
+            <p>&#22330;&#26223;&#21270;&#20013;&#25991;&#25945;&#32451;&#65292;&#24102;&#20320;&#32451;&#20064;&#21548;&#12289;&#35828;&#12289;&#35835;&#12289;&#20889;&#12290;</p>
           </aside>
           <section class="workbench" aria-label="Practice workspace">
             <div class="mode-tabs" role="tablist" aria-label="Practice modes">
               <button class="mode-tab active" id="chatTab" type="button" data-mode="chat" role="tab" aria-selected="true">&#32842;</button>
-              <button class="mode-tab" id="readTab" type="button" data-mode="read" role="tab" aria-selected="false">&#35835;</button>
               <button class="mode-tab" id="listenTab" type="button" data-mode="listen" role="tab" aria-selected="false">&#21548;</button>
               <button class="mode-tab" id="speakTab" type="button" data-mode="speak" role="tab" aria-selected="false">&#35828;</button>
+              <button class="mode-tab" id="readTab" type="button" data-mode="read" role="tab" aria-selected="false">&#35835;</button>
               <button class="mode-tab" id="writeTab" type="button" data-mode="write" role="tab" aria-selected="false">&#20889;</button>
+            </div>
+            <div class="course-bar" aria-label="Scenario course">
+              <label>
+                <span>&#22330;&#26223;&#35838;&#31243;</span>
+                <select id="courseSelect"></select>
+              </label>
+              <p id="courseSummary">&#27491;&#22312;&#21152;&#36733;&#22330;&#26223;&#35838;&#31243;&#12290;</p>
             </div>
 
             <section class="conversation mode-pane active" id="conversation" data-pane="chat" role="tabpanel" aria-labelledby="chatTab" aria-live="polite"></section>
@@ -64,109 +71,175 @@
             <section class="skill-panel mode-pane" id="readPane" data-pane="read" role="tabpanel" aria-labelledby="readTab" aria-label="Reading practice">
               <header class="skill-head">
                 <div>
-                  <p class="eyebrow">Current Reply Practice</p>
-                  <h2>&#35835;&#65306;&#37197;&#23545;</h2>
+                  <p class="eyebrow">Scenario Reading</p>
+                  <h2>&#35835;&#65306;&#27721;&#23383;&#19982;&#22330;&#26223;&#38405;&#35835;</h2>
                 </div>
                 <button class="play-button" id="resetReadingButton" type="button">&#37325;&#26469;</button>
               </header>
-              <div class="target-box">
-                <p class="label">&#25226;&#27721;&#23383;&#21644;&#25340;&#38899;&#36830;&#36215;&#26469;</p>
+              <div class="skill-subtabs" role="tablist" aria-label="Reading submodes">
+                <button class="submode-tab active" type="button" data-skill="read" data-submode="lesson">&#19971;&#23618;&#27721;&#23383;</button>
+                <button class="submode-tab" type="button" data-skill="read" data-submode="scene">&#22330;&#26223;&#38405;&#35835;</button>
               </div>
-              <div class="match-board" id="readingBoard">
-                <div>
-                  <p class="label">&#27721;&#23383;</p>
-                  <div class="match-column" id="readingTextCards"></div>
+              <div class="submode-panel active" id="readingLessonPanel" data-read-panel="lesson">
+                <div class="target-box" id="characterLessonBox"></div>
+                <div class="match-board" id="readingBoard">
+                  <div>
+                    <p class="label">&#32452;&#35789;&#37197;&#23545;&#65306;&#27721;&#23383;</p>
+                    <div class="match-column" id="readingTextCards"></div>
+                  </div>
+                  <div>
+                    <p class="label">&#25340;&#38899;</p>
+                    <div class="match-column" id="readingPinyinCards"></div>
+                  </div>
                 </div>
-                <div>
-                  <p class="label">&#25340;&#38899;</p>
-                  <div class="match-column" id="readingPinyinCards"></div>
+                <div class="sentence-practice">
+                  <textarea id="readingSentenceInput" rows="2" placeholder="&#29992;&#30446;&#26631;&#23383;&#36896;&#19968;&#21477;&#20013;&#25991;"></textarea>
+                  <button class="primary-button" id="evaluateReadingButton" type="button">&#35780;&#20998;&#36896;&#21477;</button>
                 </div>
+                <div class="score-area" id="readingScore"></div>
               </div>
-              <div class="score-area" id="readingScore"></div>
+              <div class="submode-panel" id="readingScenePanel" data-read-panel="scene">
+                <div class="target-box" id="readingPassageBox"></div>
+                <div class="scene-questions" id="readingQuestions"></div>
+                <div class="score-area" id="readingSceneScore"></div>
+              </div>
             </section>
 
             <section class="skill-panel mode-pane" id="listenPane" data-pane="listen" role="tabpanel" aria-labelledby="listenTab" aria-label="Listening practice">
               <header class="skill-head">
                 <div>
-                  <p class="eyebrow">Current Reply Practice</p>
-                  <h2>&#21548;&#65306;&#22768;&#35843;</h2>
+                  <p class="eyebrow">Scenario Listening</p>
+                  <h2>&#21548;&#65306;&#22768;&#35843;&#19982;&#22330;&#26223;&#21548;&#21147;</h2>
                 </div>
                 <button class="play-button" id="resetListeningButton" type="button">&#37325;&#26469;</button>
               </header>
-              <div class="target-box">
-                <p class="label">&#21548;&#19968;&#19979;&#65292;&#36873;&#22768;&#35843;</p>
-                <p class="target-text" id="listeningPrompt">&#35831;&#20808;&#21644;&#33487;&#26848;&#32842;&#19968;&#21477;&#12290;</p>
-                <p class="target-pinyin" id="listeningProgress"></p>
-                <p class="target-hint" id="listeningHint">&#25773;&#25918;&#21518;&#36873;&#36825;&#20010;&#23383;&#30340;&#22768;&#35843;&#12290;</p>
+              <div class="skill-subtabs" role="tablist" aria-label="Listening submodes">
+                <button class="submode-tab active" type="button" data-skill="listen" data-submode="tone">&#22768;&#35843;&#36776;&#21035;</button>
+                <button class="submode-tab" type="button" data-skill="listen" data-submode="scene">&#22330;&#26223;&#21548;&#21147;</button>
               </div>
-              <div class="listening-actions">
-                <button class="play-button" id="playListeningButton" type="button">&#25773;&#25918;</button>
-                <div class="tone-options" id="toneOptions"></div>
+              <div class="submode-panel active" id="listeningTonePanel" data-listen-panel="tone">
+                <div class="target-box">
+                  <p class="label">&#21548;&#19968;&#19979;&#65292;&#36873;&#22768;&#35843;</p>
+                  <p class="target-text" id="listeningPrompt">&#35831;&#20808;&#36873;&#25321;&#22330;&#26223;&#35838;&#31243;&#12290;</p>
+                  <p class="target-pinyin" id="listeningProgress"></p>
+                  <p class="target-hint" id="listeningHint">&#25773;&#25918;&#21518;&#36873;&#36825;&#20010;&#23383;&#30340;&#22768;&#35843;&#12290;</p>
+                </div>
+                <div class="listening-actions">
+                  <button class="play-button" id="playListeningButton" type="button">&#25773;&#25918;</button>
+                  <button class="play-button" id="voiceToneButton" type="button">&#35821;&#38899;&#22238;&#31572;</button>
+                  <div class="tone-options" id="toneOptions"></div>
+                </div>
+                <div class="score-area" id="listeningScore"></div>
               </div>
-              <div class="score-area" id="listeningScore"></div>
+              <div class="submode-panel" id="listeningScenePanel" data-listen-panel="scene">
+                <div class="target-box" id="sceneTranscriptBox"></div>
+                <div class="listening-actions">
+                  <button class="primary-button" id="playSceneAudioButton" type="button">&#25773;&#25918;&#22330;&#26223;&#38899;&#39057;</button>
+                  <button class="play-button" id="showSceneTranscriptButton" type="button">&#26597;&#30475;&#25991;&#26412;&#21644;&#25340;&#38899;</button>
+                </div>
+                <div class="scene-questions" id="listeningSceneQuestions"></div>
+                <div class="score-area" id="listeningSceneScore"></div>
+              </div>
             </section>
 
             <section class="skill-panel mode-pane" id="speakPane" data-pane="speak" role="tabpanel" aria-labelledby="speakTab" aria-label="Speaking practice">
               <header class="skill-head">
                 <div>
-                  <p class="eyebrow">Current Reply Practice</p>
-                  <h2>&#35828;&#65306;&#36319;&#35835;</h2>
+                  <p class="eyebrow">Scenario Speaking</p>
+                  <h2>&#35828;&#65306;&#36319;&#35835;&#19982;&#22330;&#26223;&#23545;&#35805;</h2>
                 </div>
               </header>
-              <div class="target-box">
-                <p class="label">&#36319;&#35835;&#30446;&#26631;</p>
-                <p class="target-text" id="speakingTarget">&#35831;&#20808;&#21644;&#33487;&#26848;&#32842;&#19968;&#21477;&#12290;</p>
-                <p class="target-pinyin" id="speakingPinyin"></p>
+              <div class="skill-subtabs" role="tablist" aria-label="Speaking submodes">
+                <button class="submode-tab active" type="button" data-skill="speak" data-submode="shadow">&#36319;&#35835;&#32451;&#20064;</button>
+                <button class="submode-tab" type="button" data-skill="speak" data-submode="dialogue">&#22330;&#26223;&#23545;&#35805;</button>
               </div>
-              <div class="skill-controls">
-                <label>
-                  <span>&#35780;&#20998;&#27169;&#24335;</span>
-                  <select id="speakingMode">
-                    <option value="transcript">&#36716;&#20889;&#35780;&#20998;</option>
-                    <option value="audio">&#38899;&#39057;&#35780;&#20998;</option>
-                  </select>
-                </label>
-                <button class="play-button" id="playTargetButton" type="button">&#25773;&#25918;&#31034;&#33539;</button>
-                <button class="primary-button" id="shadowButton" type="button">&#24405;&#38899;&#36319;&#35835;</button>
+              <div class="submode-panel active" id="speakingShadowPanel" data-speak-panel="shadow">
+                <div class="target-box">
+                  <p class="label">&#36319;&#35835;&#30446;&#26631;</p>
+                  <p class="target-text" id="speakingTarget">&#35831;&#20808;&#36873;&#25321;&#22330;&#26223;&#35838;&#31243;&#12290;</p>
+                  <p class="target-pinyin" id="speakingPinyin"></p>
+                </div>
+                <div class="skill-controls">
+                  <label>
+                    <span>&#35780;&#20998;&#27169;&#24335;</span>
+                    <select id="speakingMode">
+                      <option value="audio">&#38899;&#39057;&#35780;&#20998;</option>
+                      <option value="transcript">&#36716;&#20889;&#35780;&#20998;</option>
+                    </select>
+                  </label>
+                  <button class="play-button" id="playTargetButton" type="button">&#25773;&#25918; Luming &#31034;&#33539;</button>
+                  <button class="primary-button" id="shadowButton" type="button">&#24405;&#38899;&#36319;&#35835;</button>
+                </div>
+                <div class="score-area" id="speakingScore"></div>
               </div>
-              <div class="score-area" id="speakingScore"></div>
+              <div class="submode-panel" id="speakingDialoguePanel" data-speak-panel="dialogue">
+                <div class="target-box">
+                  <p class="label">&#20320;&#30340;&#22330;&#26223;&#20219;&#21153;</p>
+                  <p class="target-text" id="dialogueRole"></p>
+                  <p class="target-hint" id="dialogueTask"></p>
+                </div>
+                <div class="choice-row" id="dialogueChoices"></div>
+                <textarea id="dialogueInput" rows="2" placeholder="&#29992;&#20013;&#25991;&#33258;&#30001;&#22238;&#24212;"></textarea>
+                <div class="skill-controls">
+                  <button class="play-button" id="dialogueRecordButton" type="button">&#35821;&#38899;&#22238;&#24212;</button>
+                  <button class="primary-button" id="sendDialogueButton" type="button">&#21457;&#36865;&#23545;&#35805;</button>
+                </div>
+                <div class="score-area" id="dialogueScore"></div>
+              </div>
             </section>
 
             <section class="skill-panel mode-pane" id="writePane" data-pane="write" role="tabpanel" aria-labelledby="writeTab" aria-label="Writing practice">
               <header class="skill-head">
                 <div>
-                  <p class="eyebrow">Current Reply Practice</p>
-                  <h2>&#20889;&#65306;&#25163;&#20889;</h2>
+                  <p class="eyebrow">Scenario Writing</p>
+                  <h2>&#20889;&#65306;&#31508;&#39034;&#25163;&#20889;&#19982;&#36896;&#21477;</h2>
                 </div>
               </header>
-              <div class="writing-toolbar">
-                <label>
-                  <span>&#20070;&#20889;&#30446;&#26631;</span>
-                  <select id="writingTarget"></select>
-                </label>
-                <label>
-                  <span>&#35780;&#20998;&#27169;&#24335;</span>
-                  <select id="writingMode">
-                    <option value="self">&#20020;&#25721;&#33258;&#26597;</option>
-                    <option value="ai">AI/OCR &#21028;&#26029;</option>
-                  </select>
-                </label>
-                <label class="toggle writing-trace">
-                  <input id="traceToggle" type="checkbox" checked />
-                  &#25551;&#32418;
-                </label>
+              <div class="skill-subtabs" role="tablist" aria-label="Writing submodes">
+                <button class="submode-tab active" type="button" data-skill="write" data-submode="hand">&#31508;&#39034;&#25163;&#20889;</button>
+                <button class="submode-tab" type="button" data-skill="write" data-submode="sentence">&#36896;&#21477;&#36755;&#20837;</button>
               </div>
-              <div class="canvas-wrap">
-                <canvas id="writingCanvas" width="360" height="360" aria-label="Handwriting canvas"></canvas>
-                <div class="trace-character" id="traceCharacter" aria-hidden="true"></div>
+              <div class="submode-panel active" id="writingHandPanel" data-write-panel="hand">
+                <div class="writing-toolbar">
+                  <label>
+                    <span>&#20070;&#20889;&#30446;&#26631;</span>
+                    <select id="writingTarget"></select>
+                  </label>
+                  <label>
+                    <span>&#35780;&#20998;&#27169;&#24335;</span>
+                    <select id="writingMode">
+                      <option value="ai">AI + &#31508;&#39034;&#35780;&#20998;</option>
+                      <option value="stroke">&#31508;&#39034;&#26412;&#22320;&#35780;&#20998;</option>
+                      <option value="self">&#20020;&#25721;&#33258;&#26597;</option>
+                    </select>
+                  </label>
+                  <label class="toggle writing-trace">
+                    <input id="traceToggle" type="checkbox" checked />
+                    &#25551;&#32418;
+                  </label>
+                </div>
+                <div class="canvas-wrap">
+                  <canvas id="writingCanvas" width="360" height="360" aria-label="Handwriting canvas"></canvas>
+                  <div class="trace-character" id="traceCharacter" aria-hidden="true"></div>
+                  <canvas id="particleCanvas" width="360" height="360" aria-hidden="true"></canvas>
+                </div>
+                <div class="canvas-actions">
+                  <button class="play-button" id="undoStrokeButton" type="button">&#25764;&#38144;</button>
+                  <button class="play-button" id="clearCanvasButton" type="button">&#28165;&#31354;</button>
+                  <button class="play-button" id="saveCanvasButton" type="button">&#20445;&#23384;</button>
+                  <button class="primary-button" id="evaluateWritingButton" type="button">&#35780;&#20998;</button>
+                </div>
+                <div class="score-area" id="writingScore"></div>
               </div>
-              <div class="canvas-actions">
-                <button class="play-button" id="undoStrokeButton" type="button">&#25764;&#38144;</button>
-                <button class="play-button" id="clearCanvasButton" type="button">&#28165;&#31354;</button>
-                <button class="play-button" id="saveCanvasButton" type="button">&#20445;&#23384;</button>
-                <button class="primary-button" id="evaluateWritingButton" type="button">&#35780;&#20998;</button>
+              <div class="submode-panel" id="writingSentencePanel" data-write-panel="sentence">
+                <div class="target-box">
+                  <p class="label">&#36896;&#21477;&#20219;&#21153;</p>
+                  <p class="target-text" id="writingSentencePrompt"></p>
+                </div>
+                <textarea id="writingSentenceInput" rows="3" placeholder="&#36755;&#20837;&#19968;&#21477;&#20013;&#25991;&#12290;"></textarea>
+                <button class="primary-button" id="evaluateWritingSentenceButton" type="button">&#35780;&#20998;&#36896;&#21477;</button>
+                <div class="score-area" id="writingSentenceScore"></div>
               </div>
-              <div class="score-area" id="writingScore"></div>
             </section>
           </section>
         </section>
