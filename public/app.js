@@ -736,13 +736,39 @@ function renderRadar(container, result, labels) {
     `;
   }).join("");
   const feedback = Array.isArray(result.feedback) ? result.feedback.map((item) => `<li>${escapeHtml(item)}</li>`).join("") : "";
+  const modeLabels = {
+    audio: "\u97f3\u9891\u8bc4\u5206",
+    transcript: "\u8f6c\u5199\u8bc4\u5206",
+    ai: "AI \u8bc4\u5206",
+    self: "\u81ea\u67e5\u8bc4\u5206",
+    "self-fallback": "\u81ea\u67e5\u515c\u5e95"
+  };
+  const modeLabel = modeLabels[result.modeUsed] || modeLabels[result.modeRequested] || result.modeUsed || result.modeRequested || "";
+  const fallbackNote = result.modeRequested === "audio" && result.modeUsed !== "audio" ? `<p class="score-note">\u672a\u4f7f\u7528\u97f3\u9891\u8bc4\u5206\uff0c\u5df2\u5207\u56de\u8f6c\u5199\u8bc4\u5206\u3002</p>` : "";
+  const fallbackReasons = {
+    "vision-not-configured": "\u672a\u914d\u7f6e\u53ef\u7528\u7684\u89c6\u89c9\u8bc4\u5206\u6a21\u578b\u3002",
+    "invalid-image": "\u624b\u5199\u56fe\u7247\u65e0\u6548\uff0c\u8bf7\u6e05\u7a7a\u540e\u91cd\u5199\u3002",
+    "vision-request-failed": "\u89c6\u89c9\u8bc4\u5206\u8bf7\u6c42\u5931\u8d25\uff0c\u5df2\u5207\u56de\u81ea\u67e5\u3002",
+    "vision-invalid-response": "\u89c6\u89c9\u6a21\u578b\u672a\u8fd4\u56de\u6709\u6548\u8bc4\u5206\uff0c\u5df2\u5207\u56de\u81ea\u67e5\u3002"
+  };
+  const reasonNote = result.fallbackReason ? `<p class="score-note">${escapeHtml(fallbackReasons[result.fallbackReason] || result.fallbackReason)}</p>` : "";
+  const audioMetrics = result.audioMetrics ? `
+    <p class="score-note">
+      \u5f55\u97f3 ${escapeHtml(result.audioMetrics.durationSeconds)}s\uff0c\u6709\u6548\u8bed\u97f3 ${Math.round(Number(result.audioMetrics.voicedRatio || 0) * 100)}%\uff0c\u505c\u987f ${escapeHtml(result.audioMetrics.pauseCount)} \u6b21
+    </p>
+  ` : "";
+  const recognizedText = result.recognizedText ? `<p class="score-note">\u8bc6\u522b\uff1a${escapeHtml(result.recognizedText)}</p>` : "";
   container.innerHTML = `
     <div class="score-card">
       <div class="score-summary">
-        <span>${escapeHtml(result.modeUsed || result.modeRequested || "")}</span>
+        <span>${escapeHtml(modeLabel)}</span>
         <strong>${Math.round(Number(result.score) || 0)}</strong>
       </div>
       <div class="radar-list">${rows}</div>
+      ${fallbackNote}
+      ${reasonNote}
+      ${audioMetrics}
+      ${recognizedText}
       ${result.transcript ? `<p class="transcript"><span>识别：</span>${escapeHtml(result.transcript)}</p>` : ""}
       ${feedback ? `<ul class="feedback-list">${feedback}</ul>` : ""}
     </div>
