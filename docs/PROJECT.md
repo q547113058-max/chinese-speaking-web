@@ -42,6 +42,8 @@ chinese-speaking-web/
 - `POST /api/transcribe`：接收浏览器上传的音频，返回英文转写。
 - `POST /api/practice`：接收英文文本和练习设置，返回中文、拼音、解释和建议。
 - `POST /api/tts`：接收中文文本和语速，返回 MP3 音频；无 API key 时返回 `{ "fallback": true }`。
+- API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
+- JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
 
 ## 前端结构
