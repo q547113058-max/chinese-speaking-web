@@ -121,6 +121,12 @@ STT_TARGET_LANGUAGE=zh
 ```
 
 The browser records 16 kHz mono PCM and uploads it to `/api/transcribe`. The server streams that PCM to Qwen realtime and returns the source-language transcript.
+
+## API safety limits
+
+API routes use exact path matching. For example, `/api/health-check` is not treated as `/api/health`.
+
+JSON request bodies are limited to 256 KB. Audio upload bodies are limited to 8 MB.
 ## Local persona and context
 
 The app does not require accounts. It stores practice state in the browser:
