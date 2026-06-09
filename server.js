@@ -1,4 +1,4 @@
-﻿import http from "node:http";
+import http from "node:http";
 import { readFile } from "node:fs/promises";
 import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { extname, join, normalize } from "node:path";
@@ -40,6 +40,8 @@ const qwenSttModel = process.env.STT_MODEL || "qwen3.5-livetranslate-flash-realt
 const qwenAsrModel = process.env.STT_TRANSCRIPTION_MODEL || "qwen3-asr-flash-realtime";
 const sttSourceLanguage = process.env.STT_SOURCE_LANGUAGE || "en";
 const sttTargetLanguage = process.env.STT_TARGET_LANGUAGE || "zh";
+const jsonBodyLimitBytes = 256 * 1024;
+const audioBodyLimitBytes = 8 * 1024 * 1024;
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -64,10 +66,19 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
-async function readRequestBody(req) {
+async function readRequestBody(req, maxBytes = jsonBodyLimitBytes) {
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let totalBytes = 0;
+  for await (const chunk of req) {
+    totalBytes += chunk.length;
+    if (totalBytes > maxBytes) throw new Error("Request body too large.");
+    chunks.push(chunk);
+  }
   return Buffer.concat(chunks);
+}
+
+async function readJsonBody(req) {
+  return JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
 }
 
 function parseMultipart(buffer, contentType) {
@@ -274,7 +285,7 @@ Learner just said: ${text}`
 }
 
 async function transcribeAudio(req) {
-  const body = await readRequestBody(req);
+  const body = await readRequestBody(req, audioBodyLimitBytes);
   const parts = parseMultipart(body, req.headers["content-type"] || "");
   const file = parts.find((part) => part.name === "audio");
   if (!file) throw new Error("No audio file received.");
@@ -521,30 +532,32 @@ async function serveStatic(req, res) {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === "GET" && req.url?.startsWith("/api/health")) {
+    const { pathname } = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+
+    if (req.method === "GET" && pathname === "/api/health") {
       sendJson(res, 200, { ok: true, aiEnabled: Boolean(chatApiKey) });
       return;
     }
 
-    if (req.method === "POST" && req.url?.startsWith("/api/transcribe")) {
+    if (req.method === "POST" && pathname === "/api/transcribe") {
       sendJson(res, 200, await transcribeAudio(req));
       return;
     }
 
-    if (req.method === "POST" && req.url?.startsWith("/api/practice")) {
-      const body = JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
+    if (req.method === "POST" && pathname === "/api/practice") {
+      const body = await readJsonBody(req);
       sendJson(res, 200, await generatePracticeReply(body.text || "", body.settings || {}, body.context || {}));
       return;
     }
 
-    if (req.method === "POST" && req.url?.startsWith("/api/persona")) {
-      const body = JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
+    if (req.method === "POST" && pathname === "/api/persona") {
+      const body = await readJsonBody(req);
       sendJson(res, 200, fallbackPersona(body.settings || {}));
       return;
     }
 
-    if (req.method === "POST" && req.url?.startsWith("/api/tts")) {
-      const body = JSON.parse((await readRequestBody(req)).toString("utf8") || "{}");
+    if (req.method === "POST" && pathname === "/api/tts") {
+      const body = await readJsonBody(req);
       const audio = await synthesizeSpeech(body.text || "", body.speed);
       if (!audio) {
         sendJson(res, 200, { fallback: true });
@@ -570,5 +583,3 @@ server.listen(port, () => {
   console.log(`Chinese speaking coach running at http://localhost:${port}`);
   console.log(chatApiKey ? `AI mode enabled with ${chatModel}.` : "No CHAT_API_KEY or OPENAI_API_KEY found. Using mock practice replies.");
 });
-
-
