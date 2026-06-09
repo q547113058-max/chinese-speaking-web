@@ -28,6 +28,9 @@ const port = Number(process.env.PORT || 5173);
 const chatApiKey = process.env.CHAT_API_KEY || process.env.OPENAI_API_KEY;
 const chatBaseUrl = (process.env.CHAT_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
 const chatModel = process.env.CHAT_MODEL || process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini";
+const visionApiKey = process.env.VISION_API_KEY || process.env.CHAT_API_KEY || process.env.OPENAI_API_KEY;
+const visionBaseUrl = (process.env.VISION_BASE_URL || process.env.CHAT_BASE_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+const visionModel = process.env.VISION_MODEL || process.env.OPENAI_VISION_MODEL || process.env.CHAT_MODEL || process.env.OPENAI_CHAT_MODEL || "gpt-4.1-mini";
 const ttsProvider = (process.env.TTS_PROVIDER || (process.env.TTS_API_KEY || process.env.CHAT_API_KEY ? "minimax" : "openai")).toLowerCase();
 const ttsApiKey = process.env.TTS_API_KEY || process.env.CHAT_API_KEY || process.env.OPENAI_API_KEY;
 const minimaxTtsBaseUrl = (process.env.TTS_BASE_URL || "https://api.minimaxi.com/v1").replace(/\/+$/, "");
@@ -182,6 +185,152 @@ function textSimilarity(target = "", actual = "") {
   const actualChars = new Set([...actualText]);
   const matched = targetChars.filter((char) => actualChars.has(char)).length;
   return clampScore((matched / targetChars.length) * 100);
+}
+
+function estimateSpeakingDurationSeconds(text = "") {
+  const hanCount = [...String(text).matchAll(/\p{Script=Han}/gu)].length;
+  const latinWordCount = String(text).match(/[a-z0-9]+/gi)?.length || 0;
+  const unitCount = Math.max(1, hanCount || latinWordCount);
+  return Math.max(0.9, unitCount * 0.42);
+}
+
+function readPcm16Samples(audioBuffer) {
+  if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length < 2) return [];
+  const sampleCount = Math.floor(audioBuffer.length / 2);
+  const samples = new Array(sampleCount);
+  for (let index = 0; index < sampleCount; index += 1) {
+    samples[index] = audioBuffer.readInt16LE(index * 2) / 32768;
+  }
+  return samples;
+}
+
+function analyzePcm16Audio(audioBuffer, targetText = "") {
+  const samples = readPcm16Samples(audioBuffer);
+  const sampleRate = 16000;
+  if (samples.length === 0) {
+    return {
+      durationSeconds: 0,
+      expectedSeconds: estimateSpeakingDurationSeconds(targetText),
+      rms: 0,
+      peak: 0,
+      voicedRatio: 0,
+      pauseCount: 0,
+      energyVariation: 0,
+      valid: false
+    };
+  }
+
+  let sumSquares = 0;
+  let peak = 0;
+  for (const sample of samples) {
+    const absolute = Math.abs(sample);
+    sumSquares += sample * sample;
+    if (absolute > peak) peak = absolute;
+  }
+
+  const frameSize = Math.floor(sampleRate * 0.05);
+  const frameEnergies = [];
+  let voicedFrames = 0;
+  let pauseCount = 0;
+  let previousVoiced = false;
+  const speechThreshold = 0.012;
+
+  for (let start = 0; start < samples.length; start += frameSize) {
+    const end = Math.min(samples.length, start + frameSize);
+    let frameSquares = 0;
+    for (let index = start; index < end; index += 1) {
+      frameSquares += samples[index] * samples[index];
+    }
+    const frameRms = Math.sqrt(frameSquares / Math.max(1, end - start));
+    const voiced = frameRms >= speechThreshold;
+    frameEnergies.push(frameRms);
+    if (voiced) voicedFrames += 1;
+    if (!voiced && previousVoiced) pauseCount += 1;
+    previousVoiced = voiced;
+  }
+
+  const meanEnergy = frameEnergies.reduce((sum, value) => sum + value, 0) / Math.max(1, frameEnergies.length);
+  const energyVariance = frameEnergies.reduce((sum, value) => sum + ((value - meanEnergy) ** 2), 0) / Math.max(1, frameEnergies.length);
+  const energyVariation = Math.sqrt(energyVariance) / Math.max(0.001, meanEnergy);
+
+  return {
+    durationSeconds: samples.length / sampleRate,
+    expectedSeconds: estimateSpeakingDurationSeconds(targetText),
+    rms: Math.sqrt(sumSquares / samples.length),
+    peak,
+    voicedRatio: voicedFrames / Math.max(1, frameEnergies.length),
+    pauseCount,
+    energyVariation,
+    valid: true
+  };
+}
+
+function scoreAudioMetrics(metrics, targetText = "", transcript = "") {
+  if (!metrics.valid || metrics.rms < 0.004 || metrics.peak < 0.02 || metrics.voicedRatio < 0.08) {
+    const radar = {
+      accuracy: textSimilarity(targetText, transcript),
+      completeness: 10,
+      fluency: 10,
+      tone: 10,
+      rhythm: 10
+    };
+    return {
+      radar,
+      feedback: [
+        "录音声音太小或有效语音太少，请靠近麦克风再录一次。",
+        "先播放示范，跟着同样的速度完整读完目标句。",
+        "录音时尽量减少停顿和背景噪音。"
+      ]
+    };
+  }
+
+  const durationRatio = metrics.durationSeconds / Math.max(0.1, metrics.expectedSeconds);
+  const durationFit = clampScore(100 - Math.abs(1 - durationRatio) * 85);
+  const voicePresence = clampScore(metrics.voicedRatio * 135);
+  const loudness = clampScore(100 - Math.abs(metrics.rms - 0.08) * 620);
+  const clippingPenalty = metrics.peak > 0.97 ? 18 : 0;
+  const pauseScore = clampScore(100 - Math.max(0, metrics.pauseCount - 2) * 14);
+  const variationScore = clampScore(100 - Math.abs(metrics.energyVariation - 0.75) * 45);
+  const transcriptAccuracy = textSimilarity(targetText, transcript);
+  const transcriptCompleteness = transcript
+    ? Math.min(100, Math.round((normalizeChineseText(transcript).length / Math.max(1, normalizeChineseText(targetText).length)) * 100))
+    : 0;
+
+  const radar = {
+    accuracy: transcript ? clampScore((transcriptAccuracy * 0.72) + (durationFit * 0.28)) : clampScore((durationFit * 0.45) + (voicePresence * 0.55)),
+    completeness: transcript ? clampScore((transcriptCompleteness * 0.65) + (voicePresence * 0.35)) : clampScore((durationFit * 0.5) + (voicePresence * 0.5)),
+    fluency: clampScore((durationFit * 0.35) + (voicePresence * 0.3) + (pauseScore * 0.35)),
+    tone: clampScore((variationScore * 0.45) + (loudness * 0.25) + (transcriptAccuracy || durationFit) * 0.3 - clippingPenalty),
+    rhythm: clampScore((durationFit * 0.45) + (pauseScore * 0.35) + (variationScore * 0.2))
+  };
+
+  const feedback = [
+    radar.accuracy >= 78 ? "录音和目标句整体比较接近，可以继续保持。" : "先把目标句分成两小段，确保每个字都读出来。",
+    radar.fluency >= 76 ? "语速和停顿比较自然。" : "跟读时可以稍微放慢，减少中间停顿。",
+    radar.tone >= 76 ? "声音起伏比较清楚，声调练习方向是对的。" : "注意把声调的高低变化读出来，尤其是三声和轻声。"
+  ];
+
+  return { radar, feedback };
+}
+
+function fallbackAudioSpeakingScore({ targetText = "", targetPinyin = "", transcript = "", mode = "audio", audioBuffer }) {
+  const metrics = analyzePcm16Audio(audioBuffer, targetText);
+  const acoustic = scoreAudioMetrics(metrics, targetText, transcript);
+  return {
+    modeRequested: mode,
+    modeUsed: "audio",
+    transcript,
+    score: averageScores(acoustic.radar),
+    radar: acoustic.radar,
+    audioMetrics: {
+      durationSeconds: Number(metrics.durationSeconds.toFixed(2)),
+      expectedSeconds: Number(metrics.expectedSeconds.toFixed(2)),
+      voicedRatio: Number(metrics.voicedRatio.toFixed(2)),
+      pauseCount: metrics.pauseCount,
+      rms: Number(metrics.rms.toFixed(4))
+    },
+    feedback: acoustic.feedback
+  };
 }
 
 const toneMarks = {
@@ -352,8 +501,12 @@ function fallbackSpeakingScore({ targetText = "", transcript = "", mode = "trans
   };
 }
 
-async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mode }) {
-  if (!chatApiKey) return fallbackSpeakingScore({ targetText, transcript, mode });
+async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mode, audioBuffer }) {
+  const fallback = mode === "audio"
+    ? () => fallbackAudioSpeakingScore({ targetText, targetPinyin, transcript, mode, audioBuffer })
+    : () => fallbackSpeakingScore({ targetText, transcript, mode });
+
+  if (!chatApiKey) return fallback();
 
   const response = await fetch(`${chatBaseUrl}/chat/completions`, {
     method: "POST",
@@ -367,22 +520,29 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
         {
           role: "system",
           content:
-            "Score a Mandarin learner's shadowing attempt. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical."
+            mode === "audio"
+              ? "Score a Mandarin learner's shadowing attempt using the transcript and acoustic measurements. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical. Do not claim to perform phoneme-level pronunciation scoring."
+              : "Score a Mandarin learner's shadowing attempt using the transcript. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical."
         },
         {
           role: "user",
-          content: `Target Chinese: ${targetText}\nTarget pinyin: ${targetPinyin || "(none)"}\nLearner transcript: ${transcript || "(empty)"}`
+          content: `Target Chinese: ${targetText}\nTarget pinyin: ${targetPinyin || "(none)"}\nLearner transcript: ${transcript || "(empty)"}${
+            mode === "audio" && audioBuffer
+              ? `\nAcoustic fallback score: ${JSON.stringify(fallbackAudioSpeakingScore({ targetText, targetPinyin, transcript, mode, audioBuffer }).audioMetrics)}`
+              : ""
+          }`
         }
       ]
     })
   });
 
-  if (!response.ok) return fallbackSpeakingScore({ targetText, transcript, mode });
+  if (!response.ok) return fallback();
 
   try {
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
     const parsed = extractJson(content);
+    const acoustic = mode === "audio" && audioBuffer ? fallbackAudioSpeakingScore({ targetText, targetPinyin, transcript, mode, audioBuffer }) : null;
     const radar = {
       accuracy: clampScore(parsed.radar?.accuracy),
       completeness: clampScore(parsed.radar?.completeness),
@@ -390,16 +550,28 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
       tone: clampScore(parsed.radar?.tone),
       rhythm: clampScore(parsed.radar?.rhythm)
     };
+    const hasModelRadar = ["accuracy", "completeness", "fluency", "tone", "rhythm"].some((key) => parsed.radar?.[key] !== undefined);
+    if (mode === "audio" && acoustic && !hasModelRadar) return acoustic;
+    const finalRadar = mode === "audio" && acoustic
+      ? {
+          accuracy: clampScore((radar.accuracy * 0.72) + (acoustic.radar.accuracy * 0.28)),
+          completeness: clampScore((radar.completeness * 0.72) + (acoustic.radar.completeness * 0.28)),
+          fluency: clampScore((radar.fluency * 0.58) + (acoustic.radar.fluency * 0.42)),
+          tone: clampScore((radar.tone * 0.58) + (acoustic.radar.tone * 0.42)),
+          rhythm: clampScore((radar.rhythm * 0.5) + (acoustic.radar.rhythm * 0.5))
+        }
+      : radar;
     return {
       modeRequested: mode,
-      modeUsed: mode === "audio" ? "transcript" : "transcript",
+      modeUsed: mode === "audio" ? "audio" : "transcript",
       transcript,
-      score: clampScore(parsed.score || averageScores(radar)),
-      radar,
-      feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 3).map(String) : fallbackSpeakingScore({ targetText, transcript, mode }).feedback
+      score: clampScore(mode === "audio" ? averageScores(finalRadar) : (parsed.score || averageScores(finalRadar))),
+      radar: finalRadar,
+      ...(acoustic ? { audioMetrics: acoustic.audioMetrics } : {}),
+      feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 3).map(String) : fallback().feedback
     };
   } catch {
-    return fallbackSpeakingScore({ targetText, transcript, mode });
+    return fallback();
   }
 }
 
@@ -412,11 +584,17 @@ async function evaluateSpeaking(req) {
   const mode = parts.find((part) => part.name === "mode")?.data.toString("utf8") || "transcript";
   if (!file) throw new Error("No audio file received.");
 
-  const transcript = (await transcribeAudioFromBuffer(file.data, file.type, file.filename)).transcript || "";
-  return scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mode });
+  let transcript = "";
+  try {
+    const transcription = await transcribeAudioFromBuffer(file.data, file.type, file.filename);
+    transcript = mode === "audio" && transcription.fallback ? "" : (transcription.transcript || "");
+  } catch (error) {
+    if (mode !== "audio") throw error;
+  }
+  return scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mode, audioBuffer: file.data });
 }
 
-function fallbackWritingScore({ mode = "self", targetText = "" }) {
+function fallbackWritingScore({ mode = "self", targetText = "", fallbackReason = "" }) {
   const radar = {
     targetMatch: mode === "ai" ? 0 : 75,
     structure: mode === "ai" ? 0 : 75,
@@ -428,6 +606,7 @@ function fallbackWritingScore({ mode = "self", targetText = "" }) {
   return {
     modeRequested: mode,
     modeUsed: mode === "ai" ? "self-fallback" : "self",
+    ...(fallbackReason ? { fallbackReason } : {}),
     score: averageScores(radar),
     radar,
     feedback: mode === "ai"
@@ -436,12 +615,93 @@ function fallbackWritingScore({ mode = "self", targetText = "" }) {
   };
 }
 
+function normalizeWritingImageData(imageData = "") {
+  const data = String(imageData || "").trim();
+  if (!data) return "";
+  if (/^data:image\/(png|jpeg|jpg|webp);base64,[a-z0-9+/=]+$/i.test(data)) return data;
+  if (/^[a-z0-9+/=]+$/i.test(data)) return `data:image/png;base64,${data}`;
+  return "";
+}
+
+function normalizeWritingVisionScore(parsed = {}, fallback) {
+  const radar = {
+    targetMatch: clampScore(parsed.radar?.targetMatch),
+    structure: clampScore(parsed.radar?.structure),
+    proportion: clampScore(parsed.radar?.proportion),
+    strokeClarity: clampScore(parsed.radar?.strokeClarity),
+    neatness: clampScore(parsed.radar?.neatness)
+  };
+  const hasRadar = ["targetMatch", "structure", "proportion", "strokeClarity", "neatness"].some((key) => parsed.radar?.[key] !== undefined);
+  if (!hasRadar) return fallback;
+  return {
+    modeRequested: "ai",
+    modeUsed: "ai",
+    score: clampScore(parsed.score || averageScores(radar)),
+    radar,
+    recognizedText: parsed.recognizedText ? String(parsed.recognizedText).slice(0, 20) : undefined,
+    feedback: Array.isArray(parsed.feedback) && parsed.feedback.length > 0
+      ? parsed.feedback.slice(0, 3).map(String)
+      : fallback.feedback
+  };
+}
+
+async function scoreWritingWithVision({ imageData = "", targetText = "", mode = "self" }) {
+  if (mode !== "ai") return fallbackWritingScore({ mode, targetText });
+
+  const fallback = fallbackWritingScore({ mode, targetText });
+  const normalizedImage = normalizeWritingImageData(imageData);
+  if (!visionApiKey) return fallbackWritingScore({ mode, targetText, fallbackReason: "vision-not-configured" });
+  if (!normalizedImage) return fallbackWritingScore({ mode, targetText, fallbackReason: "invalid-image" });
+
+  try {
+    const response = await fetch(`${visionBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${visionApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: visionModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a Mandarin handwriting practice evaluator. Inspect the learner's handwritten character or word image against the target Chinese text. Return strict JSON with keys: score, radar, feedback, recognizedText. radar must contain targetMatch, structure, proportion, strokeClarity, neatness, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be practical and do not overclaim certainty when the image is unclear."
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: `Target Chinese text: ${targetText || "(unknown)"}\nEvaluate whether the handwriting matches the target and give actionable practice advice.`
+              },
+              {
+                type: "image_url",
+                image_url: { url: normalizedImage }
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    if (!response.ok) return fallbackWritingScore({ mode, targetText, fallbackReason: "vision-request-failed" });
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
+    const parsed = extractJson(content || "");
+    return normalizeWritingVisionScore(parsed, fallback);
+  } catch {
+    return fallbackWritingScore({ mode, targetText, fallbackReason: "vision-invalid-response" });
+  }
+}
+
 async function evaluateWriting(req) {
   const body = await readJsonBody(req, writingImageLimitBytes);
   const mode = body.mode || "self";
   const imageData = String(body.imageData || "");
   if (imageData.length > writingImageLimitBytes) throw new Error("Writing image too large.");
-  return fallbackWritingScore({ mode, targetText: body.targetText || "" });
+  return scoreWritingWithVision({ imageData, targetText: body.targetText || "", mode });
 }
 
 function levelGuide(level = "beginner") {
@@ -583,12 +843,12 @@ async function transcribeAudio(req) {
 
 async function transcribeAudioFromBuffer(audioBuffer, type = "application/octet-stream", filename = "speech.pcm") {
   if (sttProvider === "qwen") {
-    if (!qwenSttApiKey) return { transcript: "I want to order coffee." };
+    if (!qwenSttApiKey) return { transcript: "I want to order coffee.", fallback: true };
     return { transcript: await transcribeQwenAudio(audioBuffer) };
   }
 
   if (!process.env.OPENAI_API_KEY) {
-    return { transcript: "I want to order coffee." };
+    return { transcript: "I want to order coffee.", fallback: true };
   }
 
   const formData = new FormData();
