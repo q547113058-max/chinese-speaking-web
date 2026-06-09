@@ -18,3 +18,4 @@
 - Add a floating typing indicator while a reply is being generated, auto-play generated Chinese replies, and make beginner/intermediate/advanced response behavior explicit in the model prompt.
 - Add visible difficulty descriptions, generated coach personas, and browser-local conversation context stored in `localStorage["chinese-speaking-coach-state"]`.
 - Initialize the coach from the supplied fixed persona, add a generated avatar asset, greet users as the persona on entry, show pinyin with tone marks, remove the bottom status bar, render saved conversation history, show all difficulty descriptions while selecting difficulty, and add a left-side persona card.
+- Fix API route matching so prefix paths such as `/api/health-check` no longer hit `/api/health`, add request body size limits, and remove the extra trailing blank line in `server.js`.
