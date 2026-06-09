@@ -16,6 +16,7 @@ const readingScore = document.querySelector("#readingScore");
 const resetReadingButton = document.querySelector("#resetReadingButton");
 const listeningPrompt = document.querySelector("#listeningPrompt");
 const listeningProgress = document.querySelector("#listeningProgress");
+const listeningHint = document.querySelector("#listeningHint");
 const toneOptions = document.querySelector("#toneOptions");
 const playListeningButton = document.querySelector("#playListeningButton");
 const resetListeningButton = document.querySelector("#resetListeningButton");
@@ -473,6 +474,7 @@ function renderListeningGame() {
   if (!listeningState?.items?.length) {
     listeningPrompt.textContent = "\u5f53\u524d\u56de\u590d\u6682\u65f6\u6ca1\u6709\u53ef\u5224\u65ad\u58f0\u8c03\u7684\u9898\u76ee\u3002";
     listeningProgress.textContent = "";
+    listeningHint.textContent = "\u9700\u8981\u5e26\u58f0\u8c03\u7684\u62fc\u97f3\u624d\u80fd\u751f\u6210\u542c\u529b\u9898\u3002";
     toneOptions.innerHTML = "";
     listeningScore.innerHTML = `<div class="score-card muted-card">\u9700\u8981\u5e26\u58f0\u8c03\u7684\u62fc\u97f3\u624d\u80fd\u751f\u6210\u542c\u529b\u9898\u3002</div>`;
     return;
@@ -483,6 +485,7 @@ function renderListeningGame() {
     const score = Math.round((listeningState.correct / total) * 100);
     listeningPrompt.textContent = "\u542c\u529b\u7ec3\u4e60\u5b8c\u6210";
     listeningProgress.textContent = `${listeningState.correct} / ${total}`;
+    listeningHint.textContent = "";
     toneOptions.innerHTML = "";
     listeningScore.innerHTML = `
       <div class="score-card">
@@ -498,8 +501,9 @@ function renderListeningGame() {
   }
 
   const item = listeningState.items[listeningState.index];
-  listeningPrompt.textContent = "\u542c\u8fd9\u4e2a\u5b57\uff0c\u9009\u5b83\u7684\u58f0\u8c03";
+  listeningPrompt.textContent = item.text;
   listeningProgress.textContent = `${listeningState.index + 1} / ${listeningState.items.length}`;
+  listeningHint.textContent = "\u64ad\u653e\u540e\u9009\u8fd9\u4e2a\u5b57\u7684\u58f0\u8c03\u3002";
   toneOptions.innerHTML = toneChoices.map((choice) => {
     const classes = ["tone-option"];
     if (listeningState.selectedTone === choice.tone) classes.push("selected");
