@@ -10,6 +10,15 @@ const showExplanation = document.querySelector("#showExplanation");
 const modeTabs = document.querySelectorAll(".mode-tab");
 const modePanes = document.querySelectorAll(".mode-pane");
 const composer = document.querySelector(".composer");
+const readingTextCards = document.querySelector("#readingTextCards");
+const readingPinyinCards = document.querySelector("#readingPinyinCards");
+const readingScore = document.querySelector("#readingScore");
+const resetReadingButton = document.querySelector("#resetReadingButton");
+const listeningPrompt = document.querySelector("#listeningPrompt");
+const listeningProgress = document.querySelector("#listeningProgress");
+const toneOptions = document.querySelector("#toneOptions");
+const playListeningButton = document.querySelector("#playListeningButton");
+const resetListeningButton = document.querySelector("#resetListeningButton");
 const speakingTarget = document.querySelector("#speakingTarget");
 const speakingPinyin = document.querySelector("#speakingPinyin");
 const speakingMode = document.querySelector("#speakingMode");
@@ -65,6 +74,8 @@ let writingCtx = null;
 let writingStrokes = [];
 let activeStroke = null;
 let currentMode = "chat";
+let readingState = null;
+let listeningState = null;
 
 const settings = () => ({
   level: level.value,
@@ -128,6 +139,94 @@ function escapeHtml(value) {
   });
 }
 
+const toneMarks = {
+  "\u0101": 1,
+  "\u0113": 1,
+  "\u012b": 1,
+  "\u014d": 1,
+  "\u016b": 1,
+  "\u01d6": 1,
+  "\u00e1": 2,
+  "\u00e9": 2,
+  "\u00ed": 2,
+  "\u00f3": 2,
+  "\u00fa": 2,
+  "\u01d8": 2,
+  "\u01ce": 3,
+  "\u011b": 3,
+  "\u01d0": 3,
+  "\u01d2": 3,
+  "\u01d4": 3,
+  "\u01da": 3,
+  "\u00e0": 4,
+  "\u00e8": 4,
+  "\u00ec": 4,
+  "\u00f2": 4,
+  "\u00f9": 4,
+  "\u01dc": 4,
+  "\u0100": 1,
+  "\u0112": 1,
+  "\u012a": 1,
+  "\u014c": 1,
+  "\u016a": 1,
+  "\u01d5": 1,
+  "\u00c1": 2,
+  "\u00c9": 2,
+  "\u00cd": 2,
+  "\u00d3": 2,
+  "\u00da": 2,
+  "\u01d7": 2,
+  "\u01cd": 3,
+  "\u011a": 3,
+  "\u01cf": 3,
+  "\u01d1": 3,
+  "\u01d3": 3,
+  "\u01d9": 3,
+  "\u00c0": 4,
+  "\u00c8": 4,
+  "\u00cc": 4,
+  "\u00d2": 4,
+  "\u00d9": 4,
+  "\u01db": 4
+};
+
+function pinyinTone(syllable = "") {
+  for (const char of String(syllable)) {
+    if (toneMarks[char]) return toneMarks[char];
+  }
+  const numbered = String(syllable).match(/[1-5]/);
+  if (numbered) return Number(numbered[0]);
+  return 0;
+}
+
+function pinyinSyllables(pinyin = "") {
+  return String(pinyin)
+    .replace(/[,.?!;:\u3002\uff0c\uff01\uff1f\uff1b\uff1a]/g, " ")
+    .split(/\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function readingListeningItems(text = "", pinyin = "") {
+  const chars = [...String(text).matchAll(/\p{Script=Han}/gu)].map((match) => match[0]).slice(0, 4);
+  const syllables = pinyinSyllables(pinyin);
+  const reading = chars.map((char, index) => ({
+    text: char,
+    pinyin: syllables[index] || ""
+  }));
+  const listening = reading
+    .map((item) => ({ ...item, tone: pinyinTone(item.pinyin) }))
+    .filter((item) => item.tone > 0);
+  return { reading, listening };
+}
+
+function shuffleItems(items = []) {
+  return items
+    .map((item) => ({ item, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ item }) => item);
+}
+
 function deriveExercise(payload = {}) {
   const chinese = String(payload.chinese || "").trim();
   const sentence = chinese.split(/[。！？!?]/).find(Boolean)?.trim() || chinese || "你好呀，我们开始练习吧";
@@ -144,7 +243,10 @@ function deriveExercise(payload = {}) {
     });
     if (items.length >= 3) break;
   }
+  const derived = readingListeningItems(sentence, payload.pinyin || "");
   return {
+    reading: { items: derived.reading },
+    listening: { items: derived.listening },
     speaking: { text: sentence, pinyin: payload.pinyin || "" },
     writing: { items }
   };
@@ -154,6 +256,12 @@ function normalizeExercise(payload = {}) {
   const fallback = deriveExercise(payload);
   const exercise = payload.exercise || fallback;
   return {
+    reading: {
+      items: Array.isArray(exercise.reading?.items) && exercise.reading.items.length > 0 ? exercise.reading.items.slice(0, 4) : fallback.reading.items
+    },
+    listening: {
+      items: Array.isArray(exercise.listening?.items) && exercise.listening.items.length > 0 ? exercise.listening.items.slice(0, 4) : fallback.listening.items
+    },
     speaking: {
       text: exercise.speaking?.text || fallback.speaking.text,
       pinyin: exercise.speaking?.pinyin || payload.pinyin || fallback.speaking.pinyin
@@ -221,8 +329,205 @@ function setCurrentExercise(payload = {}) {
     option.dataset.hint = item.hint || "";
     writingTarget.appendChild(option);
   }
+  resetReadingGame();
+  resetListeningGame();
   updateTraceCharacter();
   clearWritingCanvas();
+}
+
+function resetReadingGame() {
+  const items = (currentExercise?.reading?.items || [])
+    .filter((item) => item.text)
+    .slice(0, 4)
+    .map((item, index) => ({
+      id: `read-${index}`,
+      text: item.text,
+      pinyin: item.pinyin || "\u2014"
+    }));
+  readingState = {
+    items,
+    pinyinOrder: shuffleItems(items),
+    selectedText: null,
+    selectedPinyin: null,
+    wrong: [],
+    matched: new Set(),
+    attempts: 0,
+    startedAt: Date.now(),
+    completed: false
+  };
+  readingScore.innerHTML = "";
+  renderReadingGame();
+}
+
+function readingCardClass(side, item) {
+  const classes = ["match-card"];
+  if (readingState.matched.has(item.id)) classes.push("matched");
+  if ((side === "text" && readingState.selectedText === item.id) || (side === "pinyin" && readingState.selectedPinyin === item.id)) classes.push("selected");
+  if (readingState.wrong.includes(`${side}:${item.id}`)) classes.push("wrong");
+  return classes.join(" ");
+}
+
+function renderReadingGame() {
+  if (!readingState?.items?.length) {
+    readingTextCards.innerHTML = "";
+    readingPinyinCards.innerHTML = "";
+    readingScore.innerHTML = `<div class="score-card muted-card">\u5f53\u524d\u56de\u590d\u6682\u65f6\u6ca1\u6709\u53ef\u914d\u5bf9\u7684\u6c49\u5b57\u3002</div>`;
+    return;
+  }
+
+  readingTextCards.innerHTML = readingState.items.map((item) => `
+    <button class="${readingCardClass("text", item)}" type="button" data-side="text" data-id="${escapeHtml(item.id)}">${escapeHtml(item.text)}</button>
+  `).join("");
+  readingPinyinCards.innerHTML = readingState.pinyinOrder.map((item) => `
+    <button class="${readingCardClass("pinyin", item)}" type="button" data-side="pinyin" data-id="${escapeHtml(item.id)}">${escapeHtml(item.pinyin)}</button>
+  `).join("");
+
+  if (!readingState.completed && !readingScore.textContent.trim()) {
+    readingScore.innerHTML = `<div class="score-card muted-card">\u70b9\u4e00\u4e2a\u6c49\u5b57\uff0c\u518d\u70b9\u5bf9\u5e94\u7684\u62fc\u97f3\u3002</div>`;
+  }
+}
+
+function handleReadingCardClick(event) {
+  const card = event.target.closest(".match-card");
+  if (!card || readingState.completed) return;
+  const id = card.dataset.id;
+  const side = card.dataset.side;
+  if (readingState.matched.has(id)) return;
+
+  if (side === "text") readingState.selectedText = id;
+  if (side === "pinyin") readingState.selectedPinyin = id;
+
+  if (readingState.selectedText && readingState.selectedPinyin) {
+    readingState.attempts += 1;
+    if (readingState.selectedText === readingState.selectedPinyin) {
+      readingState.matched.add(id);
+      readingState.selectedText = null;
+      readingState.selectedPinyin = null;
+      readingScore.innerHTML = `<div class="score-card muted-card">\u914d\u5bf9\u6b63\u786e\u3002</div>`;
+      if (readingState.matched.size === readingState.items.length) completeReadingGame();
+    } else {
+      readingState.wrong = [`text:${readingState.selectedText}`, `pinyin:${readingState.selectedPinyin}`];
+      readingScore.innerHTML = `<div class="score-card muted-card">\u8fd9\u4e00\u5bf9\u4e0d\u5bf9\uff0c\u518d\u8bd5\u4e00\u6b21\u3002</div>`;
+      setTimeout(() => {
+        readingState.wrong = [];
+        readingState.selectedText = null;
+        readingState.selectedPinyin = null;
+        renderReadingGame();
+      }, 550);
+    }
+  }
+
+  renderReadingGame();
+}
+
+function completeReadingGame() {
+  readingState.completed = true;
+  const durationSeconds = Math.max(1, Math.round((Date.now() - readingState.startedAt) / 1000));
+  const score = Math.max(0, Math.round((readingState.items.length / Math.max(readingState.attempts, readingState.items.length)) * 100));
+  const result = {
+    score,
+    attempts: readingState.attempts,
+    total: readingState.items.length,
+    durationSeconds
+  };
+  readingScore.innerHTML = `
+    <div class="score-card">
+      <div class="score-summary"><span>\u914d\u5bf9\u5b8c\u6210</span><strong>${score}</strong></div>
+      <p class="transcript">\u7528\u65f6 ${durationSeconds} \u79d2\uff0c\u5c1d\u8bd5 ${readingState.attempts} \u6b21\u3002</p>
+    </div>
+  `;
+  rememberSkillResult({ type: "reading", target: readingState.items.map((item) => item.text).join(""), result });
+}
+
+const toneChoices = [
+  { tone: 1, label: "\u4e00\u58f0" },
+  { tone: 2, label: "\u4e8c\u58f0" },
+  { tone: 3, label: "\u4e09\u58f0" },
+  { tone: 4, label: "\u56db\u58f0" },
+  { tone: 5, label: "\u8f7b\u58f0" }
+];
+
+function resetListeningGame() {
+  const items = (currentExercise?.listening?.items || [])
+    .filter((item) => item.text && Number(item.tone) > 0)
+    .slice(0, 4)
+    .map((item, index) => ({
+      id: `listen-${index}`,
+      text: item.text,
+      pinyin: item.pinyin || "",
+      tone: Number(item.tone)
+    }));
+  listeningState = {
+    items,
+    index: 0,
+    correct: 0,
+    selectedTone: null,
+    completed: false,
+    recorded: false
+  };
+  listeningScore.innerHTML = "";
+  renderListeningGame();
+}
+
+function renderListeningGame() {
+  if (!listeningState?.items?.length) {
+    listeningPrompt.textContent = "\u5f53\u524d\u56de\u590d\u6682\u65f6\u6ca1\u6709\u53ef\u5224\u65ad\u58f0\u8c03\u7684\u9898\u76ee\u3002";
+    listeningProgress.textContent = "";
+    toneOptions.innerHTML = "";
+    listeningScore.innerHTML = `<div class="score-card muted-card">\u9700\u8981\u5e26\u58f0\u8c03\u7684\u62fc\u97f3\u624d\u80fd\u751f\u6210\u542c\u529b\u9898\u3002</div>`;
+    return;
+  }
+
+  if (listeningState.completed) {
+    const total = listeningState.items.length;
+    const score = Math.round((listeningState.correct / total) * 100);
+    listeningPrompt.textContent = "\u542c\u529b\u7ec3\u4e60\u5b8c\u6210";
+    listeningProgress.textContent = `${listeningState.correct} / ${total}`;
+    toneOptions.innerHTML = "";
+    listeningScore.innerHTML = `
+      <div class="score-card">
+        <div class="score-summary"><span>\u58f0\u8c03\u9009\u62e9</span><strong>${score}</strong></div>
+        <p class="transcript">\u7b54\u5bf9 ${listeningState.correct} / ${total} \u9898\u3002</p>
+      </div>
+    `;
+    if (!listeningState.recorded) {
+      listeningState.recorded = true;
+      rememberSkillResult({ type: "listening", target: listeningState.items.map((item) => item.text).join(""), result: { score, correct: listeningState.correct, total } });
+    }
+    return;
+  }
+
+  const item = listeningState.items[listeningState.index];
+  listeningPrompt.textContent = "\u542c\u8fd9\u4e2a\u5b57\uff0c\u9009\u5b83\u7684\u58f0\u8c03";
+  listeningProgress.textContent = `${listeningState.index + 1} / ${listeningState.items.length}`;
+  toneOptions.innerHTML = toneChoices.map((choice) => {
+    const classes = ["tone-option"];
+    if (listeningState.selectedTone === choice.tone) classes.push("selected");
+    if (listeningState.selectedTone && choice.tone === item.tone) classes.push("correct");
+    if (listeningState.selectedTone === choice.tone && choice.tone !== item.tone) classes.push("wrong");
+    return `<button class="${classes.join(" ")}" type="button" data-tone="${choice.tone}">${choice.label}</button>`;
+  }).join("");
+
+  if (!listeningState.selectedTone) {
+    listeningScore.innerHTML = `<div class="score-card muted-card">\u5148\u64ad\u653e\uff0c\u518d\u9009\u58f0\u8c03\u3002</div>`;
+  }
+}
+
+function handleToneChoice(event) {
+  const button = event.target.closest(".tone-option");
+  if (!button || listeningState.completed || listeningState.selectedTone) return;
+  const item = listeningState.items[listeningState.index];
+  const tone = Number(button.dataset.tone);
+  listeningState.selectedTone = tone;
+  if (tone === item.tone) listeningState.correct += 1;
+  listeningScore.innerHTML = `<div class="score-card muted-card">${tone === item.tone ? "\u9009\u5bf9\u4e86\u3002" : `\u8fd9\u4e2a\u5b57\u662f ${toneChoices.find((choice) => choice.tone === item.tone)?.label || ""}\u3002`}</div>`;
+  renderListeningGame();
+  setTimeout(() => {
+    listeningState.index += 1;
+    listeningState.selectedTone = null;
+    if (listeningState.index >= listeningState.items.length) listeningState.completed = true;
+    renderListeningGame();
+  }, 750);
 }
 
 function addMessage(kind, payload) {
@@ -730,6 +1035,16 @@ modeTabs.forEach((tab) => {
     setMode(tab.dataset.mode || "chat");
   });
 });
+
+readingTextCards.addEventListener("click", handleReadingCardClick);
+readingPinyinCards.addEventListener("click", handleReadingCardClick);
+resetReadingButton.addEventListener("click", resetReadingGame);
+toneOptions.addEventListener("click", handleToneChoice);
+playListeningButton.addEventListener("click", () => {
+  const item = listeningState?.items?.[listeningState.index];
+  if (item) playChinese(item.text);
+});
+resetListeningButton.addEventListener("click", resetListeningGame);
 
 playTargetButton.addEventListener("click", () => playChinese(currentExercise?.speaking?.text || ""));
 shadowButton.addEventListener("click", () => {

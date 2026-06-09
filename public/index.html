@@ -53,11 +53,57 @@
           <section class="workbench" aria-label="Practice workspace">
             <div class="mode-tabs" role="tablist" aria-label="Practice modes">
               <button class="mode-tab active" id="chatTab" type="button" data-mode="chat" role="tab" aria-selected="true">&#32842;</button>
+              <button class="mode-tab" id="readTab" type="button" data-mode="read" role="tab" aria-selected="false">&#35835;</button>
+              <button class="mode-tab" id="listenTab" type="button" data-mode="listen" role="tab" aria-selected="false">&#21548;</button>
               <button class="mode-tab" id="speakTab" type="button" data-mode="speak" role="tab" aria-selected="false">&#35828;</button>
               <button class="mode-tab" id="writeTab" type="button" data-mode="write" role="tab" aria-selected="false">&#20889;</button>
             </div>
 
             <section class="conversation mode-pane active" id="conversation" data-pane="chat" role="tabpanel" aria-labelledby="chatTab" aria-live="polite"></section>
+
+            <section class="skill-panel mode-pane" id="readPane" data-pane="read" role="tabpanel" aria-labelledby="readTab" aria-label="Reading practice">
+              <header class="skill-head">
+                <div>
+                  <p class="eyebrow">Current Reply Practice</p>
+                  <h2>&#35835;&#65306;&#37197;&#23545;</h2>
+                </div>
+                <button class="play-button" id="resetReadingButton" type="button">&#37325;&#26469;</button>
+              </header>
+              <div class="target-box">
+                <p class="label">&#25226;&#27721;&#23383;&#21644;&#25340;&#38899;&#36830;&#36215;&#26469;</p>
+              </div>
+              <div class="match-board" id="readingBoard">
+                <div>
+                  <p class="label">&#27721;&#23383;</p>
+                  <div class="match-column" id="readingTextCards"></div>
+                </div>
+                <div>
+                  <p class="label">&#25340;&#38899;</p>
+                  <div class="match-column" id="readingPinyinCards"></div>
+                </div>
+              </div>
+              <div class="score-area" id="readingScore"></div>
+            </section>
+
+            <section class="skill-panel mode-pane" id="listenPane" data-pane="listen" role="tabpanel" aria-labelledby="listenTab" aria-label="Listening practice">
+              <header class="skill-head">
+                <div>
+                  <p class="eyebrow">Current Reply Practice</p>
+                  <h2>&#21548;&#65306;&#22768;&#35843;</h2>
+                </div>
+                <button class="play-button" id="resetListeningButton" type="button">&#37325;&#26469;</button>
+              </header>
+              <div class="target-box">
+                <p class="label">&#21548;&#19968;&#19979;&#65292;&#36873;&#22768;&#35843;</p>
+                <p class="target-text" id="listeningPrompt">&#35831;&#20808;&#21644;&#33487;&#26848;&#32842;&#19968;&#21477;&#12290;</p>
+                <p class="target-pinyin" id="listeningProgress"></p>
+              </div>
+              <div class="listening-actions">
+                <button class="play-button" id="playListeningButton" type="button">&#25773;&#25918;</button>
+                <div class="tone-options" id="toneOptions"></div>
+              </div>
+              <div class="score-area" id="listeningScore"></div>
+            </section>
 
             <section class="skill-panel mode-pane" id="speakPane" data-pane="speak" role="tabpanel" aria-labelledby="speakTab" aria-label="Speaking practice">
               <header class="skill-head">

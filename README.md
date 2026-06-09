@@ -8,6 +8,8 @@
 - 浏览器录音上传和语音识别。
 - 中文、拼音、英文解释、口语建议展示。
 - 中文朗读，优先使用 OpenAI TTS；没有音频 API key 时回退到浏览器朗读。
+- 读：从当前回复生成汉字-拼音配对游戏。
+- 听：从当前回复生成声调选择题。
 - 说：从当前回复生成跟读短句，支持转写评分和音频评分降级路径。
 - 写：从当前回复生成 1-3 个字词，支持 Canvas 手写、临摹自查和 AI/OCR 降级路径。
 - 初级、中级、高级三档难度。
@@ -137,6 +139,8 @@ Each `/api/practice` response includes an `exercise` object:
 ```json
 {
   "speaking": { "text": "中文短句", "pinyin": "带声调拼音" },
+  "reading": { "items": [{ "text": "字", "pinyin": "pinyin" }] },
+  "listening": { "items": [{ "text": "字", "pinyin": "pinyin", "tone": 3 }] },
   "writing": { "items": [{ "text": "字或词", "type": "character", "hint": "提示" }] }
 }
 ```
@@ -145,7 +149,7 @@ Each `/api/practice` response includes an `exercise` object:
 
 `POST /api/writing/evaluate` accepts `imageData`, `targetText`, and `mode`. AI/OCR checking is represented by an adapter path; when it is not configured, the server returns `self-fallback`.
 
-The frontend uses mutually exclusive workspace modes: `聊`, `说`, and `写`. Chat mode shows the original conversation and input composer. Speaking and writing modes use the current coach reply as their practice source and replace the chat view instead of appearing as a second panel under it.
+The frontend uses mutually exclusive workspace modes: `聊`, `读`, `听`, `说`, and `写`. Chat mode shows the original conversation and input composer. Skill modes use the current coach reply as their practice source and replace the chat view instead of appearing as a second panel under it. Reading and listening are scored locally and stored in the latest 20 practice results.
 ## Local persona and context
 
 The app does not require accounts. It stores practice state in the browser:
@@ -154,7 +158,7 @@ The app does not require accounts. It stores practice state in the browser:
 localStorage["chinese-speaking-coach-state"]
 ```
 
-The stored JSON contains the generated coach persona, recent conversation turns, and the latest 20 speaking/writing practice results. Each practice request sends only the latest turns to the server so the model can answer with context while keeping storage simple and local to the browser.
+The stored JSON contains the generated coach persona, recent conversation turns, and the latest 20 skill practice results. Each practice request sends only the latest turns to the server so the model can answer with context while keeping storage simple and local to the browser.
 ## Fixed coach persona
 
 The coach is initialized as `苏棠`: a likable, cute Chinese Literature undergraduate student who chats with foreign learners as a warm Mandarin conversation partner. The app uses `/coach-avatar.png` as her avatar, greets users as 苏棠 on entry, and sends this persona with conversation context on every practice request.

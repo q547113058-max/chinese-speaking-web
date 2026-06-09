@@ -184,6 +184,87 @@ function textSimilarity(target = "", actual = "") {
   return clampScore((matched / targetChars.length) * 100);
 }
 
+const toneMarks = {
+  "\u0101": 1,
+  "\u0113": 1,
+  "\u012b": 1,
+  "\u014d": 1,
+  "\u016b": 1,
+  "\u01d6": 1,
+  "\u00e1": 2,
+  "\u00e9": 2,
+  "\u00ed": 2,
+  "\u00f3": 2,
+  "\u00fa": 2,
+  "\u01d8": 2,
+  "\u01ce": 3,
+  "\u011b": 3,
+  "\u01d0": 3,
+  "\u01d2": 3,
+  "\u01d4": 3,
+  "\u01da": 3,
+  "\u00e0": 4,
+  "\u00e8": 4,
+  "\u00ec": 4,
+  "\u00f2": 4,
+  "\u00f9": 4,
+  "\u01dc": 4,
+  "\u0100": 1,
+  "\u0112": 1,
+  "\u012a": 1,
+  "\u014c": 1,
+  "\u016a": 1,
+  "\u01d5": 1,
+  "\u00c1": 2,
+  "\u00c9": 2,
+  "\u00cd": 2,
+  "\u00d3": 2,
+  "\u00da": 2,
+  "\u01d7": 2,
+  "\u01cd": 3,
+  "\u011a": 3,
+  "\u01cf": 3,
+  "\u01d1": 3,
+  "\u01d3": 3,
+  "\u01d9": 3,
+  "\u00c0": 4,
+  "\u00c8": 4,
+  "\u00cc": 4,
+  "\u00d2": 4,
+  "\u00d9": 4,
+  "\u01db": 4
+};
+
+function pinyinTone(syllable = "") {
+  for (const char of String(syllable)) {
+    if (toneMarks[char]) return toneMarks[char];
+  }
+  const numbered = String(syllable).match(/[1-5]/);
+  if (numbered) return Number(numbered[0]);
+  return 0;
+}
+
+function pinyinSyllables(pinyin = "") {
+  return String(pinyin)
+    .replace(/[,.?!;:，。！？；：]/g, " ")
+    .split(/\s+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function readingListeningItems(text = "", pinyin = "") {
+  const chars = [...String(text).matchAll(/\p{Script=Han}/gu)].map((match) => match[0]).slice(0, 4);
+  const syllables = pinyinSyllables(pinyin);
+  const reading = chars.map((char, index) => ({
+    text: char,
+    pinyin: syllables[index] || ""
+  }));
+  const listening = reading
+    .map((item) => ({ ...item, tone: pinyinTone(item.pinyin) }))
+    .filter((item) => item.tone > 0);
+  return { reading, listening };
+}
+
 function createExercise(reply = {}) {
   const chinese = String(reply.chinese || "").trim();
   const speakingText = chinese.split(/[。！？!?]/).find(Boolean)?.trim() || chinese || "你好呀，我们开始练习吧";
@@ -202,7 +283,11 @@ function createExercise(reply = {}) {
     if (items.length >= 3) break;
   }
 
+  const derived = readingListeningItems(speakingText, reply.pinyin || "");
+
   return {
+    reading: { items: derived.reading },
+    listening: { items: derived.listening },
     speaking: {
       text: speakingText,
       pinyin: reply.pinyin || ""
@@ -212,8 +297,17 @@ function createExercise(reply = {}) {
 }
 
 function withExercise(reply) {
-  const exercise = reply.exercise || createExercise(reply);
-  return { ...reply, exercise };
+  const fallback = createExercise(reply);
+  const exercise = reply.exercise || fallback;
+  return {
+    ...reply,
+    exercise: {
+      reading: exercise.reading || fallback.reading,
+      listening: exercise.listening || fallback.listening,
+      speaking: exercise.speaking || fallback.speaking,
+      writing: exercise.writing || fallback.writing
+    }
+  };
 }
 
 function fallbackSpeakingScore({ targetText = "", transcript = "", mode = "transcript" }) {
