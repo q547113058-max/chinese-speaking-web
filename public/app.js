@@ -10,10 +10,27 @@ const showExplanation = document.querySelector("#showExplanation");
 const modeTabs = document.querySelectorAll(".mode-tab");
 const modePanes = document.querySelectorAll(".mode-pane");
 const composer = document.querySelector(".composer");
+const courseSelect = document.querySelector("#courseSelect");
+const courseSummary = document.querySelector("#courseSummary");
+const submodeTabs = document.querySelectorAll(".submode-tab");
+const characterLessonBox = document.querySelector("#characterLessonBox");
+const readingSentenceInput = document.querySelector("#readingSentenceInput");
+const evaluateReadingButton = document.querySelector("#evaluateReadingButton");
+const readingPassageBox = document.querySelector("#readingPassageBox");
+const readingQuestions = document.querySelector("#readingQuestions");
+const readingSceneScore = document.querySelector("#readingSceneScore");
 const readingTextCards = document.querySelector("#readingTextCards");
 const readingPinyinCards = document.querySelector("#readingPinyinCards");
 const readingScore = document.querySelector("#readingScore");
 const resetReadingButton = document.querySelector("#resetReadingButton");
+const listeningTonePanel = document.querySelector("#listeningTonePanel");
+const listeningScenePanel = document.querySelector("#listeningScenePanel");
+const listeningSceneQuestions = document.querySelector("#listeningSceneQuestions");
+const listeningSceneScore = document.querySelector("#listeningSceneScore");
+const sceneTranscriptBox = document.querySelector("#sceneTranscriptBox");
+const playSceneAudioButton = document.querySelector("#playSceneAudioButton");
+const showSceneTranscriptButton = document.querySelector("#showSceneTranscriptButton");
+const voiceToneButton = document.querySelector("#voiceToneButton");
 const listeningPrompt = document.querySelector("#listeningPrompt");
 const listeningProgress = document.querySelector("#listeningProgress");
 const listeningHint = document.querySelector("#listeningHint");
@@ -26,32 +43,44 @@ const speakingMode = document.querySelector("#speakingMode");
 const playTargetButton = document.querySelector("#playTargetButton");
 const shadowButton = document.querySelector("#shadowButton");
 const speakingScore = document.querySelector("#speakingScore");
+const dialogueRole = document.querySelector("#dialogueRole");
+const dialogueTask = document.querySelector("#dialogueTask");
+const dialogueChoices = document.querySelector("#dialogueChoices");
+const dialogueInput = document.querySelector("#dialogueInput");
+const dialogueRecordButton = document.querySelector("#dialogueRecordButton");
+const sendDialogueButton = document.querySelector("#sendDialogueButton");
+const dialogueScore = document.querySelector("#dialogueScore");
 const writingTarget = document.querySelector("#writingTarget");
 const writingMode = document.querySelector("#writingMode");
 const traceToggle = document.querySelector("#traceToggle");
 const writingCanvas = document.querySelector("#writingCanvas");
+const particleCanvas = document.querySelector("#particleCanvas");
 const traceCharacter = document.querySelector("#traceCharacter");
 const undoStrokeButton = document.querySelector("#undoStrokeButton");
 const clearCanvasButton = document.querySelector("#clearCanvasButton");
 const saveCanvasButton = document.querySelector("#saveCanvasButton");
 const evaluateWritingButton = document.querySelector("#evaluateWritingButton");
 const writingScore = document.querySelector("#writingScore");
+const writingSentencePrompt = document.querySelector("#writingSentencePrompt");
+const writingSentenceInput = document.querySelector("#writingSentenceInput");
+const evaluateWritingSentenceButton = document.querySelector("#evaluateWritingSentenceButton");
+const writingSentenceScore = document.querySelector("#writingSentenceScore");
 
 const storageKey = "chinese-speaking-coach-state";
 const targetSampleRate = 16000;
 const defaultPersona = {
-  name: "\u82cf\u68e0",
-  role: "\u4e2d\u6587\u7cfb\u672c\u79d1\u751f\uff0c\u4e13\u95e8\u966a\u5916\u56fd\u5b66\u4e60\u8005\u7ec3\u4e2d\u6587\u7684\u5bf9\u8bdd\u4f19\u4f34",
-  personality: "\u8ba8\u559c\u53ef\u7231\u3001\u6e29\u67d4\u8010\u5fc3\u3001\u771f\u8bda\u597d\u5947\uff0c\u6709\u4e00\u70b9\u4e66\u5377\u6c14",
-  speakingStyle: "\u50cf\u771f\u5b9e\u4e2d\u6587\u7cfb\u5973\u751f\u804a\u5929\u4e00\u6837\u63a5\u8bdd\uff0c\u4e0d\u7ffb\u8bd1\u7528\u6237\u7684\u8bdd\uff0c\u7528\u81ea\u7136\u53e3\u8bed\u56de\u5e94\u542b\u4e49",
-  scenario: "\u9762\u5411\u60f3\u5b66\u4e2d\u6587\u7684\u5916\u56fd\u4eba\uff0c\u8fdb\u884c\u8f7b\u677e\u3001\u53ef\u6301\u7eed\u7684\u4e2d\u6587\u53e3\u8bed\u966a\u7ec3",
+  name: "Luming",
+  role: "\u4e2d\u6587\u542c\u8bf4\u8bfb\u5199\u573a\u666f\u8bad\u7ec3\u6559\u7ec3",
+  personality: "\u6e29\u548c\u3001\u6e05\u6670\u3001\u53cd\u9988\u7cbe\u51c6",
+  speakingStyle: "\u7528\u81ea\u7136\u4e2d\u6587\u5e26\u5b66\u4e60\u8005\u5b8c\u6210\u771f\u5b9e\u573a\u666f\u4efb\u52a1",
+  scenario: "\u56f4\u7ed5\u771f\u5b9e\u4e2d\u6587\u573a\u666f\u8bad\u7ec3\u542c\u8bf4\u8bfb\u5199",
   avatar: "/coach-avatar.png"
 };
 const greeting = {
-  chinese: "\u4f60\u597d\u5440\uff0c\u6211\u662f\u82cf\u68e0\u3002\u4f60\u53ef\u4ee5\u7528\u82f1\u8bed\u8ddf\u6211\u8bf4\u4e00\u53e5\u8bdd\uff0c\u6211\u4f1a\u50cf\u670b\u53cb\u4e00\u6837\u7528\u4e2d\u6587\u63a5\u7740\u804a\u3002",
-  pinyin: "N\u01d0 h\u01ceo ya, w\u01d2 sh\u00ec S\u016b T\u00e1ng. N\u01d0 k\u011by\u01d0 y\u00f2ng Y\u012bngw\u00e9n g\u0113n w\u01d2 shu\u014d y\u00ed j\u00f9 hu\u00e0, w\u01d2 hu\u00ec xi\u00e0ng p\u00e9ngyou y\u00edy\u00e0ng y\u00f2ng Zh\u014dngw\u00e9n ji\u0113zhe li\u00e1o.",
-  explanation: "Hi, I'm Su Tang. Say something in English, and I will continue the conversation in Chinese like a friend.",
-  suggestion: "\u5148\u968f\u4fbf\u8bf4\u4e00\u53e5\u4eca\u5929\u53d1\u751f\u7684\u4e8b\u5c31\u53ef\u4ee5\u3002"
+  chinese: "\u4f60\u597d\uff0c\u6211\u662f Luming\u3002\u4eca\u5929\u6211\u4eec\u7528\u771f\u5b9e\u573a\u666f\u7ec3\u542c\u8bf4\u8bfb\u5199\u3002",
+  pinyin: "N\u01d0 h\u01ceo, w\u01d2 sh\u00ec Luming. J\u012bnti\u0101n w\u01d2men y\u00f2ng zh\u0113nsh\u00ed ch\u01cengj\u01d0ng li\u00e0n t\u012bng shu\u014d d\u00fa xi\u011b.",
+  explanation: "Hi, I'm Luming. Today we will practice listening, speaking, reading, and writing through real scenarios.",
+  suggestion: "\u5148\u9009\u4e00\u4e2a\u573a\u666f\uff0c\u518d\u8fdb\u5165\u542c\u8bf4\u8bfb\u5199\u7ec3\u4e60\u3002"
 };
 
 let isRecording = false;
@@ -71,12 +100,19 @@ let shadowProcessorNode = null;
 let shadowMicStream = null;
 let shadowPcmChunks = [];
 let currentExercise = null;
+let currentCourse = null;
+let courses = [];
 let writingCtx = null;
+let particleCtx = null;
 let writingStrokes = [];
 let activeStroke = null;
 let currentMode = "chat";
 let readingState = null;
 let listeningState = null;
+let listeningSceneAnswers = {};
+let dialogueTurns = [];
+let voiceToneRecording = false;
+let dialogueRecording = false;
 
 const settings = () => ({
   level: level.value,
@@ -267,18 +303,26 @@ function normalizeExercise(payload = {}) {
   const exercise = payload.exercise || fallback;
   const speakingText = exercise.speaking?.text || fallback.speaking.text;
   return {
+    course: exercise.course || payload.course || null,
     reading: {
-      items: Array.isArray(exercise.reading?.items) && exercise.reading.items.length > 0 ? exercise.reading.items.slice(0, 4) : fallback.reading.items
+      items: Array.isArray(exercise.reading?.items) && exercise.reading.items.length > 0 ? exercise.reading.items.slice(0, 4) : fallback.reading.items,
+      lesson: Array.isArray(exercise.reading?.lesson) ? exercise.reading.lesson : [],
+      passage: exercise.reading?.passage || "",
+      questions: Array.isArray(exercise.reading?.questions) ? exercise.reading.questions : []
     },
     listening: {
-      items: Array.isArray(exercise.listening?.items) && exercise.listening.items.length > 0 ? exercise.listening.items.slice(0, 4) : fallback.listening.items
+      items: Array.isArray(exercise.listening?.items) && exercise.listening.items.length > 0 ? exercise.listening.items.slice(0, 4) : fallback.listening.items,
+      scene: exercise.listening?.scene || null
     },
     speaking: {
       text: speakingText,
-      pinyin: pinyinForText(speakingText, exercise.speaking?.pinyin || payload.pinyin || "") || fallback.speaking.pinyin
+      pinyin: pinyinForText(speakingText, exercise.speaking?.pinyin || payload.pinyin || "") || fallback.speaking.pinyin,
+      role: exercise.speaking?.role || "",
+      choices: Array.isArray(exercise.speaking?.choices) ? exercise.speaking.choices : []
     },
     writing: {
-      items: Array.isArray(exercise.writing?.items) && exercise.writing.items.length > 0 ? exercise.writing.items.slice(0, 3) : fallback.writing.items
+      items: Array.isArray(exercise.writing?.items) && exercise.writing.items.length > 0 ? exercise.writing.items.slice(0, 3) : fallback.writing.items,
+      sentencePrompt: exercise.writing?.sentencePrompt || ""
     }
   };
 }
@@ -329,8 +373,14 @@ function renderAssistantMessage(article, payload) {
 
 function setCurrentExercise(payload = {}) {
   currentExercise = normalizeExercise(payload);
+  if (currentExercise.course) currentCourse = currentExercise.course;
   speakingTarget.textContent = currentExercise.speaking.text;
   speakingPinyin.textContent = currentExercise.speaking.pinyin || "";
+  dialogueRole.textContent = currentExercise.speaking.role || "\u8bf7\u5148\u9009\u62e9\u573a\u666f\u8bfe\u7a0b\u3002";
+  dialogueTask.textContent = "\u5b8c\u6210 4-5 \u8f6e\u573a\u666f\u5bf9\u8bdd\uff0cLuming \u4f1a\u540c\u65f6\u7ed9\u51fa\u56de\u5e94\u548c\u58f0\u8c03\u53cd\u9988\u3002";
+  dialogueChoices.innerHTML = (currentExercise.speaking.choices || []).map((choice) => `
+    <button class="choice-button" type="button" data-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>
+  `).join("");
   writingTarget.innerHTML = "";
   for (const item of currentExercise.writing.items) {
     const option = document.createElement("option");
@@ -342,8 +392,102 @@ function setCurrentExercise(payload = {}) {
   }
   resetReadingGame();
   resetListeningGame();
+  renderCharacterLesson();
+  renderReadingScene();
+  renderListeningScene();
   updateTraceCharacter();
+  writingSentencePrompt.textContent = currentExercise.writing.sentencePrompt || "\u7528\u76ee\u6807\u5b57\u5199\u4e00\u53e5\u8bdd\u3002";
   clearWritingCanvas();
+}
+
+async function loadCourses() {
+  try {
+    const response = await fetch("/api/courses");
+    const data = await response.json();
+    courses = Array.isArray(data.courses) ? data.courses : [];
+    courseSelect.innerHTML = courses.map((course) => `<option value="${escapeHtml(course.id)}">${escapeHtml(course.scene)}</option>`).join("");
+    if (courses[0]) await loadCourse(courses[0].id);
+  } catch {
+    courseSummary.textContent = "\u573a\u666f\u8bfe\u7a0b\u52a0\u8f7d\u5931\u8d25\uff0c\u53ef\u7ee7\u7eed\u4f7f\u7528\u5f53\u524d\u804a\u5929\u7ec3\u4e60\u3002";
+  }
+}
+
+async function loadCourse(courseId) {
+  const response = await fetch(`/api/courses/${encodeURIComponent(courseId)}`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "\u8bfe\u7a0b\u52a0\u8f7d\u5931\u8d25");
+  currentCourse = data;
+  courseSummary.textContent = `${data.level || ""} · ${data.summary || data.scene || ""}`;
+  setCurrentExercise({ chinese: data.dialogue?.map((item) => item.text).join(""), pinyin: data.dialogue?.map((item) => item.pinyin).join(" "), exercise: data.exercise });
+}
+
+function switchSubmode(skill, submode) {
+  submodeTabs.forEach((tab) => {
+    if (tab.dataset.skill !== skill) return;
+    tab.classList.toggle("active", tab.dataset.submode === submode);
+  });
+  document.querySelectorAll(`[data-${skill}-panel]`).forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset[`${skill}Panel`] === submode);
+  });
+}
+
+function renderCharacterLesson() {
+  const lesson = currentExercise?.reading?.lesson || [];
+  if (!lesson.length) {
+    characterLessonBox.innerHTML = `<p class="target-hint">\u6682\u65f6\u6ca1\u6709\u4e03\u5c42\u6c49\u5b57\u6570\u636e\u3002</p>`;
+    return;
+  }
+  characterLessonBox.innerHTML = lesson.map((item) => `
+    <div class="character-card">
+      <div class="character-glyph">${escapeHtml(item.text)}</div>
+      <div>
+        <p class="label">\u8bb2\u5b57</p>
+        <h3>${escapeHtml(item.text)} · ${escapeHtml(item.pinyin || "")}</h3>
+        <p>${escapeHtml(item.story || "")}</p>
+        <p class="target-hint">\u8bb2\u7ec4\u8bcd\uff1a${escapeHtml((item.words || []).join(" / "))}</p>
+        <p class="target-hint">\u8bb2\u6210\u8bed\uff1a${escapeHtml(item.idiom || "")}</p>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderReadingScene() {
+  const passage = currentExercise?.reading?.passage || "";
+  readingPassageBox.innerHTML = passage
+    ? `<p class="label">\u573a\u666f\u77ed\u6587</p><p class="reading-passage">${[...passage].map((char) => /\p{Script=Han}/u.test(char) ? `<button class="inline-hanzi" type="button">${escapeHtml(char)}</button>` : escapeHtml(char)).join("")}</p>`
+    : `<p class="target-hint">\u6682\u65f6\u6ca1\u6709\u573a\u666f\u77ed\u6587\u3002</p>`;
+  readingQuestions.innerHTML = (currentExercise?.reading?.questions || []).map((question, index) => `
+    <div class="question-row">
+      <p>${index + 1}. ${escapeHtml(question.prompt || "")}</p>
+      <input type="text" data-reading-answer="${index}" placeholder="\u7528\u4e2d\u6587\u56de\u7b54" />
+    </div>
+  `).join("");
+}
+
+function renderListeningScene(showTranscript = false) {
+  const scene = currentExercise?.listening?.scene;
+  if (!scene) return;
+  sceneTranscriptBox.innerHTML = `
+    <p class="label">\u573a\u666f\u542c\u529b</p>
+    <p class="target-text">${escapeHtml(currentCourse?.scene || currentExercise?.course?.scene || "")}</p>
+    <div class="transcript-lines ${showTranscript ? "" : "hidden"}">
+      ${(scene.dialogue || []).map((line, index) => `
+        <button class="transcript-line" type="button" data-line="${index}">
+          <strong>${escapeHtml(line.speaker || "Luming")}</strong>
+          <span>${escapeHtml(line.text || "")}</span>
+          <em>${escapeHtml(line.pinyin || "")}</em>
+        </button>
+      `).join("")}
+    </div>
+  `;
+  listeningSceneQuestions.innerHTML = (scene.questions || []).map((question) => `
+    <div class="question-row" data-question="${escapeHtml(question.id)}">
+      <p>${escapeHtml(question.prompt)}</p>
+      <div class="choice-row">
+        ${(question.options || []).map((option, index) => `<button class="choice-button" type="button" data-question="${escapeHtml(question.id)}" data-answer="${index}">${escapeHtml(option)}</button>`).join("")}
+      </div>
+    </div>
+  `).join("");
 }
 
 function resetReadingGame() {
@@ -740,6 +884,11 @@ function renderRadar(container, result, labels) {
     audio: "\u97f3\u9891\u8bc4\u5206",
     transcript: "\u8f6c\u5199\u8bc4\u5206",
     ai: "AI \u8bc4\u5206",
+    "ai+stroke": "AI + \u7b14\u987a",
+    stroke: "\u7b14\u987a\u8bc4\u5206",
+    "stroke-fallback": "\u7b14\u987a\u515c\u5e95",
+    fallback: "\u672c\u5730\u8bc4\u5206",
+    scene: "\u573a\u666f\u8bc4\u5206",
     self: "\u81ea\u67e5\u8bc4\u5206",
     "self-fallback": "\u81ea\u67e5\u515c\u5e95"
   };
@@ -910,6 +1059,7 @@ function floatTo16KhzPcm(input, sourceSampleRate) {
 
 function setupWritingCanvas() {
   writingCtx = writingCanvas.getContext("2d");
+  particleCtx = particleCanvas?.getContext("2d") || null;
   writingCtx.lineCap = "round";
   writingCtx.lineJoin = "round";
   writingCtx.lineWidth = 8;
@@ -961,7 +1111,8 @@ function canvasPoint(event) {
   const source = event.touches?.[0] || event;
   return {
     x: ((source.clientX - rect.left) / rect.width) * writingCanvas.width,
-    y: ((source.clientY - rect.top) / rect.height) * writingCanvas.height
+    y: ((source.clientY - rect.top) / rect.height) * writingCanvas.height,
+    t: Date.now()
   };
 }
 
@@ -1020,7 +1171,9 @@ async function evaluateWriting() {
       body: JSON.stringify({
         imageData: writingCanvas.toDataURL("image/png"),
         targetText: writingTarget.value,
-        mode: writingMode.value
+        mode: writingMode.value,
+        courseId: currentCourse?.id || currentExercise?.course?.id || "",
+        strokes: writingStrokes
       })
     });
     const data = await response.json();
@@ -1032,6 +1185,7 @@ async function evaluateWriting() {
       ["strokeClarity", "笔画"],
       ["neatness", "整洁"]
     ]);
+    if (data.modeUsed === "ai+stroke" || data.modeUsed === "stroke" || data.modeUsed === "stroke-fallback") runInkParticles();
     rememberSkillResult({ type: "writing", target: writingTarget.value, result: data });
   } catch (error) {
     writingScore.innerHTML = "";
@@ -1039,6 +1193,208 @@ async function evaluateWriting() {
   } finally {
     updateSkillBusy(false);
   }
+}
+
+async function evaluateReadingSentence(source = "reading") {
+  const input = source === "writing" ? writingSentenceInput : readingSentenceInput;
+  const container = source === "writing" ? writingSentenceScore : readingScore;
+  const prompt = source === "writing" ? currentExercise?.writing?.sentencePrompt : "\u7528\u76ee\u6807\u5b57\u9020\u4e00\u53e5\u4e2d\u6587\u3002";
+  if (!input.value.trim()) return;
+  container.innerHTML = `<div class="score-card muted-card">\u6b63\u5728\u8bc4\u5206...</div>`;
+  try {
+    const response = await fetch("/api/reading/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        courseId: currentCourse?.id || currentExercise?.course?.id || "",
+        text: input.value,
+        prompt,
+        mode: source === "writing" ? "writing-sentence" : "reading-sentence"
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "\u9020\u53e5\u8bc4\u5206\u5931\u8d25");
+    renderRadar(container, data, [
+      ["accuracy", "\u51c6\u786e"],
+      ["naturalness", "\u81ea\u7136"],
+      ["grammar", "\u8bed\u6cd5"],
+      ["sceneFit", "\u573a\u666f"]
+    ]);
+    rememberSkillResult({ type: source === "writing" ? "writing-sentence" : "reading-sentence", target: input.value, result: data });
+  } catch (error) {
+    container.innerHTML = "";
+    addError(error.message || "\u9020\u53e5\u8bc4\u5206\u5931\u8d25\u3002");
+  }
+}
+
+async function evaluateReadingScene() {
+  const answers = [...readingQuestions.querySelectorAll("[data-reading-answer]")].map((input) => input.value.trim()).filter(Boolean);
+  const questions = currentExercise?.reading?.questions || [];
+  const score = questions.length ? Math.round((answers.length / questions.length) * 100) : 0;
+  readingSceneScore.innerHTML = `
+    <div class="score-card">
+      <div class="score-summary"><span>\u9605\u8bfb\u7406\u89e3</span><strong>${score}</strong></div>
+      <p class="transcript">\u5df2\u56de\u7b54 ${answers.length} / ${questions.length} \u9898\u3002</p>
+    </div>
+  `;
+  rememberSkillResult({ type: "reading-scene", target: currentCourse?.scene || "", result: { score, answers } });
+}
+
+async function evaluateListeningScene() {
+  const response = await fetch("/api/listening/evaluate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      courseId: currentCourse?.id || currentExercise?.course?.id || "",
+      mode: "scene",
+      answers: listeningSceneAnswers
+    })
+  });
+  const data = await response.json();
+  renderRadar(listeningSceneScore, data, [
+    ["score", "\u7406\u89e3"]
+  ]);
+  listeningSceneScore.querySelector(".radar-list").innerHTML = `<p class="transcript">\u7b54\u5bf9 ${data.correct} / ${data.total} \u9898\u3002</p>`;
+  rememberSkillResult({ type: "listening-scene", target: currentCourse?.scene || "", result: data });
+  renderListeningScene(true);
+}
+
+function selectListeningAnswer(button) {
+  const questionId = button.dataset.question;
+  listeningSceneAnswers[questionId] = Number(button.dataset.answer);
+  button.parentElement.querySelectorAll(".choice-button").forEach((item) => item.classList.toggle("selected", item === button));
+  const total = currentExercise?.listening?.scene?.questions?.length || 0;
+  if (Object.keys(listeningSceneAnswers).length >= total) evaluateListeningScene();
+}
+
+async function sendDialogue(text = dialogueInput.value) {
+  const content = String(text || "").trim();
+  if (!content) return;
+  dialogueScore.innerHTML = `<div class="score-card muted-card">Luming \u6b63\u5728\u56de\u5e94...</div>`;
+  try {
+    const response = await fetch("/api/speaking/dialogue", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        courseId: currentCourse?.id || currentExercise?.course?.id || "",
+        text: content,
+        turns: dialogueTurns
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "\u5bf9\u8bdd\u5931\u8d25");
+    dialogueTurns.push({ role: "user", text: content }, { role: "assistant", text: data.roleReply });
+    dialogueInput.value = "";
+    dialogueTask.textContent = data.nextTask || "";
+    dialogueScore.innerHTML = `
+      <div class="score-card">
+        <div class="score-summary"><span>\u7b2c ${data.round || dialogueTurns.length / 2} \u8f6e</span><strong>${Math.min(100, (data.round || 1) * 20)}</strong></div>
+        <p class="transcript"><span>Luming\uff1a</span>${escapeHtml(data.roleReply || "")}</p>
+        <ul class="feedback-list"><li>${escapeHtml(data.toneFeedback || "")}</li></ul>
+      </div>
+    `;
+    rememberSkillResult({ type: "speaking-dialogue", target: currentCourse?.scene || "", result: data });
+  } catch (error) {
+    dialogueScore.innerHTML = "";
+    addError(error.message || "\u5bf9\u8bdd\u5931\u8d25\u3002");
+  }
+}
+
+function parseToneFromText(text = "") {
+  if (/一|1|first/i.test(text)) return 1;
+  if (/二|2|second/i.test(text)) return 2;
+  if (/三|3|third/i.test(text)) return 3;
+  if (/四|4|fourth/i.test(text)) return 4;
+  if (/轻|5|neutral/i.test(text)) return 5;
+  return 0;
+}
+
+async function capturePcmOnce(milliseconds = 2400) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) throw new Error("\u5f53\u524d\u6d4f\u89c8\u5668\u4e0d\u652f\u6301\u5f55\u97f3\u3002");
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const context = new AudioContextClass();
+  const source = context.createMediaStreamSource(stream);
+  const processor = context.createScriptProcessor(4096, 1, 1);
+  const chunks = [];
+  processor.onaudioprocess = (event) => chunks.push(floatTo16KhzPcm(event.inputBuffer.getChannelData(0), context.sampleRate));
+  source.connect(processor);
+  processor.connect(context.destination);
+  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+  processor.disconnect();
+  source.disconnect();
+  stream.getTracks().forEach((track) => track.stop());
+  await context.close();
+  return new Blob(chunks, { type: "application/octet-stream" });
+}
+
+async function transcribeBlob(blob) {
+  const formData = new FormData();
+  formData.append("audio", blob, "skill.pcm");
+  const response = await fetch("/api/transcribe", { method: "POST", body: formData });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "\u8bed\u97f3\u8bc6\u522b\u5931\u8d25");
+  return data.transcript || "";
+}
+
+async function answerToneByVoice() {
+  if (!listeningState?.items?.length) return;
+  voiceToneButton.disabled = true;
+  listeningScore.innerHTML = `<div class="score-card muted-card">\u8bf7\u8bf4\u51fa\u201c\u4e00\u58f0\u201d\u3001\u201c\u4e8c\u58f0\u201d\u7b49\u7b54\u6848...</div>`;
+  try {
+    const transcript = await transcribeBlob(await capturePcmOnce());
+    const tone = parseToneFromText(transcript);
+    if (!tone) throw new Error("\u6ca1\u6709\u8bc6\u522b\u5230\u58f0\u8c03\u7b54\u6848\u3002");
+    handleToneChoice({ target: { closest: () => toneOptions.querySelector(`[data-tone="${tone}"]`) } });
+  } catch (error) {
+    addError(error.message || "\u8bed\u97f3\u56de\u7b54\u5931\u8d25\u3002");
+  } finally {
+    voiceToneButton.disabled = false;
+  }
+}
+
+async function recordDialogueReply() {
+  dialogueRecordButton.disabled = true;
+  dialogueScore.innerHTML = `<div class="score-card muted-card">\u8bf7\u7528\u4e2d\u6587\u8bf4\u51fa\u4f60\u7684\u56de\u5e94...</div>`;
+  try {
+    const transcript = await transcribeBlob(await capturePcmOnce(3600));
+    dialogueInput.value = transcript;
+    await sendDialogue(transcript);
+  } catch (error) {
+    addError(error.message || "\u8bed\u97f3\u5bf9\u8bdd\u5931\u8d25\u3002");
+  } finally {
+    dialogueRecordButton.disabled = false;
+  }
+}
+
+function runInkParticles() {
+  if (!particleCanvas || !particleCtx) return;
+  particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+  const particles = Array.from({ length: 80 }, () => ({
+    x: Math.random() * particleCanvas.width,
+    y: Math.random() * particleCanvas.height,
+    r: Math.random() * 2 + 1,
+    a: 1
+  }));
+  let frame = 0;
+  function draw() {
+    particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+    particleCtx.fillStyle = "rgba(190, 142, 50, 0.8)";
+    for (const particle of particles) {
+      particle.x += (particleCanvas.width / 2 - particle.x) * 0.035;
+      particle.y += (particleCanvas.height / 2 - particle.y) * 0.035;
+      particle.a *= 0.985;
+      particleCtx.globalAlpha = particle.a;
+      particleCtx.beginPath();
+      particleCtx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+      particleCtx.fill();
+    }
+    particleCtx.globalAlpha = 1;
+    frame += 1;
+    if (frame < 80) requestAnimationFrame(draw);
+    else particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+  }
+  draw();
 }
 
 async function uploadRecording() {
@@ -1076,21 +1432,51 @@ modeTabs.forEach((tab) => {
   });
 });
 
+submodeTabs.forEach((tab) => {
+  tab.addEventListener("click", () => switchSubmode(tab.dataset.skill, tab.dataset.submode));
+});
+
+courseSelect.addEventListener("change", () => loadCourse(courseSelect.value).catch((error) => addError(error.message)));
+
 readingTextCards.addEventListener("click", handleReadingCardClick);
 readingPinyinCards.addEventListener("click", handleReadingCardClick);
 resetReadingButton.addEventListener("click", resetReadingGame);
+evaluateReadingButton.addEventListener("click", () => evaluateReadingSentence("reading"));
+readingQuestions.addEventListener("change", evaluateReadingScene);
+readingPassageBox.addEventListener("click", (event) => {
+  const button = event.target.closest(".inline-hanzi");
+  if (button) playChinese(button.textContent || "");
+});
 toneOptions.addEventListener("click", handleToneChoice);
 playListeningButton.addEventListener("click", () => {
   const item = listeningState?.items?.[listeningState.index];
   if (item) playChinese(item.text);
 });
 resetListeningButton.addEventListener("click", resetListeningGame);
+voiceToneButton.addEventListener("click", answerToneByVoice);
+playSceneAudioButton.addEventListener("click", () => playChinese((currentExercise?.listening?.scene?.dialogue || []).map((line) => line.text).join("\n")));
+showSceneTranscriptButton.addEventListener("click", () => renderListeningScene(true));
+sceneTranscriptBox.addEventListener("click", (event) => {
+  const line = event.target.closest(".transcript-line");
+  const item = currentExercise?.listening?.scene?.dialogue?.[Number(line?.dataset.line)];
+  if (item) playChinese(item.text);
+});
+listeningSceneQuestions.addEventListener("click", (event) => {
+  const button = event.target.closest(".choice-button");
+  if (button) selectListeningAnswer(button);
+});
 
 playTargetButton.addEventListener("click", () => playChinese(currentExercise?.speaking?.text || ""));
 shadowButton.addEventListener("click", () => {
   if (shadowRecording) stopShadowRecording();
   else startShadowRecording();
 });
+dialogueChoices.addEventListener("click", (event) => {
+  const button = event.target.closest(".choice-button");
+  if (button) sendDialogue(button.dataset.choice || button.textContent);
+});
+sendDialogueButton.addEventListener("click", () => sendDialogue());
+dialogueRecordButton.addEventListener("click", recordDialogueReply);
 writingTarget.addEventListener("change", () => {
   updateTraceCharacter();
   clearWritingCanvas();
@@ -1100,6 +1486,7 @@ undoStrokeButton.addEventListener("click", undoWritingStroke);
 clearCanvasButton.addEventListener("click", clearWritingCanvas);
 saveCanvasButton.addEventListener("click", saveWritingImage);
 evaluateWritingButton.addEventListener("click", evaluateWriting);
+evaluateWritingSentenceButton.addEventListener("click", () => evaluateReadingSentence("writing"));
 writingCanvas.addEventListener("pointerdown", beginStroke);
 writingCanvas.addEventListener("pointermove", moveStroke);
 writingCanvas.addEventListener("pointerup", endStroke);
@@ -1119,3 +1506,4 @@ setupWritingCanvas();
 renderStoredConversation();
 if (!currentExercise) setCurrentExercise(greeting);
 setMode(currentMode);
+loadCourses();
