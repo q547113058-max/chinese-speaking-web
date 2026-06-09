@@ -186,7 +186,6 @@ h1 {
 .conversation {
   overflow: auto;
   padding: 22px 24px;
-  display: flex;
   flex-direction: column;
   gap: 16px;
   background:
@@ -197,9 +196,46 @@ h1 {
 .workbench {
   min-height: 0;
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   background: #fbfcfb;
+}
+
+.mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+
+.mode-tab {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.mode-tab.active {
+  color: #fff;
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.mode-pane {
+  min-height: 0;
+  display: none;
+}
+
+.mode-pane.active {
+  display: grid;
+}
+
+.conversation.mode-pane.active {
+  display: flex;
 }
 
 .message {
@@ -342,9 +378,11 @@ h1 {
 }
 
 .skill-panel {
-  border-top: 1px solid var(--line);
   background: #fff;
-  padding: 14px 18px 16px;
+  overflow: auto;
+  align-content: start;
+  gap: 14px;
+  padding: 18px 22px 22px;
 }
 
 .skill-head {
@@ -359,37 +397,6 @@ h1 {
   margin: 0;
   font-size: 18px;
   letter-spacing: 0;
-}
-
-.skill-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.skill-tab {
-  min-width: 52px;
-  min-height: 36px;
-  border: 0;
-  background: #fff;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.skill-tab.active {
-  background: var(--primary);
-  color: #fff;
-}
-
-.skill-pane {
-  display: none;
-}
-
-.skill-pane.active {
-  display: grid;
-  gap: 12px;
 }
 
 .target-box {
@@ -514,7 +521,7 @@ h1 {
 
 .canvas-wrap {
   position: relative;
-  width: min(100%, 280px);
+  width: min(100%, 360px);
   aspect-ratio: 1;
   justify-self: center;
 }
@@ -579,6 +586,10 @@ h1 {
   padding: 16px 24px 20px;
   border-top: 1px solid var(--line);
   background: #fff;
+}
+
+.composer.hidden {
+  display: none;
 }
 
 textarea {
@@ -726,12 +737,8 @@ button:disabled {
     padding: 16px;
   }
 
-  .workbench {
-    grid-template-rows: minmax(0, 1fr) auto;
-  }
-
   .skill-panel {
-    padding: 12px 14px 14px;
+    padding: 16px;
   }
 
   .skill-controls,
@@ -740,7 +747,7 @@ button:disabled {
   }
 
   .canvas-wrap {
-    width: min(100%, 240px);
+    width: min(100%, 300px);
   }
 
   .message,
@@ -772,7 +779,7 @@ button:disabled {
     flex-direction: column;
   }
 
-  .skill-tabs,
+  .mode-tabs,
   .canvas-actions {
     width: 100%;
   }

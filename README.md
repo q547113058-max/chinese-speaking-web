@@ -144,6 +144,8 @@ Each `/api/practice` response includes an `exercise` object:
 `POST /api/speaking/evaluate` accepts `multipart/form-data` with `audio`, `targetText`, `targetPinyin`, and `mode`. Dedicated audio scoring is represented by an adapter path; when it is not configured, the server falls back to transcript scoring.
 
 `POST /api/writing/evaluate` accepts `imageData`, `targetText`, and `mode`. AI/OCR checking is represented by an adapter path; when it is not configured, the server returns `self-fallback`.
+
+The frontend uses mutually exclusive workspace modes: `聊`, `说`, and `写`. Chat mode shows the original conversation and input composer. Speaking and writing modes use the current coach reply as their practice source and replace the chat view instead of appearing as a second panel under it.
 ## Local persona and context
 
 The app does not require accounts. It stores practice state in the browser:

@@ -7,8 +7,9 @@ const level = document.querySelector("#level");
 const speed = document.querySelector("#speed");
 const showPinyin = document.querySelector("#showPinyin");
 const showExplanation = document.querySelector("#showExplanation");
-const skillTabs = document.querySelectorAll(".skill-tab");
-const skillPanes = document.querySelectorAll(".skill-pane");
+const modeTabs = document.querySelectorAll(".mode-tab");
+const modePanes = document.querySelectorAll(".mode-pane");
+const composer = document.querySelector(".composer");
 const speakingTarget = document.querySelector("#speakingTarget");
 const speakingPinyin = document.querySelector("#speakingPinyin");
 const speakingMode = document.querySelector("#speakingMode");
@@ -63,6 +64,7 @@ let currentExercise = null;
 let writingCtx = null;
 let writingStrokes = [];
 let activeStroke = null;
+let currentMode = "chat";
 
 const settings = () => ({
   level: level.value,
@@ -164,6 +166,18 @@ function normalizeExercise(payload = {}) {
 
 function scrollToBottom() {
   conversation.scrollTop = conversation.scrollHeight;
+}
+
+function setMode(mode = "chat") {
+  currentMode = mode;
+  modeTabs.forEach((tab) => {
+    const active = tab.dataset.mode === mode;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", String(active));
+  });
+  modePanes.forEach((pane) => pane.classList.toggle("active", pane.dataset.pane === mode));
+  composer.classList.toggle("hidden", mode !== "chat");
+  if (mode === "chat") scrollToBottom();
 }
 
 function avatarHtml(kind = "assistant") {
@@ -711,15 +725,9 @@ recordButton.addEventListener("click", () => {
   else startRecording();
 });
 
-skillTabs.forEach((tab) => {
+modeTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
-    const target = tab.dataset.skill;
-    skillTabs.forEach((item) => {
-      const active = item.dataset.skill === target;
-      item.classList.toggle("active", active);
-      item.setAttribute("aria-selected", String(active));
-    });
-    skillPanes.forEach((pane) => pane.classList.toggle("active", pane.dataset.pane === target));
+    setMode(tab.dataset.mode || "chat");
   });
 });
 
@@ -755,3 +763,4 @@ fetch("/api/health")
 setupWritingCanvas();
 renderStoredConversation();
 if (!currentExercise) setCurrentExercise(greeting);
+setMode(currentMode);

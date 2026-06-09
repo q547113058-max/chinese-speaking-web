@@ -53,7 +53,7 @@ chinese-speaking-web/
 入口页面：[public/index.html](../public/index.html)
 
 - [public/app.js](../public/app.js)：负责录音、上传、练习请求、朗读、消息渲染和状态展示。
-- 技能练习面板包含“说”和“写”两个 tab：说用于跟读录音和评分，写用于 Canvas 手写、撤销、清空、保存和评分。
+- 工作区使用“聊 / 说 / 写”三种互斥模式：聊显示原对话和输入区；说、写使用当前苏棠回复派生出的练习目标，并替换工作区内容，不和对话列表共同占屏。
 - [public/styles.css](../public/styles.css)：负责响应式布局、对话气泡、设置区、输入区和按钮状态。
 
 ## 开发与文档同步规则

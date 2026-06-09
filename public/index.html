@@ -50,70 +50,76 @@
             <h2>&#33487;&#26848;</h2>
             <p>&#35752;&#21916;&#21487;&#29233;&#30340;&#20013;&#25991;&#31995;&#26412;&#31185;&#29983;&#65292;&#28201;&#26580;&#12289;&#32784;&#24515;&#12289;&#30495;&#35802;&#22909;&#22855;&#12290;</p>
           </aside>
-          <section class="workbench" aria-label="Conversation and skill practice">
-            <section class="conversation" id="conversation" aria-live="polite"></section>
-            <section class="skill-panel" aria-label="Skill practice">
+          <section class="workbench" aria-label="Practice workspace">
+            <div class="mode-tabs" role="tablist" aria-label="Practice modes">
+              <button class="mode-tab active" id="chatTab" type="button" data-mode="chat" role="tab" aria-selected="true">&#32842;</button>
+              <button class="mode-tab" id="speakTab" type="button" data-mode="speak" role="tab" aria-selected="false">&#35828;</button>
+              <button class="mode-tab" id="writeTab" type="button" data-mode="write" role="tab" aria-selected="false">&#20889;</button>
+            </div>
+
+            <section class="conversation mode-pane active" id="conversation" data-pane="chat" role="tabpanel" aria-labelledby="chatTab" aria-live="polite"></section>
+
+            <section class="skill-panel mode-pane" id="speakPane" data-pane="speak" role="tabpanel" aria-labelledby="speakTab" aria-label="Speaking practice">
               <header class="skill-head">
                 <div>
-                  <p class="eyebrow">Skill Practice</p>
-                  <h2>&#35828; / &#20889;</h2>
-                </div>
-                <div class="skill-tabs" role="tablist" aria-label="Skill modes">
-                  <button class="skill-tab active" id="speakTab" type="button" data-skill="speak" role="tab" aria-selected="true">&#35828;</button>
-                  <button class="skill-tab" id="writeTab" type="button" data-skill="write" role="tab" aria-selected="false">&#20889;</button>
+                  <p class="eyebrow">Current Reply Practice</p>
+                  <h2>&#35828;&#65306;&#36319;&#35835;</h2>
                 </div>
               </header>
+              <div class="target-box">
+                <p class="label">&#36319;&#35835;&#30446;&#26631;</p>
+                <p class="target-text" id="speakingTarget">&#35831;&#20808;&#21644;&#33487;&#26848;&#32842;&#19968;&#21477;&#12290;</p>
+                <p class="target-pinyin" id="speakingPinyin"></p>
+              </div>
+              <div class="skill-controls">
+                <label>
+                  <span>&#35780;&#20998;&#27169;&#24335;</span>
+                  <select id="speakingMode">
+                    <option value="transcript">&#36716;&#20889;&#35780;&#20998;</option>
+                    <option value="audio">&#38899;&#39057;&#35780;&#20998;</option>
+                  </select>
+                </label>
+                <button class="play-button" id="playTargetButton" type="button">&#25773;&#25918;&#31034;&#33539;</button>
+                <button class="primary-button" id="shadowButton" type="button">&#24405;&#38899;&#36319;&#35835;</button>
+              </div>
+              <div class="score-area" id="speakingScore"></div>
+            </section>
 
-              <section class="skill-pane active" id="speakPane" data-pane="speak" role="tabpanel" aria-labelledby="speakTab">
-                <div class="target-box">
-                  <p class="label">&#36319;&#35835;&#30446;&#26631;</p>
-                  <p class="target-text" id="speakingTarget">&#35831;&#20808;&#21644;&#33487;&#26848;&#32842;&#19968;&#21477;&#12290;</p>
-                  <p class="target-pinyin" id="speakingPinyin"></p>
+            <section class="skill-panel mode-pane" id="writePane" data-pane="write" role="tabpanel" aria-labelledby="writeTab" aria-label="Writing practice">
+              <header class="skill-head">
+                <div>
+                  <p class="eyebrow">Current Reply Practice</p>
+                  <h2>&#20889;&#65306;&#25163;&#20889;</h2>
                 </div>
-                <div class="skill-controls">
-                  <label>
-                    <span>&#35780;&#20998;&#27169;&#24335;</span>
-                    <select id="speakingMode">
-                      <option value="transcript">&#36716;&#20889;&#35780;&#20998;</option>
-                      <option value="audio">&#38899;&#39057;&#35780;&#20998;</option>
-                    </select>
-                  </label>
-                  <button class="play-button" id="playTargetButton" type="button">&#25773;&#25918;&#31034;&#33539;</button>
-                  <button class="primary-button" id="shadowButton" type="button">&#24405;&#38899;&#36319;&#35835;</button>
-                </div>
-                <div class="score-area" id="speakingScore"></div>
-              </section>
-
-              <section class="skill-pane" id="writePane" data-pane="write" role="tabpanel" aria-labelledby="writeTab">
-                <div class="writing-toolbar">
-                  <label>
-                    <span>&#20070;&#20889;&#30446;&#26631;</span>
-                    <select id="writingTarget"></select>
-                  </label>
-                  <label>
-                    <span>&#35780;&#20998;&#27169;&#24335;</span>
-                    <select id="writingMode">
-                      <option value="self">&#20020;&#25721;&#33258;&#26597;</option>
-                      <option value="ai">AI/OCR &#21028;&#26029;</option>
-                    </select>
-                  </label>
-                  <label class="toggle writing-trace">
-                    <input id="traceToggle" type="checkbox" checked />
-                    &#25551;&#32418;
-                  </label>
-                </div>
-                <div class="canvas-wrap">
-                  <canvas id="writingCanvas" width="360" height="360" aria-label="Handwriting canvas"></canvas>
-                  <div class="trace-character" id="traceCharacter" aria-hidden="true"></div>
-                </div>
-                <div class="canvas-actions">
-                  <button class="play-button" id="undoStrokeButton" type="button">&#25764;&#38144;</button>
-                  <button class="play-button" id="clearCanvasButton" type="button">&#28165;&#31354;</button>
-                  <button class="play-button" id="saveCanvasButton" type="button">&#20445;&#23384;</button>
-                  <button class="primary-button" id="evaluateWritingButton" type="button">&#35780;&#20998;</button>
-                </div>
-                <div class="score-area" id="writingScore"></div>
-              </section>
+              </header>
+              <div class="writing-toolbar">
+                <label>
+                  <span>&#20070;&#20889;&#30446;&#26631;</span>
+                  <select id="writingTarget"></select>
+                </label>
+                <label>
+                  <span>&#35780;&#20998;&#27169;&#24335;</span>
+                  <select id="writingMode">
+                    <option value="self">&#20020;&#25721;&#33258;&#26597;</option>
+                    <option value="ai">AI/OCR &#21028;&#26029;</option>
+                  </select>
+                </label>
+                <label class="toggle writing-trace">
+                  <input id="traceToggle" type="checkbox" checked />
+                  &#25551;&#32418;
+                </label>
+              </div>
+              <div class="canvas-wrap">
+                <canvas id="writingCanvas" width="360" height="360" aria-label="Handwriting canvas"></canvas>
+                <div class="trace-character" id="traceCharacter" aria-hidden="true"></div>
+              </div>
+              <div class="canvas-actions">
+                <button class="play-button" id="undoStrokeButton" type="button">&#25764;&#38144;</button>
+                <button class="play-button" id="clearCanvasButton" type="button">&#28165;&#31354;</button>
+                <button class="play-button" id="saveCanvasButton" type="button">&#20445;&#23384;</button>
+                <button class="primary-button" id="evaluateWritingButton" type="button">&#35780;&#20998;</button>
+              </div>
+              <div class="score-area" id="writingScore"></div>
             </section>
           </section>
         </section>
