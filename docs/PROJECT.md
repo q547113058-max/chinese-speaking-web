@@ -13,6 +13,7 @@
 - 显示控制：前端可开关拼音和英文解释。
 - 本地模拟：没有 `OPENAI_API_KEY` 时，后端返回固定示例，方便调试 UI 和交互流程。
 - Chat 模型：配置 `CHAT_API_KEY` 后，可使用 OpenAI-compatible Chat Completions 接口生成回复，例如 MiniMax-M3。
+- Vision 模型：配置 `VISION_API_KEY`、`VISION_BASE_URL`、`VISION_MODEL` 后，`写` 模式可把 Canvas 图片交给支持图片输入的 OpenAI-compatible 模型评分；未单独配置时会尝试复用现有 `CHAT_*` 或 `OPENAI_*`。
 
 ## 目录结构
 
@@ -42,8 +43,8 @@ chinese-speaking-web/
 - `POST /api/transcribe`：接收浏览器上传的音频，返回英文转写。
 - `POST /api/practice`：接收英文文本和练习设置，返回中文、拼音、解释和建议。
 - `POST /api/tts`：接收中文文本和语速，返回 MP3 音频；无 API key 时返回 `{ "fallback": true }`。
-- `POST /api/speaking/evaluate`：接收跟读音频和目标句，返回转写、总分、维度评分和建议；专用音频评分未配置时降级为转写评分。
-- `POST /api/writing/evaluate`：接收 Canvas 图片、目标字词和模式，返回书写评分结构；AI/OCR 未配置时降级为自查模式。
+- `POST /api/speaking/evaluate`：接收跟读音频和目标句，返回转写、总分、维度评分和建议；`transcript` 模式按识别文本评分，`audio` 模式读取 16 kHz PCM 录音并结合时长、有效语音比例、停顿、响度和节奏生成第一版音频评分。
+- `POST /api/writing/evaluate`：接收 Canvas 图片、目标字词和模式，`self` 模式返回自查结构，`ai` 模式调用视觉模型评分目标匹配、结构、比例、笔画清晰度和整洁度；未配置或调用失败时降级为自查模式。
 - API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
 - JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
