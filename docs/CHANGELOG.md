@@ -24,3 +24,5 @@
 - Add first-pass reading and listening practice: `/api/practice` now includes reading/listening exercise targets, the frontend adds mutually exclusive `读` and `听` modes, reading uses Hanzi-pinyin matching, and listening uses local tone-choice scoring.
 - Show the current Hanzi during listening tone-choice practice so the learner can connect the sound and tone to the written character.
 - Fix speaking practice target pinyin so it is cropped to the same sentence as the displayed Chinese shadowing text.
+- Add first-pass real audio scoring for speaking practice: audio mode now analyzes the uploaded PCM recording for duration, voiced speech ratio, pauses, loudness, and rhythm, while transcript mode remains text-based.
+- Add AI vision scoring for handwriting practice: `mode=ai` on `/api/writing/evaluate` can call a configured OpenAI-compatible vision model and returns handwriting radar scores, recognized text, and feedback, with `self-fallback` preserved when vision is unavailable.
