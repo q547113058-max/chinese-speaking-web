@@ -152,7 +152,9 @@ Each `/api/practice` response includes an `exercise` object:
 
 `POST /api/writing/evaluate` accepts `imageData`, `targetText`, and `mode`. `self` mode keeps the local self-check flow. `ai` mode sends the Canvas image to the configured OpenAI-compatible vision model and returns target match, structure, proportion, stroke clarity, neatness, recognized text, and feedback. When no vision service is configured or the call fails, the server returns `self-fallback` with a `fallbackReason`.
 
-The frontend uses mutually exclusive workspace modes: `聊`, `读`, `听`, `说`, and `写`. Chat mode shows the original conversation and input composer. Skill modes use the current coach reply as their practice source and replace the chat view instead of appearing as a second panel under it. Reading and listening are scored locally and stored in the latest 20 practice results.
+The app now includes a scenario course library. `GET /api/courses` lists the built-in scenarios, and `GET /api/courses/:id` returns one course with listening, speaking, reading, and writing data. New skill APIs include `/api/listening/evaluate`, `/api/speaking/dialogue`, and `/api/reading/evaluate`.
+
+The frontend uses mutually exclusive workspace modes: `聊`, `听`, `说`, `读`, and `写`. Each skill mode has internal submodes: listening has tone and scene listening, speaking has shadowing and roleplay, reading has seven-layer character study and scene reading, and writing has stroke-order handwriting and sentence input. Results continue to be stored in the latest 20 practice results.
 ## Local persona and context
 
 The app does not require accounts. It stores practice state in the browser:
@@ -164,7 +166,7 @@ localStorage["chinese-speaking-coach-state"]
 The stored JSON contains the generated coach persona, recent conversation turns, and the latest 20 skill practice results. Each practice request sends only the latest turns to the server so the model can answer with context while keeping storage simple and local to the browser.
 ## Fixed coach persona
 
-The coach is initialized as `苏棠`: a likable, cute Chinese Literature undergraduate student who chats with foreign learners as a warm Mandarin conversation partner. The app uses `/coach-avatar.png` as her avatar, greets users as 苏棠 on entry, and sends this persona with conversation context on every practice request.
+The coach is initialized as `Luming`: a Mandarin scenario coach for listening, speaking, reading, and writing practice. The app uses `/coach-avatar.png` as the coach avatar, greets users as Luming on entry, and sends this persona with conversation context on every practice request.
 
 Each reply includes:
 
