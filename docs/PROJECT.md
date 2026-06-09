@@ -43,8 +43,13 @@ chinese-speaking-web/
 - `POST /api/transcribe`：接收浏览器上传的音频，返回英文转写。
 - `POST /api/practice`：接收英文文本和练习设置，返回中文、拼音、解释和建议。
 - `POST /api/tts`：接收中文文本和语速，返回 MP3 音频；无 API key 时返回 `{ "fallback": true }`。
+- `GET /api/courses`：返回内置场景课程列表。
+- `GET /api/courses/:id`：返回单个场景课程和听说读写练习结构。
+- `POST /api/listening/evaluate`：评估声调辨别或场景听力理解题。
 - `POST /api/speaking/evaluate`：接收跟读音频和目标句，返回转写、总分、维度评分和建议；`transcript` 模式按识别文本评分，`audio` 模式读取 16 kHz PCM 录音并结合时长、有效语音比例、停顿、响度和节奏生成第一版音频评分。
-- `POST /api/writing/evaluate`：接收 Canvas 图片、目标字词和模式，`self` 模式返回自查结构，`ai` 模式调用视觉模型评分目标匹配、结构、比例、笔画清晰度和整洁度；未配置或调用失败时降级为自查模式。
+- `POST /api/speaking/dialogue`：处理 4-5 轮场景口语对话并返回 Luming 回应、声调反馈和下一轮任务。
+- `POST /api/reading/evaluate`：评估阅读/写作造句练习。
+- `POST /api/writing/evaluate`：接收 Canvas 图片、目标字词、模式和 `strokes` 轨迹，支持本地笔顺评分与 MiniMax-M3 图片评分合成。
 - API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
 - JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
@@ -54,7 +59,7 @@ chinese-speaking-web/
 入口页面：[public/index.html](../public/index.html)
 
 - [public/app.js](../public/app.js)：负责录音、上传、练习请求、朗读、消息渲染和状态展示。
-- 工作区使用“聊 / 读 / 听 / 说 / 写”五种互斥模式：聊显示原对话和输入区；读做汉字-拼音配对；听显示当前汉字并做声调选择；说、写沿用当前练习功能。技能模式都使用当前苏棠回复派生出的练习目标，并替换工作区内容，不和对话列表共同占屏。
+- 工作区使用“聊 / 听 / 说 / 读 / 写”五种互斥模式，并以内置场景课程为主数据源。每个技能模式包含二级模式：听含声调/场景听力，说含跟读/场景对话，读含七层汉字/场景阅读，写含笔顺手写/造句输入。
 - [public/styles.css](../public/styles.css)：负责响应式布局、对话气泡、设置区、输入区和按钮状态。
 
 ## 开发与文档同步规则
