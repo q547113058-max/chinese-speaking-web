@@ -77,12 +77,22 @@
                 <button class="play-button" id="resetReadingButton" type="button">&#37325;&#26469;</button>
               </header>
               <div class="skill-subtabs" role="tablist" aria-label="Reading submodes">
-                <button class="submode-tab active" type="button" data-skill="read" data-submode="lesson">&#19971;&#23618;&#27721;&#23383;</button>
-                <button class="submode-tab" type="button" data-skill="read" data-submode="scene">&#22330;&#26223;&#38405;&#35835;</button>
+                <button class="submode-tab active" type="button" data-skill="read" data-submode="scene">&#22330;&#26223;&#38405;&#35835;</button>
+                <button class="submode-tab" type="button" data-skill="read" data-submode="lesson">&#19971;&#23618;&#27721;&#23383;</button>
               </div>
-              <div class="submode-panel active" id="readingLessonPanel" data-read-panel="lesson">
+              <div class="submode-panel" id="readingLessonPanel" data-read-panel="lesson">
+                <div class="choice-row" id="readingCharacterPicker"></div>
+                <div class="reading-layer-tabs" id="readingLayerTabs" role="tablist" aria-label="Reading lesson layers">
+                  <button class="submode-tab active" type="button" data-reading-layer="shape">&#35762;&#23383;</button>
+                  <button class="submode-tab" type="button" data-reading-layer="pinyin">&#35762;&#25340;&#38899;</button>
+                  <button class="submode-tab" type="button" data-reading-layer="words">&#35762;&#32452;&#35789;</button>
+                  <button class="submode-tab" type="button" data-reading-layer="idiom">&#35762;&#25104;&#35821;</button>
+                  <button class="submode-tab" type="button" data-reading-layer="sentences">&#35762;&#21477;&#23376;</button>
+                  <button class="submode-tab" type="button" data-reading-layer="compose">&#36896;&#21477;&#32451;&#20064;</button>
+                  <button class="submode-tab" type="button" data-reading-layer="dialogue">&#22330;&#26223;&#23545;&#35805;</button>
+                </div>
                 <div class="target-box" id="characterLessonBox"></div>
-                <div class="match-board" id="readingBoard">
+                <div class="match-board reading-layer-block" id="readingBoard">
                   <div>
                     <p class="label">&#32452;&#35789;&#37197;&#23545;&#65306;&#27721;&#23383;</p>
                     <div class="match-column" id="readingTextCards"></div>
@@ -92,14 +102,19 @@
                     <div class="match-column" id="readingPinyinCards"></div>
                   </div>
                 </div>
-                <div class="sentence-practice">
+                <div class="sentence-practice reading-layer-block" id="readingSentenceBox">
                   <textarea id="readingSentenceInput" rows="2" placeholder="&#29992;&#30446;&#26631;&#23383;&#36896;&#19968;&#21477;&#20013;&#25991;"></textarea>
                   <button class="primary-button" id="evaluateReadingButton" type="button">&#23436;&#25104;&#36896;&#21477;</button>
                 </div>
                 <div class="score-area" id="readingScore"></div>
               </div>
-              <div class="submode-panel" id="readingScenePanel" data-read-panel="scene">
+              <div class="submode-panel active" id="readingScenePanel" data-read-panel="scene">
+                <div class="skill-subtabs" id="readingSceneLevelTabs" role="tablist" aria-label="Reading scene level">
+                  <button class="submode-tab active" type="button" data-reading-scene-level="basic">&#22522;&#30784;</button>
+                  <button class="submode-tab" type="button" data-reading-scene-level="advanced">&#39640;&#38454;</button>
+                </div>
                 <div class="target-box" id="readingPassageBox"></div>
+                <div class="hanzi-popover" id="readingHanziPopover" hidden></div>
                 <div class="scene-questions" id="readingQuestions"></div>
                 <div class="score-area" id="readingSceneScore"></div>
               </div>
@@ -126,6 +141,7 @@
                 </div>
                 <div class="listening-actions">
                   <button class="play-button" id="playListeningButton" type="button">&#25773;&#25918;</button>
+                  <button class="play-button" id="voiceToneButton" type="button">&#35828;&#22768;&#35843;</button>
                   <div class="tone-options" id="toneOptions"></div>
                 </div>
                 <div class="score-area" id="listeningScore"></div>
@@ -149,10 +165,10 @@
                 </div>
               </header>
               <div class="skill-subtabs" role="tablist" aria-label="Speaking submodes">
-                <button class="submode-tab active" type="button" data-skill="speak" data-submode="shadow">&#36319;&#35835;&#32451;&#20064;</button>
-                <button class="submode-tab" type="button" data-skill="speak" data-submode="dialogue">&#22330;&#26223;&#23545;&#35805;</button>
+                <button class="submode-tab active" type="button" data-skill="speak" data-submode="dialogue">&#22330;&#26223;&#23545;&#35805;</button>
+                <button class="submode-tab" type="button" data-skill="speak" data-submode="shadow">&#36319;&#35835;&#32451;&#20064;</button>
               </div>
-              <div class="submode-panel active" id="speakingShadowPanel" data-speak-panel="shadow">
+              <div class="submode-panel" id="speakingShadowPanel" data-speak-panel="shadow">
                 <div class="target-box">
                   <p class="label">&#36319;&#35835;&#30446;&#26631;</p>
                   <p class="target-text" id="speakingTarget">&#35831;&#20808;&#36873;&#25321;&#22330;&#26223;&#35838;&#31243;&#12290;</p>
@@ -162,7 +178,7 @@
                   <label>
                     <span>&#36319;&#35835;&#26041;&#24335;</span>
                     <select id="speakingMode">
-                      <option value="audio">&#24405;&#38899;&#33258;&#26597;</option>
+                      <option value="audio">&#35821;&#38899;&#21028;&#35835;</option>
                       <option value="transcript">&#36716;&#20889;&#21442;&#32771;</option>
                     </select>
                   </label>
@@ -171,7 +187,7 @@
                 </div>
                 <div class="score-area" id="speakingScore"></div>
               </div>
-              <div class="submode-panel" id="speakingDialoguePanel" data-speak-panel="dialogue">
+              <div class="submode-panel active" id="speakingDialoguePanel" data-speak-panel="dialogue">
                 <div class="target-box">
                   <p class="label">&#20320;&#30340;&#22330;&#26223;&#20219;&#21153;</p>
                   <p class="target-text" id="dialogueRole"></p>
