@@ -189,9 +189,4 @@ The scoring APIs are still present for experiments and compatibility, but the no
 
 The frontend no longer shows automatic numeric scores or radar charts. Speaking, handwriting, sentence practice, and scene practice now show completion/self-check feedback only. Reading/listening games may still show immediate correct/incorrect guidance where the answer is explicit, but they do not display a percentage score.
 
-Writing handwriting now has two modes only:
-
-- `临摹`: shows the target character as a trace guide.
-- `自由书写`: hides the trace guide so the learner writes from memory.
-
-The handwriting toolbar keeps only useful direct actions: undo, clear, and save. The old completion/check button was removed because it did not produce reliable feedback after automatic scoring was removed.
+Writing handwriting now uses a single `临摹` mode with the target character shown as a trace guide. The handwriting toolbar keeps only useful direct actions: undo and clear.
