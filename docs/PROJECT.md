@@ -30,6 +30,7 @@ chinese-speaking-web/
   scripts/
     sync-github.ps1
   public/
+    hanzi-data/
     index.html
     styles.css
     app.js
@@ -140,6 +141,6 @@ Speaking defaults to `场景对话`, and Reading defaults to `场景阅读`; sha
 
 Speaking voice responses include content correctness judgment. Shadowing checks the STT transcript against the target sentence; scene dialogue checks whether the learner's spoken reply completes the current role task and returns a reference response. `/api/speaking/dialogue` accepts `text`, `userText`, `transcript`, or `choice`, and merges model judgment with local scenario-target matching to avoid rejecting valid free-form spoken answers.
 
-Reading `七层汉字` contains shape story with stroke animation, pinyin spelling playback, word matching, idiom background/explanation playback, three example sentences for shadowing, Qwen3.6-Flash/chat-model sentence feedback without numeric scores, and a shortcut into Speaking scene dialogue. Reading `场景阅读` supports manual `基础 / 高阶` switching; high-level passages contain 5-8 sentences, and clicking a Hanzi plays the character plus its meaning.
+Reading `七层汉字` contains shape story with local real stroke-order data, pinyin spelling playback, word matching, idiom background/explanation playback, three example sentences for shadowing, Qwen3.6-Flash/chat-model sentence feedback without numeric scores, and a shortcut into Speaking scene dialogue. The app uses local stroke data in `public/hanzi-data/`; if real data is missing, it shows a static character and does not play simplified fake strokes. Reading `场景阅读` supports manual `基础 / 高阶` switching; high-level passages contain 5-8 sentences, and clicking a Hanzi plays the character plus its meaning.
 
 Writing handwriting has one learner-facing mode: `临摹`, with the target character visible as a trace guide. The handwriting toolbar intentionally keeps only undo and clear. There is no save, completion, or check button because the app no longer performs automatic handwriting evaluation in normal use.
