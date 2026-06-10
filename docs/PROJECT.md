@@ -131,3 +131,8 @@ The scoring APIs are still present for experiments and compatibility, but the no
 ## Practice feedback policy
 
 The learner-facing UI does not present automatic numeric scores or radar charts. The current product direction is completion, self-check, explicit correct/incorrect feedback for deterministic quiz items, and Luming conversation guidance. Frontend speaking, handwriting, sentence practice, and scene practice no longer call the scoring APIs during normal use.
+
+Writing handwriting has two learner-facing modes:
+
+- `临摹`: trace guide is visible.
+- `自由书写`: trace guide is hidden.
