@@ -74,8 +74,8 @@ const courseLibrary = [
     scene: "\u5317\u4eac\u5546\u52a1\u665a\u5bb4\u56de\u5e94\u795d\u9152",
     summary: "\u5b66\u4f1a\u793c\u8c8c\u56de\u5e94\u795d\u9152\uff0c\u8868\u8fbe\u611f\u8c22\u548c\u5408\u4f5c\u613f\u671b\u3002",
     dialogue: [
-      { speaker: "\u5f20\u603b", text: "\u6b22\u8fce\u4f60\u6765\u5317\u4eac\uff0c\u5e0c\u671b\u6211\u4eec\u5408\u4f5c\u987a\u5229\u3002", pinyin: "Hu\u0101ny\u00edng n\u01d0 l\u00e1i B\u011bij\u012bng, x\u012bw\u00e0ng w\u01d2men h\u00e9zu\u00f2 sh\u00f9nl\u00ec." },
-      { speaker: "Luming", text: "\u8c22\u8c22\u5f20\u603b\uff0c\u8fd9\u676f\u9152\u6211\u656c\u5927\u5bb6\uff0c\u4e5f\u795d\u6211\u4eec\u5408\u4f5c\u6210\u529f\u3002", pinyin: "Xi\u00e8xie Zh\u0101ng z\u01d2ng, zh\u00e8 b\u0113i ji\u01d4 w\u01d2 j\u00ecng d\u00e0ji\u0101, y\u011b zh\u00f9 w\u01d2men h\u00e9zu\u00f2 ch\u00e9ngg\u014dng." }
+      { speaker: "\u5f20\u603b", text: "欢迎你来北京参加晚宴，今晚大家先轻松聊一聊，也希望我们后面的合作顺利。", pinyin: "Huānyíng nǐ lái Běijīng cānjiā wǎnyàn, jīnwǎn dàjiā xiān qīngsōng liáo yi liáo, yě xīwàng wǒmen hòumiàn de hézuò shùnlì." },
+      { speaker: "Luming", text: "谢谢张总，我很高兴认识大家。这杯酒我敬各位，也祝这个项目开端顺利、合作成功。", pinyin: "Xièxie Zhāng zǒng, wǒ hěn gāoxìng rènshi dàjiā. Zhè bēi jiǔ wǒ jìng gèwèi, yě zhù zhège xiàngmù kāiduān shùnlì, hézuò chénggōng." }
     ],
     characters: [
       { text: "\u656c", pinyin: "j\u00ecng", tone: 4, story: "\u656c\u6709\u5c0a\u91cd\u7684\u610f\u601d\uff0c\u5728\u795d\u9152\u91cc\u5e38\u8bf4\u6211\u656c\u4f60\u3002", words: ["\u656c\u9152", "\u5c0a\u656c"], idiom: "\u656c\u800c\u8fdc\u4e4b", strokes: ["top-left", "top-right", "down", "left-fall", "right-fall"] },
@@ -106,8 +106,8 @@ const courseLibrary = [
     scene: "\u8336\u9986\u70b9\u8336",
     summary: "\u7ec3\u4e60\u70b9\u8336\u3001\u95ee\u53e3\u5473\u548c\u8868\u8fbe\u504f\u597d\u3002",
     dialogue: [
-      { speaker: "\u670d\u52a1\u5458", text: "\u60a8\u60f3\u559d\u4ec0\u4e48\u8336\uff1f", pinyin: "N\u00edn xi\u01ceng h\u0113 sh\u00e9nme ch\u00e1?" },
-      { speaker: "Luming", text: "\u6211\u60f3\u8981\u4e00\u676f\u9f99\u4e95\uff0c\u4e0d\u8981\u592a\u6d53\u3002", pinyin: "W\u01d2 xi\u01ceng y\u00e0o y\u00ec b\u0113i L\u00f3ngj\u01d0ng, b\u00fa y\u00e0o t\u00e0i n\u00f3ng." }
+      { speaker: "\u670d\u52a1\u5458", text: "您好，今天想喝什么茶？我们有龙井、普洱和茉莉花茶，也可以按您的口味泡淡一点。", pinyin: "Nínhǎo, jīntiān xiǎng hē shénme chá? Wǒmen yǒu Lóngjǐng, Pǔ'ěr hé Mòlìhuā chá, yě kěyǐ àn nín de kǒuwèi pào dàn yìdiǎn." },
+      { speaker: "Luming", text: "我想要一杯龙井，不要太浓。麻烦先用热水醒茶，再给我一个小杯子慢慢品。", pinyin: "Wǒ xiǎng yào yì bēi Lóngjǐng, bú yào tài nóng. Máfan xiān yòng rèshuǐ xǐng chá, zài gěi wǒ yí ge xiǎo bēizi mànmàn pǐn." }
     ],
     characters: [
       { text: "\u8336", pinyin: "ch\u00e1", tone: 2, story: "\u8336\u5b57\u4e0a\u9762\u662f\u8349\u5b57\u5934\uff0c\u548c\u690d\u7269\u6709\u5173\u3002", words: ["\u8336\u9986", "\u7eff\u8336"], idiom: "\u8336\u4f59\u996d\u540e", strokes: ["top", "middle", "left", "right"] },
@@ -128,8 +128,8 @@ const courseLibrary = [
     scene: "\u9910\u5385\u70b9\u9910",
     summary: "\u7ec3\u4e60\u8bf7\u3001\u8981\u3001\u4e0d\u8981\u548c\u53e3\u5473\u8981\u6c42\u3002",
     dialogue: [
-      { speaker: "\u670d\u52a1\u5458", text: "\u60a8\u8981\u70b9\u4ec0\u4e48\uff1f", pinyin: "N\u00edn y\u00e0o di\u01cen sh\u00e9nme?" },
-      { speaker: "Luming", text: "\u8bf7\u7ed9\u6211\u4e00\u4efd\u5bab\u4fdd\u9e21\u4e01\uff0c\u5c11\u653e\u8fa3\u3002", pinyin: "Q\u01d0ng g\u011bi w\u01d2 y\u00ed f\u00e8n G\u014dngb\u01ceo j\u012bd\u012bng, sh\u01ceo f\u00e0ng l\u00e0." }
+      { speaker: "\u670d\u52a1\u5458", text: "您好，欢迎光临。今天想点什么菜？如果不太能吃辣，我可以帮您推荐清淡一点的做法。", pinyin: "Nínhǎo, huānyíng guānglín. Jīntiān xiǎng diǎn shénme cài? Rúguǒ bú tài néng chī là, wǒ kěyǐ bāng nín tuījiàn qīngdàn yìdiǎn de zuòfǎ." },
+      { speaker: "Luming", text: "请给我一份宫保鸡丁，少放辣，多放一点花生。再来一碗米饭和一杯温水，谢谢。", pinyin: "Qǐng gěi wǒ yí fèn Gōngbǎo jīdīng, shǎo fàng là, duō fàng yìdiǎn huāshēng. Zài lái yì wǎn mǐfàn hé yì bēi wēnshuǐ, xièxie." }
     ],
     characters: [
       { text: "\u8bf7", pinyin: "q\u01d0ng", tone: 3, story: "\u8bf7\u5e38\u7528\u6765\u8868\u793a\u793c\u8c8c\u8bf7\u6c42\u3002", words: ["\u8bf7\u95ee", "\u8bf7\u7ed9\u6211"], idiom: "\u4e0d\u60c5\u4e4b\u8bf7", strokes: ["speech", "green"] },
@@ -150,8 +150,8 @@ const courseLibrary = [
     scene: "\u5730\u94c1\u7ad9\u95ee\u8def",
     summary: "\u7ec3\u4e60\u95ee\u8def\u3001\u8bf4\u65b9\u5411\u548c\u8868\u8fbe\u8ddd\u79bb\u3002",
     dialogue: [
-      { speaker: "\u8def\u4eba", text: "\u4f60\u8981\u53bb\u54ea\u91cc\uff1f", pinyin: "N\u01d0 y\u00e0o q\u00f9 n\u01cel\u01d0?" },
-      { speaker: "Luming", text: "\u8bf7\u95ee\u5730\u94c1\u7ad9\u600e\u4e48\u8d70\uff1f", pinyin: "Q\u01d0ngw\u00e8n d\u00ecti\u011b zh\u00e0n z\u011bnme z\u01d2u?" }
+      { speaker: "\u8def\u4eba", text: "你好，你看起来在找路。你要去哪里？这附近有地铁站、公交站和一个商场。", pinyin: "Nǐhǎo, nǐ kàn qǐlái zài zhǎo lù. Nǐ yào qù nǎlǐ? Zhè fùjìn yǒu dìtiě zhàn, gōngjiāo zhàn hé yí ge shāngchǎng." },
+      { speaker: "Luming", text: "请问地铁站怎么走？我第一次来这里，想坐二号线去市中心，最好能走比较近的路。", pinyin: "Qǐngwèn dìtiě zhàn zěnme zǒu? Wǒ dì yī cì lái zhèlǐ, xiǎng zuò èr hào xiàn qù shì zhōngxīn, zuìhǎo néng zǒu bǐjiào jìn de lù." }
     ],
     characters: [
       { text: "\u8def", pinyin: "l\u00f9", tone: 4, story: "\u8def\u548c\u8d70\u8def\u6709\u5173\uff0c\u95ee\u8def\u65f6\u5f88\u5e38\u89c1\u3002", words: ["\u95ee\u8def", "\u8def\u53e3"], idiom: "\u8f7b\u8f66\u719f\u8def", strokes: ["foot", "each"] },
@@ -172,8 +172,8 @@ const courseLibrary = [
     scene: "\u6821\u56ed\u804a\u5929",
     summary: "\u7ec3\u4e60\u4ecb\u7ecd\u4e13\u4e1a\u3001\u8bfe\u7a0b\u548c\u4eca\u5929\u7684\u5b89\u6392\u3002",
     dialogue: [
-      { speaker: "\u540c\u5b66", text: "\u4f60\u4eca\u5929\u6709\u4ec0\u4e48\u8bfe\uff1f", pinyin: "N\u01d0 j\u012bnti\u0101n y\u01d2u sh\u00e9nme k\u00e8?" },
-      { speaker: "Luming", text: "\u6211\u4e0a\u5348\u6709\u4e2d\u6587\u8bfe\uff0c\u4e0b\u5348\u53bb\u56fe\u4e66\u9986\u590d\u4e60\u3002", pinyin: "W\u01d2 sh\u00e0ngw\u01d4 y\u01d2u Zh\u014dngw\u00e9n k\u00e8, xi\u00e0w\u01d4 q\u00f9 t\u00fash\u016bgu\u01cen f\u00f9x\u00ed." }
+      { speaker: "\u540c\u5b66", text: "你今天有什么课？上午我看到你拿着中文书，下午是不是还要去图书馆学习？", pinyin: "Nǐ jīntiān yǒu shénme kè? Shàngwǔ wǒ kàndào nǐ názhe Zhōngwén shū, xiàwǔ shì bú shì hái yào qù túshūguǎn xuéxí?" },
+      { speaker: "Luming", text: "我上午有中文课，老师讲了声调和日常对话。下午我去图书馆复习，还要准备明天的小测。", pinyin: "Wǒ shàngwǔ yǒu Zhōngwén kè, lǎoshī jiǎng le shēngdiào hé rìcháng duìhuà. Xiàwǔ wǒ qù túshūguǎn fùxí, hái yào zhǔnbèi míngtiān de xiǎocè." }
     ],
     characters: [
       { text: "\u8bfe", pinyin: "k\u00e8", tone: 4, story: "\u8bfe\u548c\u5b66\u4e60\u6709\u5173\uff0c\u5b66\u6821\u91cc\u6bcf\u5929\u90fd\u6709\u8bfe\u3002", words: ["\u4e0a\u8bfe", "\u4e2d\u6587\u8bfe"], idiom: "\u8bfe\u4e0d\u5bb9\u7f13", strokes: ["speech", "fruit"] },
@@ -203,14 +203,158 @@ function findCourse(courseId = "") {
   return courseLibrary.find((course) => course.id === courseId) || courseLibrary[0];
 }
 
+const readingCharacterEnhancements = {
+  "\u656c": {
+    pinyinTip: "\u56db\u58f0\u8981\u77ed\u800c\u6709\u529b\uff0c\u50cf\u5728\u795d\u9152\u65f6\u628a\u8bed\u6c14\u6536\u4f4f\u3002",
+    idiomStory: "Luming \u5728\u665a\u5bb4\u4e0a\u8bf4\uff1a\u201c\u656c\u800c\u8fdc\u4e4b\u4e0d\u662f\u51b7\u6de1\uff0c\u662f\u5c0a\u91cd\u522b\u4eba\u7684\u8fb9\u754c\u3002\u201d",
+    examples: [
+      { text: "\u6211\u656c\u5927\u5bb6\u4e00\u676f\u3002", pinyin: "W\u01d2 j\u00ecng d\u00e0ji\u0101 y\u00ec b\u0113i.", translation: "I toast everyone." },
+      { text: "\u4ed6\u5f88\u5c0a\u656c\u8001\u5e08\u3002", pinyin: "T\u0101 h\u011bn z\u016bnj\u00ecng l\u01ceosh\u012b.", translation: "He respects the teacher." },
+      { text: "\u8fd9\u662f\u4e00\u79cd\u793c\u8c8c\u7684\u656c\u610f\u3002", pinyin: "Zh\u00e8 sh\u00ec y\u00ec zh\u01d2ng l\u01d0m\u00e0o de j\u00ecngy\u00ec.", translation: "This is a polite sign of respect." }
+    ]
+  },
+  "\u9152": {
+    pinyinTip: "\u4e09\u58f0\u5148\u964d\u518d\u8d77\uff0c\u8bf4\u201c\u9152\u201d\u65f6\u4e0d\u8981\u592a\u5feb\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u9152\u9022\u77e5\u5df1\u5343\u676f\u5c11\uff0c\u91cd\u70b9\u4e0d\u662f\u559d\u591a\uff0c\u662f\u9047\u5230\u61c2\u4f60\u7684\u4eba\u3002\u201d",
+    examples: [
+      { text: "\u8fd9\u676f\u9152\u6211\u656c\u4f60\u3002", pinyin: "Zh\u00e8 b\u0113i ji\u01d4 w\u01d2 j\u00ecng n\u01d0.", translation: "I toast you with this glass." },
+      { text: "\u6211\u4e0d\u559d\u9152\u3002", pinyin: "W\u01d2 b\u00f9 h\u0113 ji\u01d4.", translation: "I do not drink alcohol." },
+      { text: "\u665a\u5bb4\u4e0a\u6709\u7ea2\u9152\u3002", pinyin: "W\u01ceny\u00e0n shang y\u01d2u h\u00f3ngji\u01d4.", translation: "There is red wine at the dinner." }
+    ]
+  },
+  "\u8336": {
+    pinyinTip: "\u4e8c\u58f0\u8981\u5411\u4e0a\u626c\uff0c\u50cf\u7528\u53cb\u597d\u7684\u8bed\u6c14\u95ee\u4eba\u8981\u4e0d\u8981\u559d\u8336\u3002",
+    idiomStory: "Luming \u5728\u8336\u9986\u8bf4\uff1a\u201c\u8336\u4f59\u996d\u540e\u7684\u95f2\u804a\uff0c\u5e38\u5e38\u6700\u80fd\u62c9\u8fd1\u5173\u7cfb\u3002\u201d",
+    examples: [
+      { text: "\u6211\u60f3\u559d\u4e00\u676f\u8336\u3002", pinyin: "W\u01d2 xi\u01ceng h\u0113 y\u00ec b\u0113i ch\u00e1.", translation: "I want to drink a cup of tea." },
+      { text: "\u8fd9\u5bb6\u8336\u9986\u5f88\u5b89\u9759\u3002", pinyin: "Zh\u00e8 ji\u0101 ch\u00e1gu\u01cen h\u011bn \u0101nj\u00ecng.", translation: "This tea house is quiet." },
+      { text: "\u8fd9\u4e2a\u8336\u4e0d\u592a\u6d53\u3002", pinyin: "Zh\u00e8 ge ch\u00e1 b\u00fa t\u00e0i n\u00f3ng.", translation: "This tea is not too strong." }
+    ]
+  },
+  "\u6d53": {
+    pinyinTip: "\u4e8c\u58f0\u5411\u4e0a\u8d70\uff0c\u201c\u6d53\u201d\u7684\u97f3\u8981\u9971\u6ee1\u4e00\u70b9\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u6d53\u58a8\u91cd\u5f69\u53ef\u4ee5\u5f62\u5bb9\u753b\uff0c\u4e5f\u53ef\u4ee5\u5f62\u5bb9\u4e00\u6bb5\u96be\u5fd8\u7684\u7ecf\u5386\u3002\u201d",
+    examples: [
+      { text: "\u8fd9\u676f\u8336\u592a\u6d53\u4e86\u3002", pinyin: "Zh\u00e8 b\u0113i ch\u00e1 t\u00e0i n\u00f3ng le.", translation: "This tea is too strong." },
+      { text: "\u6211\u559c\u6b22\u6de1\u4e00\u70b9\u7684\u8336\u3002", pinyin: "W\u01d2 x\u01d0huan d\u00e0n y\u00ecdi\u01cen de ch\u00e1.", translation: "I like lighter tea." },
+      { text: "\u6c64\u7684\u5473\u9053\u5f88\u6d53\u3002", pinyin: "T\u0101ng de w\u00e8id\u00e0o h\u011bn n\u00f3ng.", translation: "The soup has a rich taste." }
+    ]
+  },
+  "\u8bf7": {
+    pinyinTip: "\u4e09\u58f0\u8981\u8bf4\u5b8c\u6574\uff0c\u201c\u8bf7\u201d\u662f\u793c\u8c8c\u8bf7\u6c42\u7684\u5f00\u5934\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u4e0d\u60c5\u4e4b\u8bf7\u662f\u5ba2\u6c14\u8bf4\u6cd5\uff0c\u7528\u6765\u8868\u793a\u4f60\u77e5\u9053\u81ea\u5df1\u5728\u9ebb\u70e6\u522b\u4eba\u3002\u201d",
+    examples: [
+      { text: "\u8bf7\u7ed9\u6211\u4e00\u676f\u6c34\u3002", pinyin: "Q\u01d0ng g\u011bi w\u01d2 y\u00ec b\u0113i shu\u01d0.", translation: "Please give me a glass of water." },
+      { text: "\u8bf7\u95ee\u6d17\u624b\u95f4\u5728\u54ea\u91cc\uff1f", pinyin: "Q\u01d0ngw\u00e8n x\u01d0sh\u01d2uji\u0101n z\u00e0i n\u01cel\u01d0?", translation: "Excuse me, where is the restroom?" },
+      { text: "\u8bf7\u5c11\u653e\u8fa3\u3002", pinyin: "Q\u01d0ng sh\u01ceo f\u00e0ng l\u00e0.", translation: "Please use less spice." }
+    ]
+  },
+  "\u8fa3": {
+    pinyinTip: "\u56db\u58f0\u8981\u5e72\u8106\uff0c\u8bf4\u201c\u8fa3\u201d\u65f6\u4e0b\u964d\u660e\u663e\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u9178\u751c\u82e6\u8fa3\u4e0d\u53ea\u662f\u5473\u9053\uff0c\u4e5f\u50cf\u751f\u6d3b\u91cc\u7684\u5404\u79cd\u7ecf\u5386\u3002\u201d",
+    examples: [
+      { text: "\u8fd9\u9053\u83dc\u5f88\u8fa3\u3002", pinyin: "Zh\u00e8 d\u00e0o c\u00e0i h\u011bn l\u00e0.", translation: "This dish is spicy." },
+      { text: "\u6211\u4e0d\u80fd\u5403\u592a\u8fa3\u3002", pinyin: "W\u01d2 b\u00f9 n\u00e9ng ch\u012b t\u00e0i l\u00e0.", translation: "I cannot eat very spicy food." },
+      { text: "\u8bf7\u5c11\u653e\u8fa3\u6912\u3002", pinyin: "Q\u01d0ng sh\u01ceo f\u00e0ng l\u00e0ji\u0101o.", translation: "Please use fewer chilies." }
+    ]
+  },
+  "\u8def": {
+    pinyinTip: "\u56db\u58f0\u77ed\u4fc3\u4e0b\u964d\uff0c\u95ee\u8def\u65f6\u8bf4\u6e05\u695a\u76ee\u7684\u5730\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u8f7b\u8f66\u719f\u8def\u5c31\u662f\u5f88\u719f\u6089\u7684\u4e8b\uff0c\u50cf\u8001\u670b\u53cb\u5e26\u4f60\u8d70\u8fc7\u4e00\u6761\u8def\u3002\u201d",
+    examples: [
+      { text: "\u8bf7\u95ee\u8fd9\u6761\u8def\u5bf9\u5417\uff1f", pinyin: "Q\u01d0ngw\u00e8n zh\u00e8 ti\u00e1o l\u00f9 du\u00ec ma?", translation: "Excuse me, is this road correct?" },
+      { text: "\u8def\u53e3\u5728\u524d\u9762\u3002", pinyin: "L\u00f9k\u01d2u z\u00e0i qi\u00e1nmi\u00e0n.", translation: "The intersection is ahead." },
+      { text: "\u6211\u5728\u95ee\u8def\u3002", pinyin: "W\u01d2 z\u00e0i w\u00e8n l\u00f9.", translation: "I am asking for directions." }
+    ]
+  },
+  "\u7ad9": {
+    pinyinTip: "\u56db\u58f0\u8981\u76f4\u63a5\u4e0b\u964d\uff0c\u201c\u7ad9\u201d\u5e38\u548c\u8f66\u7ad9\u3001\u5730\u94c1\u7ad9\u8fde\u7528\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u7ad9\u7a33\u811a\u8ddf\u5148\u662f\u771f\u7684\u7ad9\u7a33\uff0c\u540e\u6765\u4e5f\u6307\u4eba\u6709\u81ea\u5df1\u7684\u7acb\u573a\u3002\u201d",
+    examples: [
+      { text: "\u5730\u94c1\u7ad9\u600e\u4e48\u8d70\uff1f", pinyin: "D\u00ecti\u011b zh\u00e0n z\u011bnme z\u01d2u?", translation: "How do I get to the subway station?" },
+      { text: "\u8f66\u7ad9\u79bb\u8fd9\u91cc\u4e0d\u8fdc\u3002", pinyin: "Ch\u0113zh\u00e0n l\u00ed zh\u00e8l\u01d0 b\u00f9 yu\u01cen.", translation: "The station is not far from here." },
+      { text: "\u6211\u5728\u95e8\u53e3\u7ad9\u7740\u7b49\u4f60\u3002", pinyin: "W\u01d2 z\u00e0i m\u00e9nk\u01d2u zh\u00e0nzhe d\u011bng n\u01d0.", translation: "I am standing at the entrance waiting for you." }
+    ]
+  },
+  "\u8bfe": {
+    pinyinTip: "\u56db\u58f0\u6e05\u695a\u4e0b\u964d\uff0c\u8bf4\u201c\u4e2d\u6587\u8bfe\u201d\u65f6\u4e0d\u8981\u628a\u201c\u8bfe\u201d\u62d6\u957f\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u8bfe\u4e0d\u5bb9\u7f13\u662f\u5f88\u4e25\u8083\u7684\u8bf4\u6cd5\uff0c\u8868\u793a\u4e8b\u60c5\u5fc5\u987b\u9a6c\u4e0a\u505a\u3002\u201d",
+    examples: [
+      { text: "\u6211\u4eca\u5929\u6709\u4e2d\u6587\u8bfe\u3002", pinyin: "W\u01d2 j\u012bnti\u0101n y\u01d2u Zh\u014dngw\u00e9n k\u00e8.", translation: "I have Chinese class today." },
+      { text: "\u4e0a\u8bfe\u524d\u6211\u8981\u590d\u4e60\u3002", pinyin: "Sh\u00e0ngk\u00e8 qi\u00e1n w\u01d2 y\u00e0o f\u00f9x\u00ed.", translation: "Before class, I need to review." },
+      { text: "\u8fd9\u8282\u8bfe\u5f88\u6709\u610f\u601d\u3002", pinyin: "Zh\u00e8 ji\u00e9 k\u00e8 h\u011bn y\u01d2u y\u00ecs\u012b.", translation: "This class is interesting." }
+    ]
+  },
+  "\u4e60": {
+    pinyinTip: "\u4e8c\u58f0\u5411\u4e0a\uff0c\u201c\u5b66\u4e60\u201d\u91cc\u7684\u201c\u4e60\u201d\u8981\u8f7b\u4e00\u70b9\u4f46\u4e0d\u80fd\u542b\u7cca\u3002",
+    idiomStory: "Luming \u8bf4\uff1a\u201c\u4e60\u4ee5\u4e3a\u5e38\u5c31\u662f\u4e00\u4ef6\u4e8b\u505a\u591a\u4e86\uff0c\u6162\u6162\u53d8\u6210\u4e60\u60ef\u3002\u201d",
+    examples: [
+      { text: "\u6211\u8981\u590d\u4e60\u4eca\u5929\u7684\u8bfe\u3002", pinyin: "W\u01d2 y\u00e0o f\u00f9x\u00ed j\u012bnti\u0101n de k\u00e8.", translation: "I need to review today's lesson." },
+      { text: "\u5b66\u4e60\u4e2d\u6587\u9700\u8981\u7ec3\u4e60\u3002", pinyin: "Xu\u00e9x\u00ed Zh\u014dngw\u00e9n x\u016by\u00e0o li\u00e0nx\u00ed.", translation: "Learning Chinese requires practice." },
+      { text: "\u4ed6\u5728\u56fe\u4e66\u9986\u590d\u4e60\u3002", pinyin: "T\u0101 z\u00e0i t\u00fash\u016bgu\u01cen f\u00f9x\u00ed.", translation: "He is reviewing in the library." }
+    ]
+  }
+};
+
+const defaultStrokePaths = [
+  "M28 38 L112 38",
+  "M70 22 L70 122",
+  "M40 78 L104 112"
+];
+
+const advancedReadingPassages = {
+  "business-toast": "\u665a\u5bb4\u5f00\u59cb\u65f6\uff0c\u5f20\u603b\u5148\u6b22\u8fce\u8fdc\u9053\u800c\u6765\u7684\u5ba2\u4eba\u3002\u4ed6\u8bf4\u8fd9\u6b21\u5408\u4f5c\u5bf9\u53cc\u65b9\u90fd\u5f88\u91cd\u8981\u3002Luming \u7ad9\u8d77\u6765\uff0c\u5148\u611f\u8c22\u5927\u5bb6\u7684\u5b89\u6392\u3002\u7136\u540e\u4ed6\u7528\u6e05\u695a\u7684\u4e2d\u6587\u656c\u5927\u5bb6\u4e00\u676f\u9152\u3002\u684c\u4e0a\u7684\u4eba\u90fd\u5fae\u7b11\u7740\u56de\u5e94\u4ed6\u3002\u8fd9\u6bb5\u5bf9\u8bdd\u8ba9\u6c14\u6c1b\u53d8\u5f97\u66f4\u8f7b\u677e\u3002",
+  "tea-house": "\u8336\u9986\u91cc\u5f88\u5b89\u9759\uff0c\u7a97\u8fb9\u6709\u51e0\u4f4d\u5ba2\u4eba\u5728\u4f4e\u58f0\u804a\u5929\u3002\u670d\u52a1\u5458\u5411 Luming \u4ecb\u7ecd\u4e86\u51e0\u79cd\u8336\u3002Luming \u9009\u4e86\u4e00\u676f\u9f99\u4e95\uff0c\u56e0\u4e3a\u4ed6\u559c\u6b22\u6e05\u9999\u7684\u5473\u9053\u3002\u4ed6\u8bf7\u670d\u52a1\u5458\u4e0d\u8981\u6ce1\u5f97\u592a\u6d53\u3002\u8336\u4e0a\u6765\u540e\uff0c\u4ed6\u5148\u95fb\u4e86\u95fb\u9999\u6c14\u3002\u8fd9\u6bb5\u5bf9\u8bdd\u5e2e\u4ed6\u7ec3\u4e60\u70b9\u8336\u548c\u8868\u8fbe\u504f\u597d\u3002",
+  "order-food": "\u9910\u5385\u91cc\u4eba\u5f88\u591a\uff0c\u670d\u52a1\u5458\u5f88\u5feb\u628a\u83dc\u5355\u9001\u6765\u3002Luming \u60f3\u70b9\u4e00\u9053\u5e38\u89c1\u7684\u4e2d\u56fd\u83dc\u3002\u4ed6\u9009\u4e86\u5bab\u4fdd\u9e21\u4e01\uff0c\u4f46\u63d0\u9192\u670d\u52a1\u5458\u5c11\u653e\u8fa3\u3002\u670d\u52a1\u5458\u8bf4\u53ef\u4ee5\u505a\u5f97\u6e05\u6de1\u4e00\u70b9\u3002Luming \u8fd8\u70b9\u4e86\u4e00\u7897\u7c73\u996d\u548c\u4e00\u676f\u6e29\u6c34\u3002\u8fd9\u6bb5\u5bf9\u8bdd\u5f88\u9002\u5408\u7ec3\u4e60\u793c\u8c8c\u70b9\u9910\u3002",
+  "ask-directions": "\u5730\u94c1\u7ad9\u9644\u8fd1\u7684\u8def\u53e3\u5f88\u70ed\u95f9\uff0cLuming \u4e00\u65f6\u627e\u4e0d\u5230\u65b9\u5411\u3002\u4ed6\u770b\u5230\u4e00\u4f4d\u8def\u4eba\uff0c\u5148\u793c\u8c8c\u5730\u8bf4\u8bf7\u95ee\u3002\u8def\u4eba\u544a\u8bc9\u4ed6\u5730\u94c1\u7ad9\u5728\u5546\u573a\u540e\u9762\u3002Luming \u53c8\u95ee\u8d70\u8def\u9700\u8981\u591a\u4e45\u3002\u8def\u4eba\u8bf4\u5927\u6982\u4e94\u5206\u949f\u5c31\u80fd\u5230\u3002Luming \u9053\u8c22\u540e\u6309\u7167\u65b9\u5411\u7ee7\u7eed\u5f80\u524d\u8d70\u3002",
+  "campus-chat": "\u6821\u56ed\u7684\u4e0a\u5348\u5f88\u5fd9\uff0c\u5b66\u751f\u4eec\u62ff\u7740\u4e66\u8d70\u5411\u6559\u5ba4\u3002\u540c\u5b66\u95ee Luming \u4eca\u5929\u6709\u4ec0\u4e48\u8bfe\u3002Luming \u8bf4\u4ed6\u4e0a\u5348\u6709\u4e2d\u6587\u8bfe\u3002\u8bfe\u4e0a\u8001\u5e08\u5e26\u5927\u5bb6\u7ec3\u4e60\u58f0\u8c03\u548c\u65e5\u5e38\u5bf9\u8bdd\u3002\u4e0b\u5348\u4ed6\u6253\u7b97\u53bb\u56fe\u4e66\u9986\u590d\u4e60\u3002\u8fd9\u6bb5\u5bf9\u8bdd\u8ba9\u4ed6\u5b66\u4f1a\u8bf4\u81ea\u5df1\u7684\u5b66\u4e60\u5b89\u6392\u3002"
+};
+
+function enhanceReadingCharacter(item = {}, course = courseLibrary[0]) {
+  const extra = readingCharacterEnhancements[item.text] || {};
+  return {
+    ...item,
+    pinyinTip: extra.pinyinTip || "\u5148\u542c\u6807\u51c6\u53d1\u97f3\uff0c\u518d\u653e\u6162\u8ddf\u8bfb\u3002",
+    strokePaths: extra.strokePaths || defaultStrokePaths,
+    idiomStory: extra.idiomStory || `Luming \u628a\u201c${item.idiom || item.text}\u201d\u653e\u5230\u5f53\u524d\u573a\u666f\u91cc\uff0c\u5e2e\u4f60\u8bb0\u4f4f\u7528\u6cd5\u3002`,
+    examples: extra.examples || [
+      { text: `${item.text}\u662f\u4e00\u4e2a\u5e38\u7528\u5b57\u3002`, pinyin: "", translation: "This is a common character." },
+      { text: `\u8bf7\u5728\u573a\u666f\u91cc\u4f7f\u7528${item.text}\u3002`, pinyin: "", translation: "Use it in the scene." },
+      { text: `${course.scene}\u91cc\u53ef\u4ee5\u7528\u5230${item.text}\u3002`, pinyin: "", translation: "It can be used in this scene." }
+    ],
+    sceneCue: `\u5207\u5230\u573a\u666f\u5bf9\u8bdd\uff0c\u7528\u201c${item.text}\u201d\u5b8c\u6210\u4e00\u8f6e\u771f\u5b9e\u56de\u5e94\u3002`
+  };
+}
+
+function buildReadingLexicon(lesson = []) {
+  const lexicon = {};
+  for (const item of lesson) {
+    lexicon[item.text] = {
+      pinyin: item.pinyin || "",
+      translation: item.story || item.words?.join(" / ") || "\u7ed3\u5408\u4e0a\u4e0b\u6587\u7406\u89e3\u8fd9\u4e2a\u5b57\u3002"
+    };
+  }
+  return lexicon;
+}
+
+function splitChineseSentences(text = "") {
+  return text.split(/(?<=[\u3002\uff01\uff1f])/u).map((sentence) => sentence.trim()).filter(Boolean);
+}
+
 function courseToExercise(course = courseLibrary[0]) {
   const chars = course.characters || [];
+  const lesson = chars.map((item) => enhanceReadingCharacter(item, course));
+  const advancedPassage = advancedReadingPassages[course.id] || course.reading?.passage || "";
   return {
     course: courseSummary(course),
     reading: {
       items: chars.map((item) => ({ text: item.text, pinyin: item.pinyin })),
-      lesson: chars,
+      lesson,
       passage: course.reading?.passage || "",
+      basicPassage: course.reading?.passage || "",
+      advancedPassage,
+      advancedSentences: splitChineseSentences(advancedPassage).slice(0, 8),
+      lexicon: buildReadingLexicon(lesson),
       questions: course.reading?.questions || []
     },
     listening: {
@@ -248,6 +392,54 @@ function scoreMultipleChoice(answers = {}, questions = []) {
   return { correct, total, score: clampScore((correct / total) * 100) };
 }
 
+function parseToneAnswerText(text = "") {
+  if (/(\u4e00\u58f0|\u7b2c\u4e00\u58f0|1|first)/i.test(text)) return 1;
+  if (/(\u4e8c\u58f0|\u7b2c\u4e8c\u58f0|2|second)/i.test(text)) return 2;
+  if (/(\u4e09\u58f0|\u7b2c\u4e09\u58f0|3|third)/i.test(text)) return 3;
+  if (/(\u56db\u58f0|\u7b2c\u56db\u58f0|4|fourth)/i.test(text)) return 4;
+  if (/(\u8f7b\u58f0|\u7b2c\u4e94\u58f0|5|neutral)/i.test(text)) return 5;
+  return 0;
+}
+
+function toneLabel(tone) {
+  return ["", "\u4e00\u58f0", "\u4e8c\u58f0", "\u4e09\u58f0", "\u56db\u58f0", "\u8f7b\u58f0"][Number(tone)] || "";
+}
+
+async function judgeToneAnswerWithAi({ targetText, expectedTone, answerText }) {
+  if (!chatApiKey) throw new Error("chat key missing");
+  const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${chatApiKey}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      model: chatModel,
+      temperature: 0,
+      max_tokens: 120,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are Luming, a Mandarin listening coach. Decide which Mandarin tone answer the learner said. Return strict JSON only: {\"tone\":1|2|3|4|5|0,\"feedback\":[\"short Chinese feedback\"]}. Use 5 for neutral tone and 0 when unclear."
+        },
+        {
+          role: "user",
+          content: `Target character: ${targetText}\nExpected tone: ${expectedTone}\nLearner transcript: ${answerText}`
+        }
+      ]
+    })
+  }, Math.max(aiScoreTimeoutMs, 8000));
+  if (!response.ok) throw new Error("tone model failed");
+  const data = await response.json();
+  const parsed = extractJson(data.choices?.[0]?.message?.content || "");
+  return {
+    answerTone: Number(parsed.tone || 0),
+    feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 2).map(String) : [],
+    modeUsed: "ai"
+  };
+}
+
 async function evaluateListening(req) {
   const body = await readJsonBody(req);
   const course = findCourse(body.courseId);
@@ -266,44 +458,61 @@ async function evaluateListening(req) {
   }
 
   const item = (course.characters || []).find((char) => char.text === body.text) || course.characters?.[0];
-  const answerTone = Number(body.tone || body.answerTone || 0);
-  const correct = item ? answerTone === Number(item.tone) : false;
+  const expectedTone = Number(body.expectedTone || body.targetTone || item?.tone || 0);
+  const answerText = String(body.answerText || body.transcript || "").trim();
+  let answerTone = Number(body.answerTone || body.tone || 0);
+  let modeUsed = body.mode || "tone";
+  let aiFeedback = [];
+
+  if (answerText) {
+    try {
+      const aiResult = await judgeToneAnswerWithAi({ targetText: body.text || item?.text || "", expectedTone, answerText });
+      answerTone = aiResult.answerTone;
+      modeUsed = aiResult.modeUsed;
+      aiFeedback = aiResult.feedback;
+    } catch {
+      answerTone = parseToneAnswerText(answerText);
+      modeUsed = "local-fallback";
+    }
+  }
+
+  const correct = expectedTone > 0 && answerTone === expectedTone;
   return {
     modeRequested: body.mode || "tone",
-    modeUsed: body.mode || "tone",
+    modeUsed,
     score: correct ? 100 : 0,
     correct,
-    expectedTone: item?.tone || 0,
-    feedback: [
-      correct ? "\u58f0\u8c03\u5224\u65ad\u6b63\u786e\u3002" : `\u8fd9\u4e2a\u5b57\u662f\u7b2c ${item?.tone || 0} \u58f0\uff0c\u5148\u542c\u9ad8\u4f4e\u53d8\u5316\u3002`,
+    answerTone,
+    expectedTone,
+    transcript: answerText,
+    feedback: aiFeedback.length ? aiFeedback : [
+      correct ? "\u58f0\u8c03\u5224\u65ad\u6b63\u786e\u3002" : answerTone ? `\u8fd9\u4e2a\u5b57\u662f${toneLabel(expectedTone)}\uff0c\u5148\u542c\u9ad8\u4f4e\u53d8\u5316\u3002` : "\u6ca1\u542c\u6e05\u58f0\u8c03\u7b54\u6848\uff0c\u8bf7\u8bf4\u201c\u4e00\u58f0\u201d\u6216\u201c\u4e8c\u58f0\u201d\u3002",
       "\u518d\u64ad\u653e\u4e00\u6b21\uff0c\u8ddf\u7740 Luming \u8bfb\u51fa\u6765\u3002"
     ]
   };
 }
 
 function fallbackReadingScore({ text = "", course, mode = "sentence" }) {
-    const hasChinese = /\p{Script=Han}/u.test(text);
-    const radar = {
-      accuracy: hasChinese ? 70 : 20,
-      naturalness: hasChinese ? 68 : 20,
-      grammar: hasChinese ? 72 : 25,
-      sceneFit: text.includes(course.characters?.[0]?.text || "") ? 82 : 55
-    };
-    return {
-      modeRequested: mode,
-      modeUsed: "fallback",
-      score: averageScores(radar),
-      radar,
-      feedback: ["\u53e5\u5b50\u8981\u5305\u542b\u76ee\u6807\u5b57\u8bcd\u3002", "\u5c3d\u91cf\u8ba9\u53e5\u5b50\u548c\u5f53\u524d\u573a\u666f\u6709\u5173\u3002"]
-    };
+  const hasChinese = /\p{Script=Han}/u.test(text);
+  const target = course.characters?.[0]?.text || "";
+  return {
+    modeRequested: mode,
+    modeUsed: "fallback",
+    completed: hasChinese,
+    feedback: hasChinese
+      ? ["\u5df2\u5b8c\u6210\u9020\u53e5\u3002", "\u53ef\u4ee5\u518d\u68c0\u67e5\u53e5\u5b50\u662f\u5426\u8d34\u5408\u5f53\u524d\u573a\u666f\u3002"]
+      : ["\u8bf7\u7528\u4e2d\u6587\u5199\u4e00\u53e5\u8bdd\u3002", "\u5c3d\u91cf\u5305\u542b\u76ee\u6807\u5b57\u5e76\u8d34\u8fd1\u5f53\u524d\u573a\u666f\u3002"],
+    suggestedRevision: hasChinese ? text : target ? `\u6211\u60f3\u7ec3\u4e60\u201c${target}\u201d\u8fd9\u4e2a\u5b57\u3002` : ""
+  };
 }
 
 async function evaluateReading(req) {
   const body = await readJsonBody(req);
-  const text = String(body.text || "");
+  const text = String(body.text || body.sentence || "");
   const course = findCourse(body.courseId);
   const mode = body.mode || "sentence";
-  const prompt = String(body.prompt || course.writing?.sentencePrompt || "");
+  const targetCharacter = String(body.character || course.characters?.[0]?.text || "");
+  const prompt = String(body.prompt || course.writing?.sentencePrompt || "\u7528\u76ee\u6807\u5b57\u9020\u4e00\u53e5\u4e2d\u6587\u3002");
   if (!chatApiKey) return fallbackReadingScore({ text, course, mode });
 
   try {
@@ -315,27 +524,23 @@ async function evaluateReading(req) {
       },
       body: JSON.stringify({
         model: chatModel,
+        temperature: 0.2,
+        max_tokens: 700,
         messages: [
-          { role: "system", content: "Score a Mandarin learner sentence. Return strict JSON with score, radar, feedback. radar keys: accuracy, naturalness, grammar, sceneFit, each 0-100. feedback is 2 concise Chinese suggestions." },
-          { role: "user", content: `Scene: ${course.scene}\nPrompt: ${prompt}\nLearner sentence: ${text}` }
+          { role: "system", content: "You are Luming, a Mandarin reading coach. Give sentence-practice feedback without numeric scores. Return strict JSON only with keys: completed boolean, feedback array of 2 concise Chinese suggestions, suggestedRevision string." },
+          { role: "user", content: `Scene: ${course.scene}\nTarget character: ${targetCharacter}\nPrompt: ${prompt}\nLearner sentence: ${text}` }
         ]
       })
-    });
+    }, Math.max(aiChatTimeoutMs, 12000));
     if (!response.ok) throw new Error("reading model failed");
     const data = await response.json();
     const parsed = extractJson(data.choices?.[0]?.message?.content || "");
-    const radar = {
-      accuracy: clampScore(parsed.radar?.accuracy),
-      naturalness: clampScore(parsed.radar?.naturalness),
-      grammar: clampScore(parsed.radar?.grammar),
-      sceneFit: clampScore(parsed.radar?.sceneFit)
-    };
     return {
       modeRequested: body.mode || "sentence",
       modeUsed: "ai",
-      score: clampScore(parsed.score || averageScores(radar)),
-      radar,
-      feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 3).map(String) : []
+      completed: Boolean(parsed.completed ?? true),
+      feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 3).map(String) : [],
+      suggestedRevision: String(parsed.suggestedRevision || "")
     };
   } catch {
     return fallbackReadingScore({ text, course, mode });
@@ -346,11 +551,13 @@ async function speakingDialogue(req) {
   const body = await readJsonBody(req);
   const course = findCourse(body.courseId);
   const turns = Array.isArray(body.turns) ? body.turns.slice(-8) : [];
-  const userText = String(body.text || body.choice || "");
+  const userText = String(body.text || body.userText || body.transcript || body.choice || "");
+  const fallbackCorrectness = dialogueCorrectnessFallback({ course, userText });
   const fallback = () => ({
     roleReply: "\u56de\u5e94\u5f88\u81ea\u7136\u3002\u4e0b\u4e00\u53e5\u8bf7\u7ee7\u7eed\u8868\u8fbe\u4f60\u7684\u9700\u6c42\u3002",
     toneFeedback: "\u58f0\u8c03\u53ef\u4ee5\u518d\u653e\u6162\uff0c\u6ce8\u610f\u5173\u952e\u8bcd\u7684\u56db\u58f0\u3002",
     nextTask: "\u7528\u4e00\u53e5\u4e2d\u6587\u7ee7\u7eed\u8fd9\u4e2a\u573a\u666f\u3002",
+    correctness: fallbackCorrectness,
     round: Math.min(5, turns.length + 1),
     modeUsed: "fallback"
   });
@@ -366,18 +573,21 @@ async function speakingDialogue(req) {
       body: JSON.stringify({
         model: chatModel,
         messages: [
-          { role: "system", content: "You are Luming, a Mandarin scenario coach. Continue a 4-5 round roleplay. Return strict JSON with roleReply, toneFeedback, nextTask. Keep Chinese concise." },
-          { role: "user", content: `Scene: ${course.scene}\nLearner role: ${course.speaking?.role}\nHistory: ${JSON.stringify(turns)}\nLearner says: ${userText}` }
+          { role: "system", content: "You are Luming, a Mandarin scenario coach. Judge whether the learner's reply correctly completes the current scene task, then continue a 4-5 round roleplay. Return strict JSON with roleReply, toneFeedback, nextTask, correctness. correctness must contain status correct|partial|incorrect, correct boolean, feedback, suggestedRevision. Keep Chinese concise and practical." },
+          { role: "user", content: `Scene: ${course.scene}\nLearner role: ${course.speaking?.role}\nSuggested replies: ${JSON.stringify(course.speaking?.choices || [])}\nHistory: ${JSON.stringify(turns)}\nLearner says: ${userText}` }
         ]
       })
     }, aiScoreTimeoutMs);
     if (!response.ok) return fallback();
     const data = await response.json();
     const parsed = extractJson(data.choices?.[0]?.message?.content || "");
+    const parsedCorrectness = parsed.correctness || {};
+    const correctness = mergeDialogueCorrectness(parsedCorrectness, fallbackCorrectness);
     return {
       roleReply: parsed.roleReply || "\u597d\u7684\uff0c\u6211\u4eec\u7ee7\u7eed\u3002",
       toneFeedback: parsed.toneFeedback || "\u8bf7\u653e\u6162\u8bed\u901f\uff0c\u6ce8\u610f\u58f0\u8c03\u8d77\u4f0f\u3002",
       nextTask: parsed.nextTask || "\u8bf7\u7528\u4e00\u53e5\u4e2d\u6587\u56de\u5e94\u3002",
+      correctness,
       round: Math.min(5, turns.length + 1),
       modeUsed: "ai"
     };
@@ -482,7 +692,11 @@ function fallbackLesson(inputText = "I want to order coffee.", settings = {}) {
 }
 
 function extractJson(text) {
-  const cleaned = text.replace(/^```json\s*/i, "").replace(/```$/i, "").trim();
+  const cleaned = text
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/^```json\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
   try {
     return JSON.parse(cleaned);
   } catch {
@@ -505,7 +719,7 @@ function averageScores(scores) {
 }
 
 function normalizeChineseText(text = "") {
-  return String(text).replace(/[^\p{Script=Han}a-z0-9]/giu, "").toLowerCase();
+  return String(text).replace(/[^\u3400-\u9fffa-z0-9]/giu, "").toLowerCase();
 }
 
 function textSimilarity(target = "", actual = "") {
@@ -516,6 +730,81 @@ function textSimilarity(target = "", actual = "") {
   const actualChars = new Set([...actualText]);
   const matched = targetChars.filter((char) => actualChars.has(char)).length;
   return clampScore((matched / targetChars.length) * 100);
+}
+
+function correctnessStatusFromScore(score) {
+  const value = clampScore(score);
+  if (value >= 82) return "correct";
+  if (value >= 55) return "partial";
+  return "incorrect";
+}
+
+function speakingCorrectness({ targetText = "", transcript = "", radar = {}, parsed = {} }) {
+  const transcriptText = normalizeChineseText(transcript);
+  if (!transcriptText) {
+    return {
+      status: "incorrect",
+      correct: false,
+      feedback: "没有识别到清晰内容，先靠近麦克风再说一遍。",
+      suggestedRevision: targetText
+    };
+  }
+  const contentScore = clampScore((clampScore(radar.accuracy) * 0.72) + (clampScore(radar.completeness) * 0.28));
+  const status = ["correct", "partial", "incorrect"].includes(parsed.status) ? parsed.status : correctnessStatusFromScore(contentScore);
+  return {
+    status,
+    correct: Boolean(parsed.correct ?? status === "correct"),
+    feedback: String(parsed.feedback || (
+      status === "correct"
+        ? "内容和目标句基本一致。"
+        : status === "partial"
+          ? "内容有一部分对上了，再补齐漏掉的关键词。"
+          : "内容和目标句差距较大，请对照目标句重说。"
+    )),
+    suggestedRevision: String(parsed.suggestedRevision || (status === "correct" ? "" : targetText))
+  };
+}
+
+function dialogueCorrectnessFallback({ course, userText = "" }) {
+  const text = normalizeChineseText(userText);
+  const choices = course.speaking?.choices || [];
+  const targets = [
+    ...choices,
+    course.speaking?.shadowText || "",
+    course.speaking?.role || "",
+    course.scene || "",
+    course.summary || ""
+  ].filter(Boolean);
+  const bestChoiceScore = targets.reduce((best, target) => Math.max(best, textSimilarity(target, userText)), 0);
+  const status = !text ? "incorrect" : bestChoiceScore >= 72 ? "correct" : bestChoiceScore >= 35 ? "partial" : "incorrect";
+  return {
+    status,
+    correct: status === "correct",
+    feedback: status === "correct"
+      ? "你的回应能完成当前场景任务。"
+      : status === "partial"
+        ? "回应方向可以，但还需要更明确地说出需求或关键信息。"
+        : "这句还没有完成场景任务，请换成一句更直接的中文回应。",
+    suggestedRevision: status === "correct" ? "" : (choices[0] || course.speaking?.shadowText || "")
+  };
+}
+
+function mergeDialogueCorrectness(parsed = {}, fallback = {}) {
+  const validStatuses = ["correct", "partial", "incorrect"];
+  let status = validStatuses.includes(parsed.status) ? parsed.status : fallback.status;
+  status = validStatuses.includes(status) ? status : "partial";
+  const fallbackStatus = validStatuses.includes(fallback.status) ? fallback.status : "";
+  const upgradedByFallback = (fallbackStatus === "correct" && status !== "correct")
+    || (fallbackStatus === "partial" && status === "incorrect");
+  if (upgradedByFallback) status = fallbackStatus;
+  const feedback = upgradedByFallback ? fallback.feedback : (parsed.feedback || fallback.feedback);
+  const suggestedRevision = status === "correct" ? "" : (parsed.suggestedRevision || fallback.suggestedRevision || "");
+  return {
+    status,
+    correct: Boolean(status === "correct" || parsed.correct),
+    feedback: String(feedback || ""),
+    suggestedRevision: String(suggestedRevision || "")
+  };
 }
 
 function estimateSpeakingDurationSeconds(text = "") {
@@ -653,6 +942,7 @@ function fallbackAudioSpeakingScore({ targetText = "", targetPinyin = "", transc
     transcript,
     score: averageScores(acoustic.radar),
     radar: acoustic.radar,
+    correctness: speakingCorrectness({ targetText, transcript, radar: acoustic.radar }),
     audioMetrics: {
       durationSeconds: Number(metrics.durationSeconds.toFixed(2)),
       expectedSeconds: Number(metrics.expectedSeconds.toFixed(2)),
@@ -824,6 +1114,7 @@ function fallbackSpeakingScore({ targetText = "", transcript = "", mode = "trans
     transcript,
     score: averageScores(radar),
     radar,
+    correctness: speakingCorrectness({ targetText, transcript, radar }),
     feedback: [
       accuracy >= 80 ? "整体跟读很接近目标句。" : "先把目标句分成更短的两段，再逐段跟读。",
       tone >= 75 ? "声调稳定度不错，继续保持。" : "重点放慢声调变化，尤其是第三声和轻声。",
@@ -838,7 +1129,6 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
     : () => fallbackSpeakingScore({ targetText, transcript, mode });
 
   if (!chatApiKey) return fallback();
-  if (mode === "audio") return fallback();
 
   try {
     const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
@@ -854,8 +1144,8 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
             role: "system",
             content:
               mode === "audio"
-                ? "Score a Mandarin learner's shadowing attempt using the transcript and acoustic measurements. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical. Do not claim to perform phoneme-level pronunciation scoring."
-                : "Score a Mandarin learner's shadowing attempt using the transcript. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical."
+                ? "Score a Mandarin learner's shadowing attempt using the transcript and acoustic measurements. Return strict JSON with keys: score, radar, correctness, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. correctness must contain status correct|partial|incorrect, correct boolean, feedback, suggestedRevision. Be encouraging and practical. Do not claim to perform phoneme-level pronunciation scoring."
+                : "Score a Mandarin learner's shadowing attempt using the transcript. Return strict JSON with keys: score, radar, correctness, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. correctness must contain status correct|partial|incorrect, correct boolean, feedback, suggestedRevision. Be encouraging and practical."
           },
           {
             role: "user",
@@ -897,6 +1187,7 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
       transcript,
       score: clampScore(mode === "audio" ? averageScores(finalRadar) : (parsed.score || averageScores(finalRadar))),
       radar: finalRadar,
+      correctness: speakingCorrectness({ targetText, transcript, radar: finalRadar, parsed: parsed.correctness || {} }),
       ...(acoustic ? { audioMetrics: acoustic.audioMetrics } : {}),
       feedback: Array.isArray(parsed.feedback) ? parsed.feedback.slice(0, 3).map(String) : fallback().feedback
     };
@@ -913,14 +1204,11 @@ async function evaluateSpeaking(req) {
   const targetPinyin = parts.find((part) => part.name === "targetPinyin")?.data.toString("utf8") || "";
   const mode = parts.find((part) => part.name === "mode")?.data.toString("utf8") || "transcript";
   if (!file) throw new Error("No audio file received.");
-  if (mode === "audio") {
-    return scoreSpeakingWithModel({ targetText, targetPinyin, transcript: "", mode, audioBuffer: file.data });
-  }
 
   let transcript = "";
   try {
     const transcription = await transcribeAudioFromBuffer(file.data, file.type, file.filename);
-    transcript = mode === "audio" && transcription.fallback ? "" : (transcription.transcript || "");
+    transcript = transcription.fallback ? "" : (transcription.transcript || "");
   } catch (error) {
     if (mode !== "audio") throw error;
   }
