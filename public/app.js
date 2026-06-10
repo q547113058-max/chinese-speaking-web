@@ -529,6 +529,108 @@ function splitPinyinSyllable(pinyin = "") {
   return { initial, final, display: [initial, final].filter(Boolean).join(" ") };
 }
 
+const pinyinInitialAudio = {
+  b: "播",
+  p: "坡",
+  m: "摸",
+  f: "佛",
+  d: "得",
+  t: "特",
+  n: "呢",
+  l: "了",
+  g: "哥",
+  k: "科",
+  h: "喝",
+  j: "基",
+  q: "七",
+  x: "西",
+  zh: "知",
+  ch: "吃",
+  sh: "师",
+  r: "日",
+  z: "资",
+  c: "次",
+  s: "思",
+  y: "衣",
+  w: "乌"
+};
+
+const pinyinFinalAudio = {
+  a: "啊",
+  o: "喔",
+  e: "额",
+  i: "衣",
+  u: "乌",
+  v: "迂",
+  ü: "迂",
+  ai: "哀",
+  ei: "诶",
+  ui: "威",
+  ao: "熬",
+  ou: "欧",
+  iu: "优",
+  ie: "耶",
+  ve: "约",
+  üe: "约",
+  er: "儿",
+  an: "安",
+  en: "恩",
+  in: "因",
+  un: "温",
+  vn: "晕",
+  ün: "晕",
+  ang: "昂",
+  eng: "亨",
+  ing: "鹰",
+  ong: "翁",
+  ia: "呀",
+  iao: "腰",
+  ian: "烟",
+  iang: "央",
+  iong: "雍",
+  ua: "哇",
+  uo: "窝",
+  uai: "歪",
+  uan: "弯",
+  uang: "汪",
+  ueng: "翁"
+};
+
+const toneAudioLabels = {
+  1: "一声",
+  2: "二声",
+  3: "三声",
+  4: "四声",
+  5: "轻声"
+};
+
+function pinyinToneFromMarks(pinyin = "") {
+  if (/[āēīōūǖ]/i.test(pinyin)) return 1;
+  if (/[áéíóúǘ]/i.test(pinyin)) return 2;
+  if (/[ǎěǐǒǔǚ]/i.test(pinyin)) return 3;
+  if (/[àèìòùǜ]/i.test(pinyin)) return 4;
+  return 5;
+}
+
+function pinyinAudioText(item = {}, pinyinParts = splitPinyinSyllable(item.pinyin || "")) {
+  const initial = pinyinInitialAudio[pinyinParts.initial] || "";
+  const final = pinyinFinalAudio[pinyinParts.final] || pinyinParts.final || "";
+  const tone = toneAudioLabels[item.tone || pinyinToneFromMarks(item.pinyin || "")] || "轻声";
+  const parts = [];
+  if (initial) parts.push(`声母${initial}`);
+  if (final) parts.push(`韵母${final}`);
+  parts.push(tone);
+  parts.push(`合起来读，${item.text}，${item.text}`);
+  return parts.join("。");
+}
+
+function idiomAudioText(item = {}) {
+  const idiom = item.idiom || item.text || "";
+  const story = item.idiomStory || "";
+  const explanation = item.idiomExplanation || `这个表达可以帮助你理解${item.text || "这个字"}的用法。`;
+  return `${idiom}。背景故事：${story}。解释：${explanation}`;
+}
+
 function renderCharacterLesson() {
   const lesson = currentExercise?.reading?.lesson || [];
   if (!lesson.length) {
@@ -561,6 +663,7 @@ function renderCharacterLesson() {
   } else if (readingLayer === "pinyin") {
     const pinyinParts = splitPinyinSyllable(item.pinyin || "");
     const spellText = `${pinyinParts.display || item.pinyin || ""} ${item.text || ""}`.trim();
+    const spellAudio = pinyinAudioText(item, pinyinParts);
     characterLessonBox.innerHTML = `
       <div class="lesson-focus">
         <p class="label">讲拼音</p>
@@ -569,7 +672,7 @@ function renderCharacterLesson() {
         <p>${escapeHtml(item.pinyinTip || "")}</p>
         <div class="choice-row">
           <button class="play-button" type="button" data-reading-play="${escapeHtml(item.text || "")}">播放标准音</button>
-          <button class="play-button" type="button" data-reading-play="${escapeHtml(spellText)}">播放拼读</button>
+          <button class="play-button" type="button" data-reading-play="${escapeHtml(spellAudio)}">播放拼读</button>
           <button class="primary-button" type="button" data-reading-play="${escapeHtml(item.text || "")}">跟读一遍</button>
         </div>
       </div>
@@ -583,12 +686,13 @@ function renderCharacterLesson() {
       </div>
     `;
   } else if (readingLayer === "idiom") {
-    const idiomAudio = `${item.idiom || item.text}。${item.idiomStory || ""}`;
+    const idiomAudio = idiomAudioText(item);
     characterLessonBox.innerHTML = `
       <div class="lesson-focus">
         <p class="label">讲成语</p>
         <h3>${escapeHtml(item.idiom || item.text)}</h3>
         <p>${escapeHtml(item.idiomStory || "")}</p>
+        <p>${escapeHtml(item.idiomExplanation || "")}</p>
         <button class="play-button" type="button" data-reading-play="${escapeHtml(idiomAudio)}">播放背景故事和解释</button>
       </div>
     `;
