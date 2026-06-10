@@ -578,16 +578,14 @@ function handleReadingCardClick(event) {
 function completeReadingGame() {
   readingState.completed = true;
   const durationSeconds = Math.max(1, Math.round((Date.now() - readingState.startedAt) / 1000));
-  const score = Math.max(0, Math.round((readingState.items.length / Math.max(readingState.attempts, readingState.items.length)) * 100));
   const result = {
-    score,
     attempts: readingState.attempts,
     total: readingState.items.length,
     durationSeconds
   };
   readingScore.innerHTML = `
     <div class="score-card">
-      <div class="score-summary"><span>\u914d\u5bf9\u5b8c\u6210</span><strong>${score}</strong></div>
+      <div class="score-summary"><span>\u914d\u5bf9\u5b8c\u6210</span><strong>\u5b8c\u6210</strong></div>
       <p class="transcript">\u7528\u65f6 ${durationSeconds} \u79d2\uff0c\u5c1d\u8bd5 ${readingState.attempts} \u6b21\u3002</p>
     </div>
   `;
@@ -636,20 +634,19 @@ function renderListeningGame() {
 
   if (listeningState.completed) {
     const total = listeningState.items.length;
-    const score = Math.round((listeningState.correct / total) * 100);
     listeningPrompt.textContent = "\u542c\u529b\u7ec3\u4e60\u5b8c\u6210";
-    listeningProgress.textContent = `${listeningState.correct} / ${total}`;
+    listeningProgress.textContent = "\u5b8c\u6210";
     listeningHint.textContent = "";
     toneOptions.innerHTML = "";
     listeningScore.innerHTML = `
       <div class="score-card">
-        <div class="score-summary"><span>\u58f0\u8c03\u9009\u62e9</span><strong>${score}</strong></div>
+        <div class="score-summary"><span>\u58f0\u8c03\u9009\u62e9</span><strong>\u5b8c\u6210</strong></div>
         <p class="transcript">\u7b54\u5bf9 ${listeningState.correct} / ${total} \u9898\u3002</p>
       </div>
     `;
     if (!listeningState.recorded) {
       listeningState.recorded = true;
-      rememberSkillResult({ type: "listening", target: listeningState.items.map((item) => item.text).join(""), result: { score, correct: listeningState.correct, total } });
+      rememberSkillResult({ type: "listening", target: listeningState.items.map((item) => item.text).join(""), result: { correct: listeningState.correct, total } });
     }
     return;
   }
@@ -863,42 +860,32 @@ function speakWithBrowser(text) {
   window.speechSynthesis.speak(utterance);
 }
 
-function renderRadar(container, result, labels) {
+function renderFeedback(container, result = {}) {
   if (!result) {
     container.innerHTML = "";
     return;
   }
-  const radar = result.radar || {};
-  const rows = labels.map(([key, label]) => {
-    const value = Math.max(0, Math.min(100, Number(radar[key]) || 0));
-    return `
-      <div class="radar-row">
-        <span>${escapeHtml(label)}</span>
-        <div class="radar-track"><div class="radar-fill" style="width:${value}%"></div></div>
-        <strong>${value}</strong>
-      </div>
-    `;
-  }).join("");
   const feedback = Array.isArray(result.feedback) ? result.feedback.map((item) => `<li>${escapeHtml(item)}</li>`).join("") : "";
   const modeLabels = {
-    audio: "\u97f3\u9891\u8bc4\u5206",
-    transcript: "\u8f6c\u5199\u8bc4\u5206",
-    ai: "AI \u8bc4\u5206",
-    "ai+stroke": "AI + \u7b14\u987a",
-    stroke: "\u7b14\u987a\u8bc4\u5206",
-    "stroke-fallback": "\u7b14\u987a\u515c\u5e95",
-    fallback: "\u672c\u5730\u8bc4\u5206",
-    scene: "\u573a\u666f\u8bc4\u5206",
-    self: "\u81ea\u67e5\u8bc4\u5206",
-    "self-fallback": "\u81ea\u67e5\u515c\u5e95"
+    audio: "\u5f55\u97f3\u81ea\u67e5",
+    transcript: "\u8f6c\u5199\u53c2\u8003",
+    ai: "AI \u53c2\u8003",
+    "ai+stroke": "AI + \u7b14\u987a\u53c2\u8003",
+    stroke: "\u7b14\u987a\u81ea\u67e5",
+    "stroke-fallback": "\u7b14\u987a\u81ea\u67e5",
+    fallback: "\u672c\u5730\u53c2\u8003",
+    scene: "\u573a\u666f\u7ec3\u4e60",
+    self: "\u81ea\u67e5",
+    "self-fallback": "\u81ea\u67e5"
   };
   const modeLabel = modeLabels[result.modeUsed] || modeLabels[result.modeRequested] || result.modeUsed || result.modeRequested || "";
-  const fallbackNote = result.modeRequested === "audio" && result.modeUsed !== "audio" ? `<p class="score-note">\u672a\u4f7f\u7528\u97f3\u9891\u8bc4\u5206\uff0c\u5df2\u5207\u56de\u8f6c\u5199\u8bc4\u5206\u3002</p>` : "";
+  const fallbackNote = result.modeRequested === "audio" && result.modeUsed !== "audio" ? `<p class="score-note">\u672a\u4f7f\u7528\u97f3\u9891\u53c2\u8003\uff0c\u5df2\u5207\u56de\u8f6c\u5199\u53c2\u8003\u3002</p>` : "";
   const fallbackReasons = {
-    "vision-not-configured": "\u672a\u914d\u7f6e\u53ef\u7528\u7684\u89c6\u89c9\u8bc4\u5206\u6a21\u578b\u3002",
+    "vision-not-configured": "\u672a\u914d\u7f6e\u53ef\u7528\u7684\u89c6\u89c9\u6a21\u578b\u3002",
     "invalid-image": "\u624b\u5199\u56fe\u7247\u65e0\u6548\uff0c\u8bf7\u6e05\u7a7a\u540e\u91cd\u5199\u3002",
-    "vision-request-failed": "\u89c6\u89c9\u8bc4\u5206\u8bf7\u6c42\u5931\u8d25\uff0c\u5df2\u5207\u56de\u81ea\u67e5\u3002",
-    "vision-invalid-response": "\u89c6\u89c9\u6a21\u578b\u672a\u8fd4\u56de\u6709\u6548\u8bc4\u5206\uff0c\u5df2\u5207\u56de\u81ea\u67e5\u3002"
+    "vision-request-failed": "\u89c6\u89c9\u8bf7\u6c42\u5931\u8d25\uff0c\u8bf7\u6539\u7528\u81ea\u67e5\u3002",
+    "vision-invalid-response": "\u89c6\u89c9\u6a21\u578b\u672a\u8fd4\u56de\u6709\u6548\u53c2\u8003\uff0c\u8bf7\u6539\u7528\u81ea\u67e5\u3002",
+    "vision-timeout": "\u89c6\u89c9\u8bf7\u6c42\u8d85\u65f6\uff0c\u8bf7\u6539\u7528\u81ea\u67e5\u3002"
   };
   const reasonNote = result.fallbackReason ? `<p class="score-note">${escapeHtml(fallbackReasons[result.fallbackReason] || result.fallbackReason)}</p>` : "";
   const audioMetrics = result.audioMetrics ? `
@@ -910,10 +897,9 @@ function renderRadar(container, result, labels) {
   container.innerHTML = `
     <div class="score-card">
       <div class="score-summary">
-        <span>${escapeHtml(modeLabel)}</span>
-        <strong>${Math.round(Number(result.score) || 0)}</strong>
+        <span>${escapeHtml(modeLabel || "\u7ec3\u4e60\u53cd\u9988")}</span>
+        <strong>\u5b8c\u6210</strong>
       </div>
-      <div class="radar-list">${rows}</div>
       ${fallbackNote}
       ${reasonNote}
       ${audioMetrics}
@@ -950,7 +936,7 @@ async function startShadowRecording() {
     shadowProcessorNode.connect(shadowAudioContext.destination);
     shadowRecording = true;
     shadowButton.classList.add("recording");
-    shadowButton.textContent = "结束评分";
+    shadowButton.textContent = "\u7ed3\u675f\u8ddf\u8bfb";
   } catch {
     addError("无法使用麦克风。请允许权限后重试。");
   }
@@ -974,32 +960,18 @@ async function stopShadowRecording() {
 
 async function evaluateSpeaking() {
   if (!currentExercise?.speaking?.text) return;
-  updateSkillBusy(true);
-  speakingScore.innerHTML = `<div class="score-card muted-card">正在评分...</div>`;
-  try {
-    const blob = new Blob(shadowPcmChunks, { type: "application/octet-stream" });
-    const formData = new FormData();
-    formData.append("audio", blob, "shadow.pcm");
-    formData.append("targetText", currentExercise.speaking.text);
-    formData.append("targetPinyin", currentExercise.speaking.pinyin || "");
-    formData.append("mode", speakingMode.value);
-    const response = await fetch("/api/speaking/evaluate", { method: "POST", body: formData });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "评分失败");
-    renderRadar(speakingScore, data, [
-      ["accuracy", "准确"],
-      ["completeness", "完整"],
-      ["fluency", "流利"],
-      ["tone", "声调"],
-      ["rhythm", "节奏"]
-    ]);
-    rememberSkillResult({ type: "speaking", target: currentExercise.speaking.text, result: data });
-  } catch (error) {
-    speakingScore.innerHTML = "";
-    addError(error.message || "跟读评分失败。");
-  } finally {
-    updateSkillBusy(false);
-  }
+  const durationSeconds = Math.max(1, Math.round(shadowPcmChunks.reduce((sum, chunk) => sum + chunk.length, 0) / 16000));
+  const result = {
+    modeUsed: speakingMode.value === "transcript" ? "transcript" : "audio",
+    durationSeconds,
+    feedback: [
+      "\u5df2\u5b8c\u6210\u4e00\u6b21\u8ddf\u8bfb\u3002",
+      "\u8bf7\u518d\u542c\u4e00\u904d Luming \u793a\u8303\uff0c\u5bf9\u7167\u81ea\u5df1\u7684\u8bed\u901f\u548c\u505c\u987f\u3002",
+      "\u5f53\u524d\u7248\u672c\u4e0d\u663e\u793a\u81ea\u52a8\u5206\u6570\u3002"
+    ]
+  };
+  renderFeedback(speakingScore, result);
+  rememberSkillResult({ type: "speaking", target: currentExercise.speaking.text, result });
 }
 
 async function startRecording() {
@@ -1162,37 +1134,18 @@ function saveWritingImage() {
 
 async function evaluateWriting() {
   if (!writingTarget.value) return;
-  updateSkillBusy(true);
-  writingScore.innerHTML = `<div class="score-card muted-card">正在评分...</div>`;
-  try {
-    const response = await fetch("/api/writing/evaluate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        imageData: writingCanvas.toDataURL("image/png"),
-        targetText: writingTarget.value,
-        mode: writingMode.value,
-        courseId: currentCourse?.id || currentExercise?.course?.id || "",
-        strokes: writingStrokes
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "书写评分失败");
-    renderRadar(writingScore, data, [
-      ["targetMatch", "匹配"],
-      ["structure", "结构"],
-      ["proportion", "比例"],
-      ["strokeClarity", "笔画"],
-      ["neatness", "整洁"]
-    ]);
-    if (data.modeUsed === "ai+stroke" || data.modeUsed === "stroke" || data.modeUsed === "stroke-fallback") runInkParticles();
-    rememberSkillResult({ type: "writing", target: writingTarget.value, result: data });
-  } catch (error) {
-    writingScore.innerHTML = "";
-    addError(error.message || "书写评分失败。");
-  } finally {
-    updateSkillBusy(false);
-  }
+  const result = {
+    modeUsed: writingMode.value === "ai" ? "ai" : "self",
+    strokeCount: writingStrokes.length,
+    feedback: [
+      "\u5df2\u4fdd\u7559\u8fd9\u6b21\u624b\u5199\u7ec3\u4e60\u3002",
+      `\u8bf7\u5bf9\u7167\u76ee\u6807\u5b57\u201c${writingTarget.value}\u201d\u68c0\u67e5\u7ed3\u6784\u3001\u5360\u683c\u548c\u6536\u7b14\u4f4d\u7f6e\u3002`,
+      "\u5f53\u524d\u7248\u672c\u4e0d\u663e\u793a\u81ea\u52a8\u5206\u6570\u3002"
+    ]
+  };
+  renderFeedback(writingScore, result);
+  runInkParticles();
+  rememberSkillResult({ type: "writing", target: writingTarget.value, result });
 }
 
 async function evaluateReadingSentence(source = "reading") {
@@ -1200,62 +1153,39 @@ async function evaluateReadingSentence(source = "reading") {
   const container = source === "writing" ? writingSentenceScore : readingScore;
   const prompt = source === "writing" ? currentExercise?.writing?.sentencePrompt : "\u7528\u76ee\u6807\u5b57\u9020\u4e00\u53e5\u4e2d\u6587\u3002";
   if (!input.value.trim()) return;
-  container.innerHTML = `<div class="score-card muted-card">\u6b63\u5728\u8bc4\u5206...</div>`;
-  try {
-    const response = await fetch("/api/reading/evaluate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        courseId: currentCourse?.id || currentExercise?.course?.id || "",
-        text: input.value,
-        prompt,
-        mode: source === "writing" ? "writing-sentence" : "reading-sentence"
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "\u9020\u53e5\u8bc4\u5206\u5931\u8d25");
-    renderRadar(container, data, [
-      ["accuracy", "\u51c6\u786e"],
-      ["naturalness", "\u81ea\u7136"],
-      ["grammar", "\u8bed\u6cd5"],
-      ["sceneFit", "\u573a\u666f"]
-    ]);
-    rememberSkillResult({ type: source === "writing" ? "writing-sentence" : "reading-sentence", target: input.value, result: data });
-  } catch (error) {
-    container.innerHTML = "";
-    addError(error.message || "\u9020\u53e5\u8bc4\u5206\u5931\u8d25\u3002");
-  }
+  const result = {
+    modeUsed: source === "writing" ? "writing-sentence" : "reading-sentence",
+    feedback: [
+      "\u5df2\u5b8c\u6210\u9020\u53e5\u7ec3\u4e60\u3002",
+      prompt || "\u8bf7\u5bf9\u7167\u5f53\u524d\u573a\u666f\uff0c\u68c0\u67e5\u53e5\u5b50\u662f\u5426\u81ea\u7136\u3002",
+      "\u5f53\u524d\u7248\u672c\u4e0d\u663e\u793a\u81ea\u52a8\u5206\u6570\u3002"
+    ]
+  };
+  renderFeedback(container, result);
+  rememberSkillResult({ type: source === "writing" ? "writing-sentence" : "reading-sentence", target: input.value, result });
 }
 
 async function evaluateReadingScene() {
   const answers = [...readingQuestions.querySelectorAll("[data-reading-answer]")].map((input) => input.value.trim()).filter(Boolean);
   const questions = currentExercise?.reading?.questions || [];
-  const score = questions.length ? Math.round((answers.length / questions.length) * 100) : 0;
   readingSceneScore.innerHTML = `
     <div class="score-card">
-      <div class="score-summary"><span>\u9605\u8bfb\u7406\u89e3</span><strong>${score}</strong></div>
+      <div class="score-summary"><span>\u9605\u8bfb\u7406\u89e3</span><strong>\u5df2\u8bb0\u5f55</strong></div>
       <p class="transcript">\u5df2\u56de\u7b54 ${answers.length} / ${questions.length} \u9898\u3002</p>
     </div>
   `;
-  rememberSkillResult({ type: "reading-scene", target: currentCourse?.scene || "", result: { score, answers } });
+  rememberSkillResult({ type: "reading-scene", target: currentCourse?.scene || "", result: { answers } });
 }
 
 async function evaluateListeningScene() {
-  const response = await fetch("/api/listening/evaluate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      courseId: currentCourse?.id || currentExercise?.course?.id || "",
-      mode: "scene",
-      answers: listeningSceneAnswers
-    })
-  });
-  const data = await response.json();
-  renderRadar(listeningSceneScore, data, [
-    ["score", "\u7406\u89e3"]
-  ]);
-  listeningSceneScore.querySelector(".radar-list").innerHTML = `<p class="transcript">\u7b54\u5bf9 ${data.correct} / ${data.total} \u9898\u3002</p>`;
-  rememberSkillResult({ type: "listening-scene", target: currentCourse?.scene || "", result: data });
+  const total = currentExercise?.listening?.scene?.questions?.length || 0;
+  listeningSceneScore.innerHTML = `
+    <div class="score-card">
+      <div class="score-summary"><span>\u573a\u666f\u542c\u529b</span><strong>\u5df2\u5b8c\u6210</strong></div>
+      <p class="transcript">\u5df2\u56de\u7b54 ${Object.keys(listeningSceneAnswers).length} / ${total} \u9898\u3002\u53ef\u67e5\u770b\u6587\u672c\u5e76\u70b9\u51fb\u53e5\u5b50\u91cd\u542c\u3002</p>
+    </div>
+  `;
+  rememberSkillResult({ type: "listening-scene", target: currentCourse?.scene || "", result: { answers: listeningSceneAnswers } });
   renderListeningScene(true);
 }
 
@@ -1288,7 +1218,7 @@ async function sendDialogue(text = dialogueInput.value) {
     dialogueTask.textContent = data.nextTask || "";
     dialogueScore.innerHTML = `
       <div class="score-card">
-        <div class="score-summary"><span>\u7b2c ${data.round || dialogueTurns.length / 2} \u8f6e</span><strong>${Math.min(100, (data.round || 1) * 20)}</strong></div>
+        <div class="score-summary"><span>\u7b2c ${data.round || dialogueTurns.length / 2} \u8f6e</span><strong>\u7ee7\u7eed</strong></div>
         <p class="transcript"><span>Luming\uff1a</span>${escapeHtml(data.roleReply || "")}</p>
         <ul class="feedback-list"><li>${escapeHtml(data.toneFeedback || "")}</li></ul>
       </div>
