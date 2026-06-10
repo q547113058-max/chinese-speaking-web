@@ -36,3 +36,4 @@
 - Add timeout fallback for speaking roleplay so slow model responses do not block the practice flow.
 - Fix `scripts/sync-github.ps1` so new files that return GitHub Contents API 404 are created instead of stopping the sync.
 - Remove learner-facing automatic numeric scoring and radar charts from the frontend. Speaking, handwriting, sentence, and scene practice now show completion/self-check feedback and no longer call scoring APIs in normal use.
+- Simplify Writing handwriting modes to `临摹` and `自由书写`; remove the confusing `AI 参考` mode from the frontend.
