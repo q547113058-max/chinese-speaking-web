@@ -37,3 +37,4 @@
 - Fix `scripts/sync-github.ps1` so new files that return GitHub Contents API 404 are created instead of stopping the sync.
 - Remove learner-facing automatic numeric scoring and radar charts from the frontend. Speaking, handwriting, sentence, and scene practice now show completion/self-check feedback and no longer call scoring APIs in normal use.
 - Simplify Writing handwriting modes to `临摹` and `自由书写`; remove the confusing `AI 参考` mode from the frontend.
+- Remove the Writing `完成检查` button because, without automatic scoring, it did not perform a useful user-facing action.
