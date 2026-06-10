@@ -23,11 +23,15 @@ function Convert-ToRepoPath([string]$Path) {
 
 function Get-RemoteSha([string]$RepoPath) {
   $encodedPath = ($RepoPath -split "/" | ForEach-Object { [System.Uri]::EscapeDataString($_) }) -join "/"
-  $output = gh api "repos/$Owner/$Repo/contents/$encodedPath`?ref=$Branch" 2>$null
-  if ($LASTEXITCODE -ne 0) {
+  try {
+    $output = gh api "repos/$Owner/$Repo/contents/$encodedPath`?ref=$Branch" 2>$null
+  } catch {
     return $null
   }
 
+  if ($LASTEXITCODE -ne 0) {
+    return $null
+  }
   $json = $output | ConvertFrom-Json
   return $json.sha
 }
