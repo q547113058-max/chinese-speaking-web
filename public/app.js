@@ -13,10 +13,16 @@ const composer = document.querySelector(".composer");
 const courseSelect = document.querySelector("#courseSelect");
 const courseSummary = document.querySelector("#courseSummary");
 const submodeTabs = document.querySelectorAll(".submode-tab");
+const readingCharacterPicker = document.querySelector("#readingCharacterPicker");
+const readingLayerTabs = document.querySelector("#readingLayerTabs");
+const readingBoard = document.querySelector("#readingBoard");
+const readingSentenceBox = document.querySelector("#readingSentenceBox");
 const characterLessonBox = document.querySelector("#characterLessonBox");
 const readingSentenceInput = document.querySelector("#readingSentenceInput");
 const evaluateReadingButton = document.querySelector("#evaluateReadingButton");
+const readingSceneLevelTabs = document.querySelector("#readingSceneLevelTabs");
 const readingPassageBox = document.querySelector("#readingPassageBox");
+const readingHanziPopover = document.querySelector("#readingHanziPopover");
 const readingQuestions = document.querySelector("#readingQuestions");
 const readingSceneScore = document.querySelector("#readingSceneScore");
 const readingTextCards = document.querySelector("#readingTextCards");
@@ -35,6 +41,7 @@ const listeningProgress = document.querySelector("#listeningProgress");
 const listeningHint = document.querySelector("#listeningHint");
 const toneOptions = document.querySelector("#toneOptions");
 const playListeningButton = document.querySelector("#playListeningButton");
+const voiceToneButton = document.querySelector("#voiceToneButton");
 const resetListeningButton = document.querySelector("#resetListeningButton");
 const speakingTarget = document.querySelector("#speakingTarget");
 const speakingPinyin = document.querySelector("#speakingPinyin");
@@ -105,6 +112,9 @@ let writingStrokes = [];
 let activeStroke = null;
 let currentMode = "chat";
 let readingState = null;
+let readingLessonIndex = 0;
+let readingLayer = "shape";
+let readingSceneLevel = "basic";
 let listeningState = null;
 let listeningSceneAnswers = {};
 let dialogueTurns = [];
@@ -308,6 +318,10 @@ function normalizeExercise(payload = {}) {
       items: Array.isArray(exercise.reading?.items) && exercise.reading.items.length > 0 ? exercise.reading.items.slice(0, 4) : fallback.reading.items,
       lesson: Array.isArray(exercise.reading?.lesson) ? exercise.reading.lesson : [],
       passage: exercise.reading?.passage || "",
+      basicPassage: exercise.reading?.basicPassage || exercise.reading?.passage || "",
+      advancedPassage: exercise.reading?.advancedPassage || exercise.reading?.passage || "",
+      advancedSentences: Array.isArray(exercise.reading?.advancedSentences) ? exercise.reading.advancedSentences : [],
+      lexicon: exercise.reading?.lexicon || {},
       questions: Array.isArray(exercise.reading?.questions) ? exercise.reading.questions : []
     },
     listening: {
@@ -390,6 +404,12 @@ function setCurrentExercise(payload = {}) {
     option.dataset.hint = item.hint || "";
     writingTarget.appendChild(option);
   }
+  readingLessonIndex = 0;
+  readingLayer = "shape";
+  readingSceneLevel = "basic";
+  readingHanziPopover.hidden = true;
+  readingSentenceInput.value = "";
+  readingSceneScore.innerHTML = "";
   resetReadingGame();
   resetListeningGame();
   renderCharacterLesson();
@@ -431,30 +451,159 @@ function switchSubmode(skill, submode) {
   });
 }
 
-function renderCharacterLesson() {
+function selectedReadingCharacter() {
   const lesson = currentExercise?.reading?.lesson || [];
-  if (!lesson.length) {
-    characterLessonBox.innerHTML = `<p class="target-hint">\u6682\u65f6\u6ca1\u6709\u4e03\u5c42\u6c49\u5b57\u6570\u636e\u3002</p>`;
-    return;
-  }
-  characterLessonBox.innerHTML = lesson.map((item) => `
-    <div class="character-card">
-      <div class="character-glyph">${escapeHtml(item.text)}</div>
-      <div>
-        <p class="label">\u8bb2\u5b57</p>
-        <h3>${escapeHtml(item.text)} · ${escapeHtml(item.pinyin || "")}</h3>
-        <p>${escapeHtml(item.story || "")}</p>
-        <p class="target-hint">\u8bb2\u7ec4\u8bcd\uff1a${escapeHtml((item.words || []).join(" / "))}</p>
-        <p class="target-hint">\u8bb2\u6210\u8bed\uff1a${escapeHtml(item.idiom || "")}</p>
-      </div>
-    </div>
+  if (readingLessonIndex >= lesson.length) readingLessonIndex = 0;
+  return lesson[readingLessonIndex] || null;
+}
+
+function renderStrokeSvg(item = {}) {
+  const paths = Array.isArray(item.strokePaths) && item.strokePaths.length ? item.strokePaths : [];
+  if (!paths.length) return `<div class="stroke-fallback">${escapeHtml(item.text || "")}</div>`;
+  return `
+    <svg class="stroke-demo" viewBox="0 0 140 140" role="img" aria-label="${escapeHtml(item.text || "")} 笔画动画">
+      <rect x="18" y="18" width="104" height="104" rx="8"></rect>
+      <line x1="70" y1="18" x2="70" y2="122"></line>
+      <line x1="18" y1="70" x2="122" y2="70"></line>
+      ${paths.map((path, index) => `<path style="--stroke-order:${index}" d="${escapeHtml(path)}"></path>`).join("")}
+    </svg>
+  `;
+}
+
+function renderReadingCharacterPicker(lesson) {
+  readingCharacterPicker.innerHTML = lesson.map((item, index) => `
+    <button class="choice-button ${index === readingLessonIndex ? "selected" : ""}" type="button" data-reading-character="${index}">
+      ${escapeHtml(item.text || "")}
+    </button>
   `).join("");
 }
 
+function renderReadingLayerTabs() {
+  readingLayerTabs.querySelectorAll("[data-reading-layer]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.readingLayer === readingLayer);
+  });
+}
+
+function stripPinyinToneMarks(text = "") {
+  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ü/g, "v").replace(/Ü/g, "V");
+}
+
+function splitPinyinSyllable(pinyin = "") {
+  const syllable = stripPinyinToneMarks(String(pinyin).split(/[\s,.;]+/)[0] || "").toLowerCase();
+  const initials = ["zh", "ch", "sh", "b", "p", "m", "f", "d", "t", "n", "l", "g", "k", "h", "j", "q", "x", "r", "z", "c", "s", "y", "w"];
+  const initial = initials.find((value) => syllable.startsWith(value)) || "";
+  const final = initial ? syllable.slice(initial.length) : syllable;
+  return { initial, final, display: [initial, final].filter(Boolean).join(" ") };
+}
+
+function renderCharacterLesson() {
+  const lesson = currentExercise?.reading?.lesson || [];
+  if (!lesson.length) {
+    readingCharacterPicker.innerHTML = "";
+    readingBoard.classList.add("hidden");
+    readingSentenceBox.classList.add("hidden");
+    characterLessonBox.innerHTML = `<p class="target-hint">\u6682\u65f6\u6ca1\u6709\u4e03\u5c42\u6c49\u5b57\u6570\u636e\u3002</p>`;
+    return;
+  }
+  const item = selectedReadingCharacter();
+  renderReadingCharacterPicker(lesson);
+  renderReadingLayerTabs();
+  readingBoard.classList.toggle("hidden", readingLayer !== "words");
+  readingSentenceBox.classList.toggle("hidden", readingLayer !== "compose");
+
+  if (readingLayer === "shape") {
+    characterLessonBox.innerHTML = `
+      <div class="character-card lesson-card">
+        <div class="character-glyph">${escapeHtml(item.text)}</div>
+        <div>
+          <p class="label">讲字</p>
+          <h3>${escapeHtml(item.text)} · ${escapeHtml(item.pinyin || "")}</h3>
+          <p>${escapeHtml(item.story || "")}</p>
+          <p class="target-hint">笔画动画会按顺序描出主要结构。</p>
+        </div>
+      </div>
+      ${renderStrokeSvg(item)}
+    `;
+  } else if (readingLayer === "pinyin") {
+    const pinyinParts = splitPinyinSyllable(item.pinyin || "");
+    const spellText = `${pinyinParts.display || item.pinyin || ""} ${item.text || ""}`.trim();
+    characterLessonBox.innerHTML = `
+      <div class="lesson-focus">
+        <p class="label">讲拼音</p>
+        <h3>${escapeHtml(item.text)} · ${escapeHtml(item.pinyin || "")}</h3>
+        <p class="pinyin-spell">${escapeHtml(spellText)}</p>
+        <p>${escapeHtml(item.pinyinTip || "")}</p>
+        <div class="choice-row">
+          <button class="play-button" type="button" data-reading-play="${escapeHtml(item.text || "")}">播放标准音</button>
+          <button class="play-button" type="button" data-reading-play="${escapeHtml(spellText)}">播放拼读</button>
+          <button class="primary-button" type="button" data-reading-play="${escapeHtml(item.text || "")}">跟读一遍</button>
+        </div>
+      </div>
+    `;
+  } else if (readingLayer === "words") {
+    characterLessonBox.innerHTML = `
+      <div class="lesson-focus">
+        <p class="label">讲组词</p>
+        <h3>${escapeHtml((item.words || []).join(" / ") || item.text)}</h3>
+        <p class="target-hint">先读词，再完成下面的配对游戏。</p>
+      </div>
+    `;
+  } else if (readingLayer === "idiom") {
+    const idiomAudio = `${item.idiom || item.text}。${item.idiomStory || ""}`;
+    characterLessonBox.innerHTML = `
+      <div class="lesson-focus">
+        <p class="label">讲成语</p>
+        <h3>${escapeHtml(item.idiom || item.text)}</h3>
+        <p>${escapeHtml(item.idiomStory || "")}</p>
+        <button class="play-button" type="button" data-reading-play="${escapeHtml(idiomAudio)}">播放背景故事和解释</button>
+      </div>
+    `;
+  } else if (readingLayer === "sentences") {
+    characterLessonBox.innerHTML = `
+      <div class="lesson-focus">
+        <p class="label">讲句子</p>
+        <div class="example-list">
+          ${(item.examples || []).map((example, index) => `
+            <div class="example-row">
+              <p><strong>${index + 1}. ${escapeHtml(example.text || "")}</strong></p>
+              <p class="target-pinyin">${escapeHtml(example.pinyin || "")}</p>
+              <p class="target-hint">${escapeHtml(example.translation || "")}</p>
+              <button class="play-button" type="button" data-reading-play="${escapeHtml(example.text || "")}">播放跟读</button>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  } else if (readingLayer === "compose") {
+    characterLessonBox.innerHTML = `
+      <div class="lesson-focus">
+        <p class="label">造句练习</p>
+        <h3>用「${escapeHtml(item.text)}」写一句中文</h3>
+        <p class="target-hint">${escapeHtml(item.sceneCue || "")}</p>
+      </div>
+    `;
+  } else {
+    characterLessonBox.innerHTML = `
+      <div class="lesson-focus">
+        <p class="label">场景对话</p>
+        <h3>把「${escapeHtml(item.text)}」放进真实对话</h3>
+        <p>${escapeHtml(item.sceneCue || "")}</p>
+        <button class="primary-button" type="button" id="readingToDialogueButton">进入场景对话</button>
+      </div>
+    `;
+  }
+}
+
 function renderReadingScene() {
-  const passage = currentExercise?.reading?.passage || "";
+  readingSceneLevelTabs.querySelectorAll("[data-reading-scene-level]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.readingSceneLevel === readingSceneLevel);
+  });
+  const passage = readingSceneLevel === "advanced"
+    ? currentExercise?.reading?.advancedPassage || currentExercise?.reading?.passage || ""
+    : currentExercise?.reading?.basicPassage || currentExercise?.reading?.passage || "";
+  const label = readingSceneLevel === "advanced" ? "高阶场景阅读" : "基础场景阅读";
   readingPassageBox.innerHTML = passage
-    ? `<p class="label">\u573a\u666f\u77ed\u6587</p><p class="reading-passage">${[...passage].map((char) => /\p{Script=Han}/u.test(char) ? `<button class="inline-hanzi" type="button">${escapeHtml(char)}</button>` : escapeHtml(char)).join("")}</p>`
+    ? `<p class="label">${label}</p><p class="reading-passage">${[...passage].map((char) => /\p{Script=Han}/u.test(char) ? `<button class="inline-hanzi" type="button" data-hanzi="${escapeHtml(char)}">${escapeHtml(char)}</button>` : escapeHtml(char)).join("")}</p>`
     : `<p class="target-hint">\u6682\u65f6\u6ca1\u6709\u573a\u666f\u77ed\u6587\u3002</p>`;
   readingQuestions.innerHTML = (currentExercise?.reading?.questions || []).map((question, index) => `
     <div class="question-row">
@@ -464,12 +613,25 @@ function renderReadingScene() {
   `).join("");
 }
 
+function showReadingHanziInfo(button) {
+  const char = button?.dataset?.hanzi || button?.textContent || "";
+  const info = currentExercise?.reading?.lexicon?.[char] || {};
+  readingHanziPopover.hidden = false;
+  readingHanziPopover.innerHTML = `
+    <strong>${escapeHtml(char)}</strong>
+    <span>${escapeHtml(info.pinyin || "\u62fc\u97f3\u5f85\u8865\u5145")}</span>
+    <p>${escapeHtml(info.translation || "\u7ed3\u5408\u4e0a\u4e0b\u6587\u7406\u89e3\u8fd9\u4e2a\u5b57\u3002")}</p>
+  `;
+  playChinese(`${char}\u3002${info.translation || "\u7ed3\u5408\u4e0a\u4e0b\u6587\u7406\u89e3\u8fd9\u4e2a\u5b57\u3002"}`);
+}
+
 function renderListeningScene(showTranscript = false) {
   const scene = currentExercise?.listening?.scene;
   if (!scene) return;
   sceneTranscriptBox.innerHTML = `
     <p class="label">\u573a\u666f\u542c\u529b</p>
     <p class="target-text">${escapeHtml(currentCourse?.scene || currentExercise?.course?.scene || "")}</p>
+    ${showTranscript ? "" : `<p class="target-hint">\u5148\u542c\u5b8c\u97f3\u9891\u5e76\u56de\u7b54\u95ee\u9898\uff0c\u9700\u8981\u65f6\u518d\u70b9\u51fb\u201c\u67e5\u770b\u6587\u672c\u548c\u62fc\u97f3\u201d\u3002</p>`}
     <div class="transcript-lines ${showTranscript ? "" : "hidden"}">
       ${(scene.dialogue || []).map((line, index) => `
         <button class="transcript-line" type="button" data-line="${index}">
@@ -600,6 +762,15 @@ const toneChoices = [
   { tone: 5, label: "\u8f7b\u58f0" }
 ];
 
+function parseToneFromText(text = "") {
+  if (/(\u4e00\u58f0|\u7b2c\u4e00\u58f0|1|first)/i.test(text)) return 1;
+  if (/(\u4e8c\u58f0|\u7b2c\u4e8c\u58f0|2|second)/i.test(text)) return 2;
+  if (/(\u4e09\u58f0|\u7b2c\u4e09\u58f0|3|third)/i.test(text)) return 3;
+  if (/(\u56db\u58f0|\u7b2c\u56db\u58f0|4|fourth)/i.test(text)) return 4;
+  if (/(\u8f7b\u58f0|\u7b2c\u4e94\u58f0|5|neutral)/i.test(text)) return 5;
+  return 0;
+}
+
 function resetListeningGame() {
   const items = (currentExercise?.listening?.items || [])
     .filter((item) => item.text && Number(item.tone) > 0)
@@ -628,6 +799,7 @@ function renderListeningGame() {
     listeningProgress.textContent = "";
     listeningHint.textContent = "\u9700\u8981\u5e26\u58f0\u8c03\u7684\u62fc\u97f3\u624d\u80fd\u751f\u6210\u542c\u529b\u9898\u3002";
     toneOptions.innerHTML = "";
+    voiceToneButton.disabled = true;
     listeningScore.innerHTML = `<div class="score-card muted-card">\u9700\u8981\u5e26\u58f0\u8c03\u7684\u62fc\u97f3\u624d\u80fd\u751f\u6210\u542c\u529b\u9898\u3002</div>`;
     return;
   }
@@ -638,6 +810,7 @@ function renderListeningGame() {
     listeningProgress.textContent = "\u5b8c\u6210";
     listeningHint.textContent = "";
     toneOptions.innerHTML = "";
+    voiceToneButton.disabled = true;
     listeningScore.innerHTML = `
       <div class="score-card">
         <div class="score-summary"><span>\u58f0\u8c03\u9009\u62e9</span><strong>\u5b8c\u6210</strong></div>
@@ -654,7 +827,8 @@ function renderListeningGame() {
   const item = listeningState.items[listeningState.index];
   listeningPrompt.textContent = item.text;
   listeningProgress.textContent = `${listeningState.index + 1} / ${listeningState.items.length}`;
-  listeningHint.textContent = "\u64ad\u653e\u540e\u9009\u8fd9\u4e2a\u5b57\u7684\u58f0\u8c03\u3002";
+  listeningHint.textContent = "\u64ad\u653e\u540e\u9009\u58f0\u8c03\uff0c\u6216\u8005\u8bf4\u51fa\u201c\u4e00\u58f0\u201d\u7b49\u7b54\u6848\u3002";
+  voiceToneButton.disabled = Boolean(listeningState.selectedTone);
   toneOptions.innerHTML = toneChoices.map((choice) => {
     const classes = ["tone-option"];
     if (listeningState.selectedTone === choice.tone) classes.push("selected");
@@ -670,12 +844,27 @@ function renderListeningGame() {
 
 function handleToneChoice(event) {
   const button = event.target.closest(".tone-option");
-  if (!button || listeningState.completed || listeningState.selectedTone) return;
-  const item = listeningState.items[listeningState.index];
+  if (!button) return;
   const tone = Number(button.dataset.tone);
+  submitToneAnswer(tone);
+}
+
+function submitToneAnswer(tone, context = {}) {
+  if (!tone || listeningState.completed || listeningState.selectedTone) return;
+  const item = listeningState.items[listeningState.index];
   listeningState.selectedTone = tone;
   if (tone === item.tone) listeningState.correct += 1;
-  listeningScore.innerHTML = `<div class="score-card muted-card">${tone === item.tone ? "\u9009\u5bf9\u4e86\u3002" : `\u8fd9\u4e2a\u5b57\u662f ${toneChoices.find((choice) => choice.tone === item.tone)?.label || ""}\u3002`}</div>`;
+  const expectedLabel = toneChoices.find((choice) => choice.tone === item.tone)?.label || "";
+  const transcriptLine = context.transcript ? `<p class="transcript">\u8bc6\u522b\uff1a${escapeHtml(context.transcript)}</p>` : "";
+  const feedbackItems = Array.isArray(context.feedback) && context.feedback.length
+    ? `<ul class="feedback-list">${context.feedback.slice(0, 2).map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>`
+    : `<p class="transcript">${tone === item.tone ? "\u9009\u5bf9\u4e86\u3002" : `\u8fd9\u4e2a\u5b57\u662f ${expectedLabel}\u3002`}</p>`;
+  listeningScore.innerHTML = `
+    <div class="score-card muted-card">
+      ${transcriptLine}
+      ${feedbackItems}
+    </div>
+  `;
   renderListeningGame();
   setTimeout(() => {
     listeningState.index += 1;
@@ -860,6 +1049,23 @@ function speakWithBrowser(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+function correctnessHtml(correctness = {}) {
+  if (!correctness || !correctness.status) return "";
+  const labels = {
+    correct: "\u6b63\u786e",
+    partial: "\u57fa\u672c\u6b63\u786e",
+    incorrect: "\u9700\u4fee\u6539"
+  };
+  const label = labels[correctness.status] || "\u5df2\u5224\u8bfb";
+  const feedback = correctness.feedback ? `<p class="score-note">${escapeHtml(correctness.feedback)}</p>` : "";
+  const revision = correctness.suggestedRevision ? `<p class="score-note">\u53c2\u8003\u8bf4\u6cd5\uff1a${escapeHtml(correctness.suggestedRevision)}</p>` : "";
+  return `
+    <p class="transcript"><span>\u5224\u8bfb\uff1a</span>${escapeHtml(label)}</p>
+    ${feedback}
+    ${revision}
+  `;
+}
+
 function renderFeedback(container, result = {}) {
   if (!result) {
     container.innerHTML = "";
@@ -867,7 +1073,7 @@ function renderFeedback(container, result = {}) {
   }
   const feedback = Array.isArray(result.feedback) ? result.feedback.map((item) => `<li>${escapeHtml(item)}</li>`).join("") : "";
   const modeLabels = {
-    audio: "\u5f55\u97f3\u81ea\u67e5",
+    audio: "\u8bed\u97f3\u5224\u8bfb",
     transcript: "\u8f6c\u5199\u53c2\u8003",
     trace: "\u4e34\u6479",
     free: "\u81ea\u7531\u4e66\u5199",
@@ -877,6 +1083,8 @@ function renderFeedback(container, result = {}) {
     "stroke-fallback": "\u7b14\u987a\u81ea\u67e5",
     fallback: "\u672c\u5730\u53c2\u8003",
     scene: "\u573a\u666f\u7ec3\u4e60",
+    "reading-sentence": "\u9020\u53e5\u53cd\u9988",
+    "writing-sentence": "\u9020\u53e5\u53cd\u9988",
     self: "\u81ea\u67e5",
     "self-fallback": "\u81ea\u67e5"
   };
@@ -896,16 +1104,21 @@ function renderFeedback(container, result = {}) {
     </p>
   ` : "";
   const recognizedText = result.recognizedText ? `<p class="score-note">\u8bc6\u522b\uff1a${escapeHtml(result.recognizedText)}</p>` : "";
+  const suggestedRevision = result.suggestedRevision ? `<p class="score-note">\u53c2\u8003\u6539\u5199\uff1a${escapeHtml(result.suggestedRevision)}</p>` : "";
+  const scoreValue = Number(result.score);
+  const summaryValue = Number.isFinite(scoreValue) ? `${Math.round(scoreValue)}\u5206` : "\u5b8c\u6210";
   container.innerHTML = `
     <div class="score-card">
       <div class="score-summary">
         <span>${escapeHtml(modeLabel || "\u7ec3\u4e60\u53cd\u9988")}</span>
-        <strong>\u5b8c\u6210</strong>
+        <strong>${summaryValue}</strong>
       </div>
       ${fallbackNote}
       ${reasonNote}
       ${audioMetrics}
       ${recognizedText}
+      ${suggestedRevision}
+      ${correctnessHtml(result.correctness)}
       ${result.transcript ? `<p class="transcript"><span>识别：</span>${escapeHtml(result.transcript)}</p>` : ""}
       ${feedback ? `<ul class="feedback-list">${feedback}</ul>` : ""}
     </div>
@@ -961,18 +1174,29 @@ async function stopShadowRecording() {
 
 async function evaluateSpeaking() {
   if (!currentExercise?.speaking?.text) return;
-  const durationSeconds = Math.max(1, Math.round(shadowPcmChunks.reduce((sum, chunk) => sum + chunk.length, 0) / 16000));
-  const result = {
-    modeUsed: speakingMode.value === "transcript" ? "transcript" : "audio",
-    durationSeconds,
-    feedback: [
-      "\u5df2\u5b8c\u6210\u4e00\u6b21\u8ddf\u8bfb\u3002",
-      "\u8bf7\u518d\u542c\u4e00\u904d Luming \u793a\u8303\uff0c\u5bf9\u7167\u81ea\u5df1\u7684\u8bed\u901f\u548c\u505c\u987f\u3002",
-      "\u5f53\u524d\u7248\u672c\u4e0d\u663e\u793a\u81ea\u52a8\u5206\u6570\u3002"
-    ]
-  };
-  renderFeedback(speakingScore, result);
-  rememberSkillResult({ type: "speaking", target: currentExercise.speaking.text, result });
+  if (!shadowPcmChunks.length) {
+    speakingScore.innerHTML = `<div class="score-card muted-card">\u6ca1\u6709\u5f55\u5230\u8bed\u97f3\uff0c\u8bf7\u91cd\u65b0\u8ddf\u8bfb\u4e00\u904d\u3002</div>`;
+    return;
+  }
+  updateSkillBusy(true);
+  speakingScore.innerHTML = `<div class="score-card muted-card">Luming \u6b63\u5728\u8bc6\u522b\u5e76\u5224\u8bfb\u4f60\u7684\u8ddf\u8bfb...</div>`;
+  try {
+    const formData = new FormData();
+    formData.append("targetText", currentExercise.speaking.text);
+    formData.append("targetPinyin", currentExercise.speaking.pinyin || "");
+    formData.append("mode", speakingMode.value === "transcript" ? "transcript" : "audio");
+    formData.append("audio", new Blob(shadowPcmChunks, { type: "application/octet-stream" }), "shadow.pcm");
+    const response = await fetch("/api/speaking/evaluate", { method: "POST", body: formData });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "\u8ddf\u8bfb\u5224\u8bfb\u5931\u8d25");
+    renderFeedback(speakingScore, result);
+    rememberSkillResult({ type: "speaking", target: currentExercise.speaking.text, result });
+  } catch (error) {
+    speakingScore.innerHTML = "";
+    addError(error.message || "\u8ddf\u8bfb\u5224\u8bfb\u5931\u8d25\u3002");
+  } finally {
+    updateSkillBusy(false);
+  }
 }
 
 async function startRecording() {
@@ -1137,25 +1361,52 @@ async function evaluateReadingSentence(source = "reading") {
   const container = source === "writing" ? writingSentenceScore : readingScore;
   const prompt = source === "writing" ? currentExercise?.writing?.sentencePrompt : "\u7528\u76ee\u6807\u5b57\u9020\u4e00\u53e5\u4e2d\u6587\u3002";
   if (!input.value.trim()) return;
-  const result = {
-    modeUsed: source === "writing" ? "writing-sentence" : "reading-sentence",
-    feedback: [
-      "\u5df2\u5b8c\u6210\u9020\u53e5\u7ec3\u4e60\u3002",
-      prompt || "\u8bf7\u5bf9\u7167\u5f53\u524d\u573a\u666f\uff0c\u68c0\u67e5\u53e5\u5b50\u662f\u5426\u81ea\u7136\u3002",
-      "\u5f53\u524d\u7248\u672c\u4e0d\u663e\u793a\u81ea\u52a8\u5206\u6570\u3002"
-    ]
-  };
+  container.innerHTML = `<div class="score-card muted-card">Luming \u6b63\u5728\u770b\u4f60\u7684\u53e5\u5b50...</div>`;
+  let result;
+  try {
+    const response = await fetch("/api/reading/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: source === "writing" ? "writing-sentence" : "reading-sentence",
+        courseId: currentCourse?.id || currentExercise?.course?.id || "",
+        character: selectedReadingCharacter()?.text || currentExercise?.writing?.items?.[0]?.text || "",
+        text: input.value,
+        prompt
+      })
+    });
+    result = await response.json();
+    if (!response.ok) throw new Error(result.error || "\u9020\u53e5\u53cd\u9988\u5931\u8d25\u3002");
+  } catch {
+    result = {
+      modeUsed: source === "writing" ? "writing-sentence" : "reading-sentence",
+      completed: true,
+      feedback: [
+        "\u5df2\u5b8c\u6210\u9020\u53e5\u7ec3\u4e60\u3002",
+        prompt || "\u8bf7\u5bf9\u7167\u5f53\u524d\u573a\u666f\uff0c\u68c0\u67e5\u53e5\u5b50\u662f\u5426\u81ea\u7136\u3002"
+      ],
+      suggestedRevision: input.value
+    };
+  }
   renderFeedback(container, result);
   rememberSkillResult({ type: source === "writing" ? "writing-sentence" : "reading-sentence", target: input.value, result });
 }
 
 async function evaluateReadingScene() {
-  const answers = [...readingQuestions.querySelectorAll("[data-reading-answer]")].map((input) => input.value.trim()).filter(Boolean);
+  const inputs = [...readingQuestions.querySelectorAll("[data-reading-answer]")];
+  const answers = inputs.map((input) => input.value.trim());
   const questions = currentExercise?.reading?.questions || [];
+  const rows = questions.map((question, index) => {
+    const answer = answers[index] || "";
+    const reference = String(question.answer || "");
+    const hit = answer && (reference.includes(answer) || answer.includes(reference));
+    return `<li>${hit ? "\u547d\u4e2d" : "\u53c2\u8003"}：${escapeHtml(question.prompt || "")} / ${escapeHtml(reference || "\u8bf7\u56de\u5230\u77ed\u6587\u91cc\u627e\u5173\u952e\u53e5")}</li>`;
+  }).join("");
   readingSceneScore.innerHTML = `
     <div class="score-card">
       <div class="score-summary"><span>\u9605\u8bfb\u7406\u89e3</span><strong>\u5df2\u8bb0\u5f55</strong></div>
-      <p class="transcript">\u5df2\u56de\u7b54 ${answers.length} / ${questions.length} \u9898\u3002</p>
+      <p class="transcript">\u5df2\u56de\u7b54 ${answers.filter(Boolean).length} / ${questions.length} \u9898\u3002</p>
+      <ul class="feedback-list">${rows}</ul>
     </div>
   `;
   rememberSkillResult({ type: "reading-scene", target: currentCourse?.scene || "", result: { answers } });
@@ -1203,6 +1454,8 @@ async function sendDialogue(text = dialogueInput.value) {
     dialogueScore.innerHTML = `
       <div class="score-card">
         <div class="score-summary"><span>\u7b2c ${data.round || dialogueTurns.length / 2} \u8f6e</span><strong>\u7ee7\u7eed</strong></div>
+        <p class="transcript"><span>\u4f60\uff1a</span>${escapeHtml(content)}</p>
+        ${correctnessHtml(data.correctness)}
         <p class="transcript"><span>Luming\uff1a</span>${escapeHtml(data.roleReply || "")}</p>
         <ul class="feedback-list"><li>${escapeHtml(data.toneFeedback || "")}</li></ul>
       </div>
@@ -1240,6 +1493,47 @@ async function transcribeBlob(blob) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "\u8bed\u97f3\u8bc6\u522b\u5931\u8d25");
   return data.transcript || "";
+}
+
+async function answerToneByVoice() {
+  const item = listeningState?.items?.[listeningState.index];
+  if (!item || listeningState.completed || listeningState.selectedTone) return;
+  voiceToneButton.disabled = true;
+  listeningScore.innerHTML = `<div class="score-card muted-card">\u8bf7\u8bf4\u51fa\u201c\u4e00\u58f0\u201d\u3001\u201c\u4e8c\u58f0\u201d\u7b49\u7b54\u6848...</div>`;
+  try {
+    const transcript = await transcribeBlob(await capturePcmOnce(2600));
+    let data = {};
+    try {
+      const response = await fetch("/api/listening/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "tone-voice",
+          courseId: currentCourse?.id || currentExercise?.course?.id || "",
+          text: item.text,
+          pinyin: item.pinyin,
+          expectedTone: item.tone,
+          answerText: transcript
+        })
+      });
+      data = await response.json();
+      if (!response.ok) throw new Error(data.error || "\u58f0\u8c03\u5224\u65ad\u5931\u8d25\u3002");
+    } catch {
+      data = {
+        modeUsed: "local-fallback",
+        answerTone: parseToneFromText(transcript),
+        feedback: []
+      };
+    }
+    const tone = Number(data.answerTone || parseToneFromText(transcript));
+    if (!tone) throw new Error("\u6ca1\u6709\u8bc6\u522b\u5230\u660e\u786e\u7684\u58f0\u8c03\u7b54\u6848\u3002");
+    submitToneAnswer(tone, { transcript, feedback: data.feedback });
+  } catch (error) {
+    listeningScore.innerHTML = "";
+    addError(error.message || "\u8bed\u97f3\u56de\u7b54\u5931\u8d25\u3002");
+  } finally {
+    voiceToneButton.disabled = Boolean(listeningState?.selectedTone || listeningState?.completed);
+  }
 }
 
 async function recordDialogueReply() {
@@ -1322,11 +1616,48 @@ modeTabs.forEach((tab) => {
 });
 
 submodeTabs.forEach((tab) => {
-  tab.addEventListener("click", () => switchSubmode(tab.dataset.skill, tab.dataset.submode));
+  tab.addEventListener("click", () => {
+    if (tab.dataset.skill) switchSubmode(tab.dataset.skill, tab.dataset.submode);
+  });
 });
 
 courseSelect.addEventListener("change", () => loadCourse(courseSelect.value).catch((error) => addError(error.message)));
 
+readingCharacterPicker.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-reading-character]");
+  if (!button) return;
+  readingLessonIndex = Number(button.dataset.readingCharacter) || 0;
+  resetReadingGame();
+  readingScore.innerHTML = "";
+  renderCharacterLesson();
+});
+readingLayerTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-reading-layer]");
+  if (!button) return;
+  readingLayer = button.dataset.readingLayer || "shape";
+  resetReadingGame();
+  readingScore.innerHTML = "";
+  renderCharacterLesson();
+});
+readingSceneLevelTabs.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-reading-scene-level]");
+  if (!button) return;
+  readingSceneLevel = button.dataset.readingSceneLevel || "basic";
+  readingHanziPopover.hidden = true;
+  readingSceneScore.innerHTML = "";
+  renderReadingScene();
+});
+characterLessonBox.addEventListener("click", (event) => {
+  const playButton = event.target.closest("[data-reading-play]");
+  if (playButton) {
+    playChinese(playButton.dataset.readingPlay || "");
+    return;
+  }
+  if (event.target.closest("#readingToDialogueButton")) {
+    setMode("speak");
+    switchSubmode("speak", "dialogue");
+  }
+});
 readingTextCards.addEventListener("click", handleReadingCardClick);
 readingPinyinCards.addEventListener("click", handleReadingCardClick);
 resetReadingButton.addEventListener("click", resetReadingGame);
@@ -1334,7 +1665,7 @@ evaluateReadingButton.addEventListener("click", () => evaluateReadingSentence("r
 readingQuestions.addEventListener("change", evaluateReadingScene);
 readingPassageBox.addEventListener("click", (event) => {
   const button = event.target.closest(".inline-hanzi");
-  if (button) playChinese(button.textContent || "");
+  if (button) showReadingHanziInfo(button);
 });
 toneOptions.addEventListener("click", handleToneChoice);
 playListeningButton.addEventListener("click", () => {
@@ -1342,6 +1673,7 @@ playListeningButton.addEventListener("click", () => {
   if (item) playChinese(item.text);
 });
 resetListeningButton.addEventListener("click", resetListeningGame);
+voiceToneButton.addEventListener("click", answerToneByVoice);
 playSceneAudioButton.addEventListener("click", () => playChinese((currentExercise?.listening?.scene?.dialogue || []).map((line) => line.text).join("\n")));
 showSceneTranscriptButton.addEventListener("click", () => renderListeningScene(true));
 sceneTranscriptBox.addEventListener("click", (event) => {
