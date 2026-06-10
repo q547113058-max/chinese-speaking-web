@@ -30,7 +30,6 @@ const listeningSceneScore = document.querySelector("#listeningSceneScore");
 const sceneTranscriptBox = document.querySelector("#sceneTranscriptBox");
 const playSceneAudioButton = document.querySelector("#playSceneAudioButton");
 const showSceneTranscriptButton = document.querySelector("#showSceneTranscriptButton");
-const voiceToneButton = document.querySelector("#voiceToneButton");
 const listeningPrompt = document.querySelector("#listeningPrompt");
 const listeningProgress = document.querySelector("#listeningProgress");
 const listeningHint = document.querySelector("#listeningHint");
@@ -1215,15 +1214,6 @@ async function sendDialogue(text = dialogueInput.value) {
   }
 }
 
-function parseToneFromText(text = "") {
-  if (/一|1|first/i.test(text)) return 1;
-  if (/二|2|second/i.test(text)) return 2;
-  if (/三|3|third/i.test(text)) return 3;
-  if (/四|4|fourth/i.test(text)) return 4;
-  if (/轻|5|neutral/i.test(text)) return 5;
-  return 0;
-}
-
 async function capturePcmOnce(milliseconds = 2400) {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
   if (!navigator.mediaDevices?.getUserMedia || !AudioContextClass) throw new Error("\u5f53\u524d\u6d4f\u89c8\u5668\u4e0d\u652f\u6301\u5f55\u97f3\u3002");
@@ -1250,22 +1240,6 @@ async function transcribeBlob(blob) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "\u8bed\u97f3\u8bc6\u522b\u5931\u8d25");
   return data.transcript || "";
-}
-
-async function answerToneByVoice() {
-  if (!listeningState?.items?.length) return;
-  voiceToneButton.disabled = true;
-  listeningScore.innerHTML = `<div class="score-card muted-card">\u8bf7\u8bf4\u51fa\u201c\u4e00\u58f0\u201d\u3001\u201c\u4e8c\u58f0\u201d\u7b49\u7b54\u6848...</div>`;
-  try {
-    const transcript = await transcribeBlob(await capturePcmOnce());
-    const tone = parseToneFromText(transcript);
-    if (!tone) throw new Error("\u6ca1\u6709\u8bc6\u522b\u5230\u58f0\u8c03\u7b54\u6848\u3002");
-    handleToneChoice({ target: { closest: () => toneOptions.querySelector(`[data-tone="${tone}"]`) } });
-  } catch (error) {
-    addError(error.message || "\u8bed\u97f3\u56de\u7b54\u5931\u8d25\u3002");
-  } finally {
-    voiceToneButton.disabled = false;
-  }
 }
 
 async function recordDialogueReply() {
@@ -1368,7 +1342,6 @@ playListeningButton.addEventListener("click", () => {
   if (item) playChinese(item.text);
 });
 resetListeningButton.addEventListener("click", resetListeningGame);
-voiceToneButton.addEventListener("click", answerToneByVoice);
 playSceneAudioButton.addEventListener("click", () => playChinese((currentExercise?.listening?.scene?.dialogue || []).map((line) => line.text).join("\n")));
 showSceneTranscriptButton.addEventListener("click", () => renderListeningScene(true));
 sceneTranscriptBox.addEventListener("click", (event) => {
