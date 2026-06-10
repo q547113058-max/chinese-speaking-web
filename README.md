@@ -189,4 +189,6 @@ The scoring APIs are still present for experiments and compatibility, but the no
 
 The frontend no longer shows automatic numeric scores or radar charts. Speaking, handwriting, sentence practice, and scene practice now show completion/self-check feedback only. Reading/listening games may still show immediate correct/incorrect guidance where the answer is explicit, but they do not display a percentage score.
 
+Listening opens on `场景辨别` by default. `声调辨别` is button-only: play the character audio, then choose one of the five tone options.
+
 Writing handwriting now uses a single `临摹` mode with the target character shown as a trace guide. The handwriting toolbar keeps only useful direct actions: undo and clear.
