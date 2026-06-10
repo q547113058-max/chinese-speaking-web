@@ -175,3 +175,12 @@ Each reply includes:
 - Pinyin with tone marks
 - English explanation
 - Speaking suggestion
+
+## Scoring latency policy
+
+Skill scoring is optimized for quick feedback:
+
+- `AI_SCORE_TIMEOUT_MS` controls scoring-model and vision-model calls. The default is `3500`.
+- `AI_CHAT_TIMEOUT_MS` controls normal chat/persona calls. The default is `12000`.
+- Speaking `audio` mode now returns an immediate acoustic score from the uploaded PCM recording instead of waiting for STT. Speaking `transcript` mode still uses STT and MiniMax-M3/text scoring when configured.
+- Writing handwriting defaults to `stroke` mode for local stroke-order scoring. `ai` mode still calls the configured vision model, but falls back to the stroke score when the model is unavailable or too slow.
