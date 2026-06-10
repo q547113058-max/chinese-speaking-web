@@ -27,3 +27,11 @@
 - Add first-pass real audio scoring for speaking practice: audio mode now analyzes the uploaded PCM recording for duration, voiced speech ratio, pauses, loudness, and rhythm, while transcript mode remains text-based.
 - Add AI vision scoring for handwriting practice: `mode=ai` on `/api/writing/evaluate` can call a configured OpenAI-compatible vision model and returns handwriting radar scores, recognized text, and feedback, with `self-fallback` preserved when vision is unavailable.
 - Expand the app into a Luming scenario skill system: add built-in courses, `GET /api/courses`, listening scene questions, speaking roleplay, reading sentence scoring, writing stroke scoring, and second-level modes for listening/speaking/reading/writing.
+
+## 2026-06-10
+
+- Speed up skill scoring by adding `AI_SCORE_TIMEOUT_MS` for scoring/vision calls and `AI_CHAT_TIMEOUT_MS` for normal chat calls.
+- Make speaking `audio` mode return immediate local acoustic scoring instead of waiting for STT before scoring.
+- Make Writing default to local stroke-order scoring; AI handwriting mode still runs vision scoring and falls back to `stroke-fallback` within the scoring timeout.
+- Add timeout fallback for speaking roleplay so slow model responses do not block the practice flow.
+- Fix `scripts/sync-github.ps1` so new files that return GitHub Contents API 404 are created instead of stopping the sync.
