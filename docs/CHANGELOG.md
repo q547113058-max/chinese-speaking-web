@@ -40,3 +40,4 @@
 - Remove the Writing `完成检查` button because, without automatic scoring, it did not perform a useful user-facing action.
 - Remove Writing `保存` and `自由书写`; handwriting now stays in trace-copy mode with only undo and clear actions.
 - Migrate old local conversation state by filtering the previous Su Tang greeting, keeping the UI consistently branded as Luming.
+- Make Listening default to `场景辨别` and remove speech answering from `声调辨别`; tone practice is now playback plus button choice only.
