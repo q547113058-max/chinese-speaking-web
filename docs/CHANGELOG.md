@@ -48,3 +48,4 @@
 - Add content correctness judgment to Speaking voice responses: shadowing checks the recognized reply against the target sentence, and scene dialogue checks whether the spoken response completes the role task.
 - Fix Speaking scene-dialogue correctness so free-form voice replies can be judged against the role task and shadow target, not only against preset button text; `/api/speaking/dialogue` now also accepts `userText` and `transcript`.
 - Replace the simplified Reading shape-layer stroke sketch with local real stroke-order data for the current course characters; missing data now falls back to a static character instead of fake stroke animation.
+- Fix Reading pinyin playback so `播放拼读` uses Mandarin syllable prompts instead of Latin-letter text, and make idiom playback include both background story and explanation.
