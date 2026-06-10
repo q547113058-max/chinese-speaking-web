@@ -132,4 +132,6 @@ The scoring APIs are still present for experiments and compatibility, but the no
 
 The learner-facing UI does not present automatic numeric scores or radar charts. The current product direction is completion, self-check, explicit correct/incorrect feedback for deterministic quiz items, and Luming conversation guidance. Frontend speaking, handwriting, sentence practice, and scene practice no longer call the scoring APIs during normal use.
 
+Listening defaults to `场景辨别`. `声调辨别` keeps only audio playback plus five tone-choice buttons; speech answering is intentionally removed.
+
 Writing handwriting has one learner-facing mode: `临摹`, with the target character visible as a trace guide. The handwriting toolbar intentionally keeps only undo and clear. There is no save, completion, or check button because the app no longer performs automatic handwriting evaluation in normal use.
