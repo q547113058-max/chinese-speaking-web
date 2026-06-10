@@ -10,8 +10,8 @@
 - 中文朗读，优先使用 OpenAI TTS；没有音频 API key 时回退到浏览器朗读。
 - 读：从当前回复生成汉字-拼音配对游戏。
 - 听：从当前回复生成声调选择题，显示对应汉字后播放并选择声调。
-- 说：从当前回复生成跟读短句，支持转写评分和音频评分降级路径。
-- 写：从当前回复生成 1-3 个字词，支持 Canvas 手写、临摹自查和 AI/OCR 降级路径。
+- 说：从当前回复生成跟读短句，支持录音自查和转写参考，不展示自动分数。
+- 写：从当前回复生成 1-3 个字词，支持 Canvas 手写、临摹自查和 AI/OCR 参考，不展示自动分数。
 - 初级、中级、高级三档难度。
 - 语速、拼音、英文解释显示开关。
 - 无 `OPENAI_API_KEY` 时使用模拟回复，便于先测试界面和流程。
@@ -54,7 +54,7 @@ npm start
 - `CHAT_MODEL`：聊天模型，MiniMax 示例为 `MiniMax-M3`。
 - `OPENAI_API_KEY`：OpenAI API key。缺省时进入模拟模式；配置后可用于音频能力。
 - `OPENAI_CHAT_MODEL`：OpenAI 回复模型，默认 `gpt-4.1-mini`。
-- `VISION_API_KEY`：手写 Canvas 图片评分使用的 OpenAI-compatible vision API key；未设置时会依次回退到 `CHAT_API_KEY`、`OPENAI_API_KEY`。
+- `VISION_API_KEY`：legacy/experimental Canvas 图片参考判断使用的 OpenAI-compatible vision API key；未设置时会依次回退到 `CHAT_API_KEY`、`OPENAI_API_KEY`。
 - `VISION_BASE_URL`：vision chat completions 接口地址，默认 `https://api.openai.com/v1`。
 - `VISION_MODEL`：支持图片输入的视觉模型；未设置时会依次回退到 `OPENAI_VISION_MODEL`、`CHAT_MODEL`、`OPENAI_CHAT_MODEL`、`gpt-4.1-mini`。
 - `OPENAI_TRANSCRIBE_MODEL`：语音识别模型，默认 `gpt-4o-mini-transcribe`。
@@ -148,11 +148,11 @@ Each `/api/practice` response includes an `exercise` object:
 }
 ```
 
-`POST /api/speaking/evaluate` accepts `multipart/form-data` with `audio`, `targetText`, `targetPinyin`, and `mode`. `transcript` mode scores the STT transcript against the target text. `audio` mode now reads the uploaded 16 kHz PCM recording and scores duration fit, voiced speech ratio, pauses, loudness, and rhythm, using the transcript as an extra accuracy signal when real STT is available. The response uses `modeUsed: "audio"` and includes `audioMetrics` for the first-pass acoustic score.
+`POST /api/speaking/evaluate` remains available as a legacy/experimental endpoint, but the normal frontend no longer calls it or displays automatic speaking scores.
 
-`POST /api/writing/evaluate` accepts `imageData`, `targetText`, and `mode`. `self` mode keeps the local self-check flow. `ai` mode sends the Canvas image to the configured OpenAI-compatible vision model and returns target match, structure, proportion, stroke clarity, neatness, recognized text, and feedback. When no vision service is configured or the call fails, the server returns `self-fallback` with a `fallbackReason`.
+`POST /api/writing/evaluate` remains available as a legacy/experimental endpoint, but the normal frontend no longer calls it or displays automatic handwriting scores.
 
-The app now includes a scenario course library. `GET /api/courses` lists the built-in scenarios, and `GET /api/courses/:id` returns one course with listening, speaking, reading, and writing data. New skill APIs include `/api/listening/evaluate`, `/api/speaking/dialogue`, and `/api/reading/evaluate`.
+The app now includes a scenario course library. `GET /api/courses` lists the built-in scenarios, and `GET /api/courses/:id` returns one course with listening, speaking, reading, and writing data. Legacy/experimental skill APIs include `/api/listening/evaluate`, `/api/speaking/evaluate`, `/api/writing/evaluate`, `/api/speaking/dialogue`, and `/api/reading/evaluate`.
 
 The frontend uses mutually exclusive workspace modes: `聊`, `听`, `说`, `读`, and `写`. Each skill mode has internal submodes: listening has tone and scene listening, speaking has shadowing and roleplay, reading has seven-layer character study and scene reading, and writing has stroke-order handwriting and sentence input. Results continue to be stored in the latest 20 practice results.
 ## Local persona and context
@@ -176,11 +176,15 @@ Each reply includes:
 - English explanation
 - Speaking suggestion
 
-## Scoring latency policy
+## Legacy scoring API latency policy
 
-Skill scoring is optimized for quick feedback:
+The scoring APIs are still present for experiments and compatibility, but the normal frontend no longer calls them. If they are used directly, they follow this latency policy:
 
 - `AI_SCORE_TIMEOUT_MS` controls scoring-model and vision-model calls. The default is `3500`.
 - `AI_CHAT_TIMEOUT_MS` controls normal chat/persona calls. The default is `12000`.
 - Speaking `audio` mode now returns an immediate acoustic score from the uploaded PCM recording instead of waiting for STT. Speaking `transcript` mode still uses STT and MiniMax-M3/text scoring when configured.
 - Writing handwriting defaults to `stroke` mode for local stroke-order scoring. `ai` mode still calls the configured vision model, but falls back to the stroke score when the model is unavailable or too slow.
+
+## Practice feedback policy
+
+The frontend no longer shows automatic numeric scores or radar charts. Speaking, handwriting, sentence practice, and scene practice now show completion/self-check feedback only. Reading/listening games may still show immediate correct/incorrect guidance where the answer is explicit, but they do not display a percentage score.
