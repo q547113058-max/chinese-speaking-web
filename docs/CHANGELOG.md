@@ -40,4 +40,10 @@
 - Remove the Writing `完成检查` button because, without automatic scoring, it did not perform a useful user-facing action.
 - Remove Writing `保存` and `自由书写`; handwriting now stays in trace-copy mode with only undo and clear actions.
 - Migrate old local conversation state by filtering the previous Su Tang greeting, keeping the UI consistently branded as Luming.
-- Make Listening default to `场景辨别` and remove speech answering from `声调辨别`; tone practice is now playback plus button choice only.
+- Make Listening default to `场景辨别`; `声调辨别` now supports both button choice and voice answer, with STT plus Qwen3.6-Flash/chat-model feedback and local fallback.
+- Make Speaking default to `场景对话` and Reading default to `场景阅读`, keeping shadowing and seven-layer character study as secondary submodes.
+- Expand built-in listening scene dialogues to at least 50 Chinese characters and hide transcripts/pinyin until `查看文本和拼音` is clicked.
+- Expand Reading into the seven-layer lesson flow with stroke animation, pinyin spelling playback, idiom story playback, three example-sentence follow-read prompts, Qwen3.6-Flash/chat-model sentence feedback without numeric scores, and manual basic/advanced scene reading.
+- Switch the recommended chat model example from MiniMax-M3 to DashScope/Qwen3.6-Flash while keeping MiniMax as the TTS provider.
+- Add content correctness judgment to Speaking voice responses: shadowing checks the recognized reply against the target sentence, and scene dialogue checks whether the spoken response completes the role task.
+- Fix Speaking scene-dialogue correctness so free-form voice replies can be judged against the role task and shadow target, not only against preset button text; `/api/speaking/dialogue` now also accepts `userText` and `transcript`.
