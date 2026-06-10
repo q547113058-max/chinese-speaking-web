@@ -13,7 +13,7 @@
 - 显示控制：前端可开关拼音和英文解释。
 - 本地模拟：没有 `OPENAI_API_KEY` 时，后端返回固定示例，方便调试 UI 和交互流程。
 - Chat 模型：配置 `CHAT_API_KEY` 后，可使用 OpenAI-compatible Chat Completions 接口生成回复，例如 MiniMax-M3。
-- Vision 模型：配置 `VISION_API_KEY`、`VISION_BASE_URL`、`VISION_MODEL` 后，`写` 模式可把 Canvas 图片交给支持图片输入的 OpenAI-compatible 模型评分；未单独配置时会尝试复用现有 `CHAT_*` 或 `OPENAI_*`。
+- Vision 模型：配置 `VISION_API_KEY`、`VISION_BASE_URL`、`VISION_MODEL` 后，可通过 legacy/experimental API 做 Canvas 图片参考判断；正常前端不展示自动分数。
 
 ## 目录结构
 
@@ -45,11 +45,11 @@ chinese-speaking-web/
 - `POST /api/tts`：接收中文文本和语速，返回 MP3 音频；无 API key 时返回 `{ "fallback": true }`。
 - `GET /api/courses`：返回内置场景课程列表。
 - `GET /api/courses/:id`：返回单个场景课程和听说读写练习结构。
-- `POST /api/listening/evaluate`：评估声调辨别或场景听力理解题。
-- `POST /api/speaking/evaluate`：接收跟读音频和目标句，返回转写、总分、维度评分和建议；`transcript` 模式按识别文本评分，`audio` 模式读取 16 kHz PCM 录音并结合时长、有效语音比例、停顿、响度和节奏生成第一版音频评分。
+- `POST /api/listening/evaluate`：legacy/experimental API，用于判断声调辨别或场景听力理解题；正常前端不展示自动分数。
+- `POST /api/speaking/evaluate`：legacy/experimental API，接收跟读音频和目标句；正常前端不再调用或展示自动跟读分数。
 - `POST /api/speaking/dialogue`：处理 4-5 轮场景口语对话并返回 Luming 回应、声调反馈和下一轮任务。
-- `POST /api/reading/evaluate`：评估阅读/写作造句练习。
-- `POST /api/writing/evaluate`：接收 Canvas 图片、目标字词、模式和 `strokes` 轨迹，支持本地笔顺评分与 MiniMax-M3 图片评分合成。
+- `POST /api/reading/evaluate`：legacy/experimental API，用于阅读/写作造句参考判断；正常前端不再调用或展示自动造句分数。
+- `POST /api/writing/evaluate`：legacy/experimental API，接收 Canvas 图片、目标字词、模式和 `strokes` 轨迹；正常前端不再调用或展示自动书写分数。
 - API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
 - JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
@@ -119,10 +119,15 @@ STT_TARGET_LANGUAGE=zh
 
 The frontend records 16 kHz mono PCM for compatibility with Qwen realtime audio input. The real DashScope key is stored only in `.env`, GitHub Secrets, or deployment environment variables.
 
-## Scoring latency policy
+## Legacy scoring API latency policy
 
-- Fast skill feedback is the default. `AI_SCORE_TIMEOUT_MS` limits scoring and vision calls; default: `3500`.
+The scoring APIs are still present for experiments and compatibility, but the normal frontend no longer calls them.
+
+- Fast skill feedback is the default. `AI_SCORE_TIMEOUT_MS` limits legacy scoring and vision calls; default: `3500`.
 - Normal chat remains more tolerant. `AI_CHAT_TIMEOUT_MS` limits chat/persona generation; default: `12000`.
-- `/api/speaking/evaluate` in `audio` mode now scores uploaded PCM audio immediately from local acoustic features. `transcript` mode keeps the STT plus model scoring path.
-- `/api/writing/evaluate` in `stroke` mode returns local stroke-order scoring immediately. `ai` mode combines vision scoring with stroke scoring when available, and falls back to `stroke-fallback` when the vision request times out or fails.
-- The Writing UI defaults to local stroke scoring so handwriting practice does not block on remote vision scoring.
+- `/api/speaking/evaluate` and `/api/writing/evaluate` are retained only as legacy/experimental paths.
+- The Writing UI uses self-check completion feedback so handwriting practice does not block on remote vision calls.
+
+## Practice feedback policy
+
+The learner-facing UI does not present automatic numeric scores or radar charts. The current product direction is completion, self-check, explicit correct/incorrect feedback for deterministic quiz items, and Luming conversation guidance. Frontend speaking, handwriting, sentence practice, and scene practice no longer call the scoring APIs during normal use.
