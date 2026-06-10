@@ -46,6 +46,8 @@ const sttTargetLanguage = process.env.STT_TARGET_LANGUAGE || "zh";
 const jsonBodyLimitBytes = 256 * 1024;
 const audioBodyLimitBytes = 8 * 1024 * 1024;
 const writingImageLimitBytes = 1024 * 1024;
+const aiScoreTimeoutMs = Number(process.env.AI_SCORE_TIMEOUT_MS || 3500);
+const aiChatTimeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS || 12000);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -305,7 +307,7 @@ async function evaluateReading(req) {
   if (!chatApiKey) return fallbackReadingScore({ text, course, mode });
 
   try {
-    const response = await fetch(`${chatBaseUrl}/chat/completions`, {
+    const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${chatApiKey}`,
@@ -345,43 +347,58 @@ async function speakingDialogue(req) {
   const course = findCourse(body.courseId);
   const turns = Array.isArray(body.turns) ? body.turns.slice(-8) : [];
   const userText = String(body.text || body.choice || "");
-  if (!chatApiKey) {
-    return {
-      roleReply: "\u56de\u5e94\u5f88\u81ea\u7136\u3002\u4e0b\u4e00\u53e5\u8bf7\u7ee7\u7eed\u8868\u8fbe\u4f60\u7684\u9700\u6c42\u3002",
-      toneFeedback: "\u58f0\u8c03\u53ef\u4ee5\u518d\u653e\u6162\uff0c\u6ce8\u610f\u5173\u952e\u8bcd\u7684\u56db\u58f0\u3002",
-      nextTask: "\u7528\u4e00\u53e5\u4e2d\u6587\u7ee7\u7eed\u8fd9\u4e2a\u573a\u666f\u3002",
-      round: Math.min(5, turns.length + 1)
-    };
-  }
-
-  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${chatApiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: chatModel,
-      messages: [
-        { role: "system", content: "You are Luming, a Mandarin scenario coach. Continue a 4-5 round roleplay. Return strict JSON with roleReply, toneFeedback, nextTask. Keep Chinese concise." },
-        { role: "user", content: `Scene: ${course.scene}\nLearner role: ${course.speaking?.role}\nHistory: ${JSON.stringify(turns)}\nLearner says: ${userText}` }
-      ]
-    })
+  const fallback = () => ({
+    roleReply: "\u56de\u5e94\u5f88\u81ea\u7136\u3002\u4e0b\u4e00\u53e5\u8bf7\u7ee7\u7eed\u8868\u8fbe\u4f60\u7684\u9700\u6c42\u3002",
+    toneFeedback: "\u58f0\u8c03\u53ef\u4ee5\u518d\u653e\u6162\uff0c\u6ce8\u610f\u5173\u952e\u8bcd\u7684\u56db\u58f0\u3002",
+    nextTask: "\u7528\u4e00\u53e5\u4e2d\u6587\u7ee7\u7eed\u8fd9\u4e2a\u573a\u666f\u3002",
+    round: Math.min(5, turns.length + 1),
+    modeUsed: "fallback"
   });
-  if (!response.ok) throw new Error("Dialogue model failed.");
-  const data = await response.json();
-  const parsed = extractJson(data.choices?.[0]?.message?.content || "");
-  return {
-    roleReply: parsed.roleReply || "\u597d\u7684\uff0c\u6211\u4eec\u7ee7\u7eed\u3002",
-    toneFeedback: parsed.toneFeedback || "\u8bf7\u653e\u6162\u8bed\u901f\uff0c\u6ce8\u610f\u58f0\u8c03\u8d77\u4f0f\u3002",
-    nextTask: parsed.nextTask || "\u8bf7\u7528\u4e00\u53e5\u4e2d\u6587\u56de\u5e94\u3002",
-    round: Math.min(5, turns.length + 1)
-  };
+  if (!chatApiKey) return fallback();
+
+  try {
+    const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${chatApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: chatModel,
+        messages: [
+          { role: "system", content: "You are Luming, a Mandarin scenario coach. Continue a 4-5 round roleplay. Return strict JSON with roleReply, toneFeedback, nextTask. Keep Chinese concise." },
+          { role: "user", content: `Scene: ${course.scene}\nLearner role: ${course.speaking?.role}\nHistory: ${JSON.stringify(turns)}\nLearner says: ${userText}` }
+        ]
+      })
+    }, aiScoreTimeoutMs);
+    if (!response.ok) return fallback();
+    const data = await response.json();
+    const parsed = extractJson(data.choices?.[0]?.message?.content || "");
+    return {
+      roleReply: parsed.roleReply || "\u597d\u7684\uff0c\u6211\u4eec\u7ee7\u7eed\u3002",
+      toneFeedback: parsed.toneFeedback || "\u8bf7\u653e\u6162\u8bed\u901f\uff0c\u6ce8\u610f\u58f0\u8c03\u8d77\u4f0f\u3002",
+      nextTask: parsed.nextTask || "\u8bf7\u7528\u4e00\u53e5\u4e2d\u6587\u56de\u5e94\u3002",
+      round: Math.min(5, turns.length + 1),
+      modeUsed: "ai"
+    };
+  } catch {
+    return fallback();
+  }
 }
 
 function sendJson(res, status, payload) {
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload));
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = aiScoreTimeoutMs) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function readRequestBody(req, maxBytes = jsonBodyLimitBytes) {
@@ -821,38 +838,37 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
     : () => fallbackSpeakingScore({ targetText, transcript, mode });
 
   if (!chatApiKey) return fallback();
-
-  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${chatApiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: chatModel,
-      messages: [
-        {
-          role: "system",
-          content:
-            mode === "audio"
-              ? "Score a Mandarin learner's shadowing attempt using the transcript and acoustic measurements. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical. Do not claim to perform phoneme-level pronunciation scoring."
-              : "Score a Mandarin learner's shadowing attempt using the transcript. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical."
-        },
-        {
-          role: "user",
-          content: `Target Chinese: ${targetText}\nTarget pinyin: ${targetPinyin || "(none)"}\nLearner transcript: ${transcript || "(empty)"}${
-            mode === "audio" && audioBuffer
-              ? `\nAcoustic fallback score: ${JSON.stringify(fallbackAudioSpeakingScore({ targetText, targetPinyin, transcript, mode, audioBuffer }).audioMetrics)}`
-              : ""
-          }`
-        }
-      ]
-    })
-  });
-
-  if (!response.ok) return fallback();
+  if (mode === "audio") return fallback();
 
   try {
+    const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${chatApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: chatModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              mode === "audio"
+                ? "Score a Mandarin learner's shadowing attempt using the transcript and acoustic measurements. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical. Do not claim to perform phoneme-level pronunciation scoring."
+                : "Score a Mandarin learner's shadowing attempt using the transcript. Return strict JSON with keys: score, radar, feedback. radar must contain accuracy, completeness, fluency, tone, rhythm, each 0-100. feedback must be 2-3 concise Chinese suggestions. Be encouraging and practical."
+          },
+          {
+            role: "user",
+            content: `Target Chinese: ${targetText}\nTarget pinyin: ${targetPinyin || "(none)"}\nLearner transcript: ${transcript || "(empty)"}${
+              mode === "audio" && audioBuffer
+                ? `\nAcoustic fallback score: ${JSON.stringify(fallbackAudioSpeakingScore({ targetText, targetPinyin, transcript, mode, audioBuffer }).audioMetrics)}`
+                : ""
+            }`
+          }
+        ]
+      })
+    }, aiScoreTimeoutMs);
+    if (!response.ok) return fallback();
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content || "";
     const parsed = extractJson(content);
@@ -897,6 +913,9 @@ async function evaluateSpeaking(req) {
   const targetPinyin = parts.find((part) => part.name === "targetPinyin")?.data.toString("utf8") || "";
   const mode = parts.find((part) => part.name === "mode")?.data.toString("utf8") || "transcript";
   if (!file) throw new Error("No audio file received.");
+  if (mode === "audio") {
+    return scoreSpeakingWithModel({ targetText, targetPinyin, transcript: "", mode, audioBuffer: file.data });
+  }
 
   let transcript = "";
   try {
@@ -968,7 +987,7 @@ async function scoreWritingWithVision({ imageData = "", targetText = "", mode = 
   if (!normalizedImage) return fallbackWritingScore({ mode, targetText, fallbackReason: "invalid-image" });
 
   try {
-    const response = await fetch(`${visionBaseUrl}/chat/completions`, {
+    const response = await fetchWithTimeout(`${visionBaseUrl}/chat/completions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${visionApiKey}`,
@@ -1005,8 +1024,12 @@ async function scoreWritingWithVision({ imageData = "", targetText = "", mode = 
     const content = data.choices?.[0]?.message?.content || data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
     const parsed = extractJson(content || "");
     return normalizeWritingVisionScore(parsed, fallback);
-  } catch {
-    return fallbackWritingScore({ mode, targetText, fallbackReason: "vision-invalid-response" });
+  } catch (error) {
+    return fallbackWritingScore({
+      mode,
+      targetText,
+      fallbackReason: error?.name === "AbortError" ? "vision-timeout" : "vision-invalid-response"
+    });
   }
 }
 
@@ -1110,7 +1133,7 @@ function fallbackPersona(settings = {}) {
 async function generatePersona(settings = {}) {
   if (!chatApiKey) return fallbackPersona(settings);
 
-  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${chatApiKey}`,
@@ -1130,7 +1153,7 @@ async function generatePersona(settings = {}) {
         }
       ]
     })
-  });
+  }, aiChatTimeoutMs);
 
   if (!response.ok) return fallbackPersona(settings);
 
@@ -1170,7 +1193,7 @@ function summarizeContext(context = {}) {
 async function generatePracticeReply(text, settings, context = {}) {
   if (!chatApiKey) return fallbackLesson(text, settings);
 
-  const response = await fetch(`${chatBaseUrl}/chat/completions`, {
+  const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${chatApiKey}`,
@@ -1192,7 +1215,7 @@ Learner just said: ${text}`
         }
       ]
     })
-  });
+  }, aiChatTimeoutMs);
 
   if (!response.ok) {
     const error = await response.text();
