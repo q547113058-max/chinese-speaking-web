@@ -272,6 +272,16 @@ h1 {
   display: grid;
 }
 
+.reading-layer-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reading-layer-block.hidden {
+  display: none;
+}
+
 .mode-pane {
   min-height: 0;
   display: none;
@@ -601,6 +611,92 @@ h1 {
   font-weight: 700;
 }
 
+.lesson-focus {
+  display: grid;
+  gap: 10px;
+}
+
+.pinyin-spell {
+  margin: 0;
+  color: var(--primary-dark);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.stroke-demo,
+.stroke-fallback {
+  width: min(100%, 280px);
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+.stroke-demo rect {
+  fill: #f8faf8;
+  stroke: var(--line);
+}
+
+.stroke-demo line {
+  stroke: #dce7e1;
+  stroke-dasharray: 5 5;
+}
+
+.stroke-demo path {
+  fill: none;
+  stroke: var(--primary-dark);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: drawStroke 1.2s ease forwards;
+  animation-delay: calc(var(--stroke-order) * 0.45s);
+}
+
+.stroke-fallback {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8faf8;
+  color: var(--primary-dark);
+  font-size: 96px;
+  font-weight: 700;
+}
+
+@keyframes drawStroke {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.example-list {
+  display: grid;
+  gap: 10px;
+}
+
+.example-row,
+.hanzi-popover {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px;
+}
+
+.hanzi-popover {
+  background: #f8faf8;
+}
+
+.hanzi-popover strong {
+  color: var(--primary-dark);
+  font-size: 24px;
+}
+
+.hanzi-popover span {
+  color: var(--muted);
+}
+
 .reading-passage {
   margin: 0;
   line-height: 1.9;
@@ -648,6 +744,10 @@ h1 {
   display: grid;
   gap: 8px;
   margin-top: 10px;
+}
+
+.transcript-lines.hidden {
+  display: none;
 }
 
 .transcript-line {
