@@ -118,3 +118,11 @@ STT_TARGET_LANGUAGE=zh
 ```
 
 The frontend records 16 kHz mono PCM for compatibility with Qwen realtime audio input. The real DashScope key is stored only in `.env`, GitHub Secrets, or deployment environment variables.
+
+## Scoring latency policy
+
+- Fast skill feedback is the default. `AI_SCORE_TIMEOUT_MS` limits scoring and vision calls; default: `3500`.
+- Normal chat remains more tolerant. `AI_CHAT_TIMEOUT_MS` limits chat/persona generation; default: `12000`.
+- `/api/speaking/evaluate` in `audio` mode now scores uploaded PCM audio immediately from local acoustic features. `transcript` mode keeps the STT plus model scoring path.
+- `/api/writing/evaluate` in `stroke` mode returns local stroke-order scoring immediately. `ai` mode combines vision scoring with stroke scoring when available, and falls back to `stroke-fallback` when the vision request times out or fails.
+- The Writing UI defaults to local stroke scoring so handwriting practice does not block on remote vision scoring.
