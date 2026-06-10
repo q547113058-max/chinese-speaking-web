@@ -458,16 +458,49 @@ function selectedReadingCharacter() {
 }
 
 function renderStrokeSvg(item = {}) {
-  const paths = Array.isArray(item.strokePaths) && item.strokePaths.length ? item.strokePaths : [];
-  if (!paths.length) return `<div class="stroke-fallback">${escapeHtml(item.text || "")}</div>`;
+  const char = [...String(item.text || "")][0] || "";
+  if (!char) return `<div class="stroke-fallback"></div>`;
   return `
-    <svg class="stroke-demo" viewBox="0 0 140 140" role="img" aria-label="${escapeHtml(item.text || "")} 笔画动画">
-      <rect x="18" y="18" width="104" height="104" rx="8"></rect>
-      <line x1="70" y1="18" x2="70" y2="122"></line>
-      <line x1="18" y1="70" x2="122" y2="70"></line>
-      ${paths.map((path, index) => `<path style="--stroke-order:${index}" d="${escapeHtml(path)}"></path>`).join("")}
-    </svg>
+    <div class="stroke-demo hanzi-writer-target" id="hanziStrokeDemo" data-hanzi="${escapeHtml(char)}" role="img" aria-label="${escapeHtml(char)} 笔顺动画">
+      <div class="stroke-loading">加载真实笔顺...</div>
+    </div>
   `;
+}
+
+function showStaticStrokeFallback(target, char, message) {
+  if (!target) return;
+  target.classList.add("stroke-static");
+  target.innerHTML = `
+    <div class="stroke-fallback">${escapeHtml(char || "")}</div>
+    <p class="target-hint">${escapeHtml(message)}</p>
+  `;
+}
+
+async function initHanziStroke(item = {}) {
+  const target = document.getElementById("hanziStrokeDemo");
+  const char = target?.dataset?.hanzi || [...String(item.text || "")][0] || "";
+  if (!target || !char) return;
+
+  try {
+    const response = await fetch(`/hanzi-data/${encodeURIComponent(char)}.json`);
+    if (!response.ok) throw new Error("missing stroke data");
+    const charData = await response.json();
+    const strokes = Array.isArray(charData.strokes) ? charData.strokes : [];
+    if (!strokes.length) throw new Error("invalid stroke data");
+    if (target.dataset.hanzi !== char) return;
+    target.classList.remove("stroke-static");
+    target.innerHTML = `
+      <svg class="stroke-demo hanzi-data-stroke" viewBox="0 0 1024 1024" role="img" aria-label="${escapeHtml(char)} 真实笔顺">
+        <line x1="512" y1="0" x2="512" y2="1024"></line>
+        <line x1="0" y1="512" x2="1024" y2="512"></line>
+        <g transform="translate(0 900) scale(1 -1)">
+          ${strokes.map((path, index) => `<path style="--stroke-order:${index}" d="${escapeHtml(path)}"></path>`).join("")}
+        </g>
+      </svg>
+    `;
+  } catch {
+    showStaticStrokeFallback(target, char, "暂无这个字的本地真实笔顺数据，不播放简化假动画。");
+  }
 }
 
 function renderReadingCharacterPicker(lesson) {
@@ -519,11 +552,12 @@ function renderCharacterLesson() {
           <p class="label">讲字</p>
           <h3>${escapeHtml(item.text)} · ${escapeHtml(item.pinyin || "")}</h3>
           <p>${escapeHtml(item.story || "")}</p>
-          <p class="target-hint">笔画动画会按顺序描出主要结构。</p>
+          <p class="target-hint">使用本地真实笔顺数据播放；没有数据时只显示静态字形。</p>
         </div>
       </div>
       ${renderStrokeSvg(item)}
     `;
+    requestAnimationFrame(() => initHanziStroke(item));
   } else if (readingLayer === "pinyin") {
     const pinyinParts = splitPinyinSyllable(item.pinyin || "");
     const spellText = `${pinyinParts.display || item.pinyin || ""} ${item.text || ""}`.trim();
