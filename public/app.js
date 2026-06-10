@@ -58,7 +58,6 @@ const particleCanvas = document.querySelector("#particleCanvas");
 const traceCharacter = document.querySelector("#traceCharacter");
 const undoStrokeButton = document.querySelector("#undoStrokeButton");
 const clearCanvasButton = document.querySelector("#clearCanvasButton");
-const saveCanvasButton = document.querySelector("#saveCanvasButton");
 const writingScore = document.querySelector("#writingScore");
 const writingSentencePrompt = document.querySelector("#writingSentencePrompt");
 const writingSentenceInput = document.querySelector("#writingSentenceInput");
@@ -132,9 +131,12 @@ function setBusy(busy = false) {
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    const turns = Array.isArray(saved.turns)
+      ? saved.turns.filter((turn) => !String(turn.chinese || turn.text || "").includes("\u6211\u662f\u82cf\u68e0")).slice(-40)
+      : [];
     return {
       persona: saved.persona || defaultPersona,
-      turns: Array.isArray(saved.turns) ? saved.turns.slice(-40) : [],
+      turns,
       skillResults: Array.isArray(saved.skillResults) ? saved.skillResults.slice(-20) : []
     };
   } catch {
@@ -1131,13 +1133,6 @@ function undoWritingStroke() {
   drawWritingCanvas();
 }
 
-function saveWritingImage() {
-  const link = document.createElement("a");
-  link.download = `writing-${writingTarget.value || "practice"}.png`;
-  link.href = writingCanvas.toDataURL("image/png");
-  link.click();
-}
-
 async function evaluateReadingSentence(source = "reading") {
   const input = source === "writing" ? writingSentenceInput : readingSentenceInput;
   const container = source === "writing" ? writingSentenceScore : readingScore;
@@ -1400,11 +1395,9 @@ dialogueRecordButton.addEventListener("click", recordDialogueReply);
 writingTarget.addEventListener("change", () => {
   applyWritingMode();
 });
-writingMode.addEventListener("change", () => applyWritingMode());
 traceToggle.addEventListener("change", updateTraceCharacter);
 undoStrokeButton.addEventListener("click", undoWritingStroke);
 clearCanvasButton.addEventListener("click", clearWritingCanvas);
-saveCanvasButton.addEventListener("click", saveWritingImage);
 evaluateWritingSentenceButton.addEventListener("click", () => evaluateReadingSentence("writing"));
 writingCanvas.addEventListener("pointerdown", beginStroke);
 writingCanvas.addEventListener("pointermove", moveStroke);
