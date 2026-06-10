@@ -12,7 +12,7 @@
 - 难度控制：支持 `beginner`、`intermediate`、`advanced` 三档。
 - 显示控制：前端可开关拼音和英文解释。
 - 本地模拟：没有 `OPENAI_API_KEY` 时，后端返回固定示例，方便调试 UI 和交互流程。
-- Chat 模型：配置 `CHAT_API_KEY` 后，可使用 OpenAI-compatible Chat Completions 接口生成回复，例如 MiniMax-M3。
+- Chat 模型：配置 `CHAT_API_KEY` 后，可使用 OpenAI-compatible Chat Completions 接口生成回复；当前推荐 DashScope/Qwen3.6-Flash 处理即时反馈和 JSON 判断。
 - Vision 模型：配置 `VISION_API_KEY`、`VISION_BASE_URL`、`VISION_MODEL` 后，可通过 legacy/experimental API 做 Canvas 图片参考判断；正常前端不展示自动分数。
 
 ## 目录结构
@@ -132,6 +132,14 @@ The scoring APIs are still present for experiments and compatibility, but the no
 
 The learner-facing UI does not present automatic numeric scores or radar charts. The current product direction is completion, self-check, explicit correct/incorrect feedback for deterministic quiz items, and Luming conversation guidance. Frontend speaking, handwriting, sentence practice, and scene practice no longer call the scoring APIs during normal use.
 
-Listening defaults to `场景辨别`. `声调辨别` keeps only audio playback plus five tone-choice buttons; speech answering is intentionally removed.
+Listening defaults to `场景辨别`. `声调辨别` supports audio playback plus five tone-choice buttons, and also allows learners to say the tone aloud. Voice answers are transcribed by STT, judged by Qwen3.6-Flash/chat-model logic, and fall back to local tone-word parsing if the AI path is unavailable.
+
+Listening scene dialogues are at least 50 Chinese characters. The transcript and pinyin are hidden by default and become visible only after clicking `查看文本和拼音`.
+
+Speaking defaults to `场景对话`, and Reading defaults to `场景阅读`; shadowing and seven-layer character study remain available as secondary submodes.
+
+Speaking voice responses include content correctness judgment. Shadowing checks the STT transcript against the target sentence; scene dialogue checks whether the learner's spoken reply completes the current role task and returns a reference response. `/api/speaking/dialogue` accepts `text`, `userText`, `transcript`, or `choice`, and merges model judgment with local scenario-target matching to avoid rejecting valid free-form spoken answers.
+
+Reading `七层汉字` contains shape story with stroke animation, pinyin spelling playback, word matching, idiom background/explanation playback, three example sentences for shadowing, Qwen3.6-Flash/chat-model sentence feedback without numeric scores, and a shortcut into Speaking scene dialogue. Reading `场景阅读` supports manual `基础 / 高阶` switching; high-level passages contain 5-8 sentences, and clicking a Hanzi plays the character plus its meaning.
 
 Writing handwriting has one learner-facing mode: `临摹`, with the target character visible as a trace guide. The handwriting toolbar intentionally keeps only undo and clear. There is no save, completion, or check button because the app no longer performs automatic handwriting evaluation in normal use.
