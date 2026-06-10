@@ -630,17 +630,17 @@ h1 {
   justify-self: center;
 }
 
-.stroke-demo rect {
+svg.stroke-demo rect {
   fill: #f8faf8;
   stroke: var(--line);
 }
 
-.stroke-demo line {
+svg.stroke-demo line {
   stroke: #dce7e1;
   stroke-dasharray: 5 5;
 }
 
-.stroke-demo path {
+svg.stroke-demo:not(.hanzi-data-stroke) path {
   fill: none;
   stroke: var(--primary-dark);
   stroke-width: 8;
@@ -650,6 +650,52 @@ h1 {
   stroke-dashoffset: 180;
   animation: drawStroke 1.2s ease forwards;
   animation-delay: calc(var(--stroke-order) * 0.45s);
+}
+
+.hanzi-data-stroke {
+  background: transparent;
+}
+
+.hanzi-data-stroke line {
+  stroke: #dce7e1;
+  stroke-dasharray: 18 18;
+  stroke-width: 2;
+}
+
+.hanzi-data-stroke path {
+  fill: var(--primary-dark);
+  opacity: 0;
+  animation: revealStroke 0.36s ease forwards;
+  animation-delay: calc(var(--stroke-order) * 0.32s);
+}
+
+.hanzi-writer-target {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, transparent calc(50% - 0.5px), #dce7e1 calc(50% - 0.5px), #dce7e1 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(0deg, transparent calc(50% - 0.5px), #dce7e1 calc(50% - 0.5px), #dce7e1 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    #f8faf8;
+  overflow: hidden;
+}
+
+.stroke-loading {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.stroke-static {
+  align-content: center;
+  gap: 10px;
+  padding: 14px;
+}
+
+.stroke-static .stroke-fallback {
+  width: 100%;
+  border: 0;
+  background: transparent;
 }
 
 .stroke-fallback {
@@ -666,6 +712,17 @@ h1 {
 @keyframes drawStroke {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes revealStroke {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
