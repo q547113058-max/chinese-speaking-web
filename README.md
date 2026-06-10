@@ -9,13 +9,13 @@
 - 中文、拼音、英文解释、口语建议展示。
 - 中文朗读，优先使用 OpenAI TTS；没有音频 API key 时回退到浏览器朗读。
 - 读：从当前回复生成汉字-拼音配对游戏。
-- 听：从当前回复生成声调选择题，显示对应汉字后播放并选择声调。
+- 听：从当前回复生成声调练习，显示对应汉字后播放，支持按钮选择或说出声调并获得即时反馈。
 - 说：从当前回复生成跟读短句，支持录音自查和转写参考，不展示自动分数。
 - 写：从当前回复生成 1-3 个字词，支持 Canvas 手写、临摹自查和 AI/OCR 参考，不展示自动分数。
 - 初级、中级、高级三档难度。
 - 语速、拼音、英文解释显示开关。
 - 无 `OPENAI_API_KEY` 时使用模拟回复，便于先测试界面和流程。
-- 可通过 OpenAI-compatible Chat Completions 接口接入 MiniMax 等模型。
+- 可通过 OpenAI-compatible Chat Completions 接口接入 Qwen / MiniMax / OpenAI 等模型；当前推荐 Qwen3.6-Flash 处理即时反馈和 JSON 判断。
 
 ## 技术栈
 
@@ -49,9 +49,9 @@ npm start
 
 参考 [.env.example](./.env.example)：
 
-- `CHAT_API_KEY`：OpenAI-compatible chat API key，例如 MiniMax key。真实密钥只能放在本地 `.env`、GitHub Secrets 或部署平台环境变量中。
-- `CHAT_BASE_URL`：chat completions 接口地址，MiniMax 示例为 `https://api.minimaxi.com/v1`。
-- `CHAT_MODEL`：聊天模型，MiniMax 示例为 `MiniMax-M3`。
+- `CHAT_API_KEY`：OpenAI-compatible chat API key，例如 DashScope/Qwen key。真实密钥只能放在本地 `.env`、GitHub Secrets 或部署平台环境变量中。
+- `CHAT_BASE_URL`：chat completions 接口地址，DashScope 示例为 `https://dashscope.aliyuncs.com/compatible-mode/v1`。
+- `CHAT_MODEL`：聊天模型，当前推荐 `qwen3.6-flash`。
 - `OPENAI_API_KEY`：OpenAI API key。缺省时进入模拟模式；配置后可用于音频能力。
 - `OPENAI_CHAT_MODEL`：OpenAI 回复模型，默认 `gpt-4.1-mini`。
 - `VISION_API_KEY`：legacy/experimental Canvas 图片参考判断使用的 OpenAI-compatible vision API key；未设置时会依次回退到 `CHAT_API_KEY`、`OPENAI_API_KEY`。
@@ -112,7 +112,7 @@ TTS_MODEL=speech-2.8-hd
 TTS_VOICE=Chinese (Mandarin)_Warm_Girl
 ```
 
-`TTS_API_KEY` is optional. When it is not set, the server reuses `CHAT_API_KEY`, so the same MiniMax key can drive both MiniMax-M3 chat and MiniMax Speech 2.8 TTS. Speech recognition is still not MiniMax-backed because MiniMax Speech 2.8 is a text-to-speech model, not a speech-to-text model.
+`TTS_API_KEY` is optional. When it is not set, the server reuses `CHAT_API_KEY`; if chat uses a non-MiniMax provider, set `TTS_API_KEY` separately for MiniMax TTS. Speech recognition is still not MiniMax-backed because MiniMax Speech 2.8 is a text-to-speech model, not a speech-to-text model.
 ## Qwen Realtime STT
 
 Speech recognition can use Alibaba Cloud Model Studio / DashScope realtime WebSocket:
@@ -182,13 +182,21 @@ The scoring APIs are still present for experiments and compatibility, but the no
 
 - `AI_SCORE_TIMEOUT_MS` controls scoring-model and vision-model calls. The default is `3500`.
 - `AI_CHAT_TIMEOUT_MS` controls normal chat/persona calls. The default is `12000`.
-- Speaking `audio` mode now returns an immediate acoustic score from the uploaded PCM recording instead of waiting for STT. Speaking `transcript` mode still uses STT and MiniMax-M3/text scoring when configured.
+- Speaking `audio` mode now returns an immediate acoustic score from the uploaded PCM recording instead of waiting for STT. Speaking `transcript` mode still uses STT and the configured chat model when configured.
 - Writing handwriting defaults to `stroke` mode for local stroke-order scoring. `ai` mode still calls the configured vision model, but falls back to the stroke score when the model is unavailable or too slow.
 
 ## Practice feedback policy
 
 The frontend no longer shows automatic numeric scores or radar charts. Speaking, handwriting, sentence practice, and scene practice now show completion/self-check feedback only. Reading/listening games may still show immediate correct/incorrect guidance where the answer is explicit, but they do not display a percentage score.
 
-Listening opens on `场景辨别` by default. `声调辨别` is button-only: play the character audio, then choose one of the five tone options.
+Listening opens on `场景辨别` by default. `声调辨别` supports both button choice and voice answer: play the character audio, then choose or say the tone. Voice answers use STT plus Qwen3.6-Flash/chat-model judgment with a local fallback.
+
+Listening scene courses use dialogues of at least 50 Chinese characters. The transcript and pinyin are hidden at first and only appear after the learner clicks `查看文本和拼音`.
+
+Speaking opens on `场景对话` by default, and Reading opens on `场景阅读` by default. `跟读练习` and `七层汉字` stay available as secondary submodes.
+
+Speaking voice responses now include content correctness judgment. Shadowing checks whether the recognized speech matches the target sentence; scene dialogue checks whether the learner completed the current role task and shows a reference response. The dialogue API accepts `text`, `userText`, `transcript`, or `choice`, and combines AI feedback with local task matching so valid spoken replies are not rejected only because they differ from preset buttons.
+
+Reading now includes a seven-layer character lesson: shape story with stroke animation, pinyin spelling such as `j ing 敬`, word matching, idiom background/explanation playback, three example-sentence shadowing prompts, sentence feedback through Qwen3.6-Flash/chat-model feedback without numeric scores, and a shortcut into Speaking scene dialogue. Scene reading has manual `基础 / 高阶` switching; high-level passages use 5-8 sentences and clickable Hanzi that play the character plus its meaning.
 
 Writing handwriting now uses a single `临摹` mode with the target character shown as a trace guide. The handwriting toolbar keeps only useful direct actions: undo and clear.
