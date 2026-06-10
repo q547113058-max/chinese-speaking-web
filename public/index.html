@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>&#20013;&#25991;&#21475;&#35821;&#38506;&#32451;</title>
+    <title>Luming &#20013;&#25991;&#21548;&#35828;&#35835;&#20889;&#25945;&#32451;</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -14,7 +14,7 @@
             <img class="coach-photo" src="/coach-avatar.png" alt="Luming avatar" />
             <div>
               <p class="eyebrow">Chinese Speaking Coach</p>
-              <h1>&#33487;&#26848; &middot; &#20013;&#25991;&#21475;&#35821;&#38506;&#32451;</h1>
+              <h1>Luming &middot; &#20013;&#25991;&#21548;&#35828;&#35835;&#20889;&#25945;&#32451;</h1>
             </div>
           </div>
           <div class="status-pill" id="aiStatus">Checking</div>
@@ -205,13 +205,7 @@
                     <span>&#20070;&#20889;&#30446;&#26631;</span>
                     <select id="writingTarget"></select>
                   </label>
-                  <label>
-                    <span>&#20070;&#20889;&#26041;&#24335;</span>
-                    <select id="writingMode">
-                      <option value="trace">&#20020;&#25721;</option>
-                      <option value="free">&#33258;&#30001;&#20070;&#20889;</option>
-                    </select>
-                  </label>
+                  <input id="writingMode" type="hidden" value="trace" />
                   <label class="toggle writing-trace" hidden>
                     <input id="traceToggle" type="checkbox" checked />
                     &#25551;&#32418;
@@ -225,7 +219,6 @@
                 <div class="canvas-actions">
                   <button class="play-button" id="undoStrokeButton" type="button">&#25764;&#38144;</button>
                   <button class="play-button" id="clearCanvasButton" type="button">&#28165;&#31354;</button>
-                  <button class="play-button" id="saveCanvasButton" type="button">&#20445;&#23384;</button>
                 </div>
                 <div class="score-area" id="writingScore"></div>
               </div>
