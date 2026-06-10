@@ -193,3 +193,5 @@ Writing handwriting now has two modes only:
 
 - `临摹`: shows the target character as a trace guide.
 - `自由书写`: hides the trace guide so the learner writes from memory.
+
+The handwriting toolbar keeps only useful direct actions: undo, clear, and save. The old completion/check button was removed because it did not produce reliable feedback after automatic scoring was removed.
