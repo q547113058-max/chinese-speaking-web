@@ -38,3 +38,5 @@
 - Remove learner-facing automatic numeric scoring and radar charts from the frontend. Speaking, handwriting, sentence, and scene practice now show completion/self-check feedback and no longer call scoring APIs in normal use.
 - Simplify Writing handwriting modes to `临摹` and `自由书写`; remove the confusing `AI 参考` mode from the frontend.
 - Remove the Writing `完成检查` button because, without automatic scoring, it did not perform a useful user-facing action.
+- Remove Writing `保存` and `自由书写`; handwriting now stays in trace-copy mode with only undo and clear actions.
+- Migrate old local conversation state by filtering the previous Su Tang greeting, keeping the UI consistently branded as Luming.
