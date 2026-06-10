@@ -869,6 +869,8 @@ function renderFeedback(container, result = {}) {
   const modeLabels = {
     audio: "\u5f55\u97f3\u81ea\u67e5",
     transcript: "\u8f6c\u5199\u53c2\u8003",
+    trace: "\u4e34\u6479",
+    free: "\u81ea\u7531\u4e66\u5199",
     ai: "AI \u53c2\u8003",
     "ai+stroke": "AI + \u7b14\u987a\u53c2\u8003",
     stroke: "\u7b14\u987a\u81ea\u67e5",
@@ -1113,6 +1115,12 @@ function updateTraceCharacter() {
   traceCharacter.textContent = traceToggle.checked ? (writingTarget.value || "") : "";
 }
 
+function applyWritingMode({ clear = true } = {}) {
+  traceToggle.checked = writingMode.value === "trace";
+  updateTraceCharacter();
+  if (clear) clearWritingCanvas();
+}
+
 function clearWritingCanvas() {
   writingStrokes = [];
   activeStroke = null;
@@ -1135,7 +1143,7 @@ function saveWritingImage() {
 async function evaluateWriting() {
   if (!writingTarget.value) return;
   const result = {
-    modeUsed: writingMode.value === "ai" ? "ai" : "self",
+    modeUsed: writingMode.value,
     strokeCount: writingStrokes.length,
     feedback: [
       "\u5df2\u4fdd\u7559\u8fd9\u6b21\u624b\u5199\u7ec3\u4e60\u3002",
@@ -1408,9 +1416,9 @@ dialogueChoices.addEventListener("click", (event) => {
 sendDialogueButton.addEventListener("click", () => sendDialogue());
 dialogueRecordButton.addEventListener("click", recordDialogueReply);
 writingTarget.addEventListener("change", () => {
-  updateTraceCharacter();
-  clearWritingCanvas();
+  applyWritingMode();
 });
+writingMode.addEventListener("change", () => applyWritingMode());
 traceToggle.addEventListener("change", updateTraceCharacter);
 undoStrokeButton.addEventListener("click", undoWritingStroke);
 clearCanvasButton.addEventListener("click", clearWritingCanvas);
