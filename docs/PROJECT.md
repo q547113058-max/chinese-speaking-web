@@ -136,3 +136,5 @@ Writing handwriting has two learner-facing modes:
 
 - `临摹`: trace guide is visible.
 - `自由书写`: trace guide is hidden.
+
+The handwriting toolbar intentionally keeps only undo, clear, and save. There is no completion/check button because the app no longer performs automatic handwriting evaluation in normal use.
