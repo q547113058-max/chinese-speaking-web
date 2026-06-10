@@ -114,10 +114,10 @@
                 <button class="play-button" id="resetListeningButton" type="button">&#37325;&#26469;</button>
               </header>
               <div class="skill-subtabs" role="tablist" aria-label="Listening submodes">
-                <button class="submode-tab active" type="button" data-skill="listen" data-submode="tone">&#22768;&#35843;&#36776;&#21035;</button>
-                <button class="submode-tab" type="button" data-skill="listen" data-submode="scene">&#22330;&#26223;&#21548;&#21147;</button>
+                <button class="submode-tab active" type="button" data-skill="listen" data-submode="scene">&#22330;&#26223;&#36776;&#21035;</button>
+                <button class="submode-tab" type="button" data-skill="listen" data-submode="tone">&#22768;&#35843;&#36776;&#21035;</button>
               </div>
-              <div class="submode-panel active" id="listeningTonePanel" data-listen-panel="tone">
+              <div class="submode-panel" id="listeningTonePanel" data-listen-panel="tone">
                 <div class="target-box">
                   <p class="label">&#21548;&#19968;&#19979;&#65292;&#36873;&#22768;&#35843;</p>
                   <p class="target-text" id="listeningPrompt">&#35831;&#20808;&#36873;&#25321;&#22330;&#26223;&#35838;&#31243;&#12290;</p>
@@ -126,12 +126,11 @@
                 </div>
                 <div class="listening-actions">
                   <button class="play-button" id="playListeningButton" type="button">&#25773;&#25918;</button>
-                  <button class="play-button" id="voiceToneButton" type="button">&#35821;&#38899;&#22238;&#31572;</button>
                   <div class="tone-options" id="toneOptions"></div>
                 </div>
                 <div class="score-area" id="listeningScore"></div>
               </div>
-              <div class="submode-panel" id="listeningScenePanel" data-listen-panel="scene">
+              <div class="submode-panel active" id="listeningScenePanel" data-listen-panel="scene">
                 <div class="target-box" id="sceneTranscriptBox"></div>
                 <div class="listening-actions">
                   <button class="primary-button" id="playSceneAudioButton" type="button">&#25773;&#25918;&#22330;&#26223;&#38899;&#39057;</button>
