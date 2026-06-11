@@ -1070,6 +1070,13 @@ function addError(error) {
   scrollToBottom();
 }
 
+function userFacingError(error, fallback = "网络失败，请重试。") {
+  const message = String(error?.message || error || "");
+  if (/aborted|abort|timeout|timed out/i.test(message)) return "请求超时，已切换或可重试。";
+  if (/fetch failed|network|failed to fetch/i.test(message)) return "网络连接不稳定，请稍后重试。";
+  return message || fallback;
+}
+
 function renderStoredConversation() {
   if (appState.turns.length === 0) {
     addMessage("assistant", greeting);
@@ -1106,7 +1113,7 @@ async function requestPractice(text) {
     await playChinese(data.chinese);
   } catch (error) {
     typingMessage.remove();
-    addError(error.message || "\u7f51\u7edc\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5\u3002");
+    addError(userFacingError(error, "\u7f51\u7edc\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5\u3002"));
   } finally {
     setBusy(false);
   }
