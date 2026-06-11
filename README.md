@@ -57,6 +57,7 @@ npm start
 - `VISION_API_KEY`：legacy/experimental Canvas 图片参考判断使用的 OpenAI-compatible vision API key；未设置时会依次回退到 `CHAT_API_KEY`、`OPENAI_API_KEY`。
 - `VISION_BASE_URL`：vision chat completions 接口地址，默认 `https://api.openai.com/v1`。
 - `VISION_MODEL`：支持图片输入的视觉模型；未设置时会依次回退到 `OPENAI_VISION_MODEL`、`CHAT_MODEL`、`OPENAI_CHAT_MODEL`、`gpt-4.1-mini`。
+- Ark/Volcengine MiniMax-M3 vision is supported with `VISION_BASE_URL=https://ark.cn-beijing.volces.com/api/coding/v3` and `VISION_MODEL=MiniMax-M3`; keep the real key only in local `.env` or deployment secrets.
 - `OPENAI_TRANSCRIBE_MODEL`：语音识别模型，默认 `gpt-4o-mini-transcribe`。
 - `OPENAI_TTS_MODEL`：中文朗读模型，默认 `gpt-4o-mini-tts`。
 - `OPENAI_TTS_VOICE`：朗读音色，默认 `coral`。
@@ -208,3 +209,5 @@ Writing handwriting now uses a single `临摹` mode with the target character sh
 ## 2026-06-11 latency note
 
 Tone voice answers use a fast local parse before calling AI. If STT returns a clear tone phrase such as `一声`, `二声`, `三声`, `四声`, or `轻声`, `/api/listening/evaluate` responds locally; the chat model is only used for ambiguous transcripts.
+
+Ark/MiniMax-M3 handwriting vision now skips unsupported `response_format=json_object`, requests JSON through the prompt, and combines the returned image feedback with local stroke analysis.
