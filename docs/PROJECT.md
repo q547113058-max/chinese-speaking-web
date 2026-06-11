@@ -151,4 +151,4 @@ Writing handwriting has one learner-facing mode: `临摹`, with the target chara
 
 - Normal chat and reading sentence feedback use the compact Qwen/DashScope request path.
 - Listening tone voice answers first parse clear STT transcripts locally, so answers like `四声` do not wait for the model. Ambiguous transcripts still fall through to the configured chat model.
-- Vision handwriting remains an experimental API path and falls back when the configured vision endpoint is unavailable.
+- Vision handwriting supports Ark/Volcengine MiniMax-M3 through `VISION_BASE_URL=https://ark.cn-beijing.volces.com/api/coding/v3`; the adapter omits unsupported `response_format=json_object` and combines image feedback with local stroke analysis. It still falls back when the configured vision endpoint is unavailable.
