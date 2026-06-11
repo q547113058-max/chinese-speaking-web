@@ -54,6 +54,7 @@ chinese-speaking-web/
 - API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
 - JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
 - `/api/practice` catches chat-model timeout/abort failures and returns local fallback practice content so the chat flow remains usable during unstable network or model latency.
+- Realtime chat requests use a compact JSON prompt, small output budget, and Qwen `enable_thinking=false` when DashScope/Qwen is configured, so chat does not wait for long reasoning output.
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
 
 ## 前端结构
