@@ -31,6 +31,7 @@
 ## 2026-06-10
 
 - On 2026-06-11, checked model response speed across chat, reading, speaking, listening, writing, TTS, and STT. Added a fast local parse for listening tone voice answers so clear transcripts such as `四声` return immediately and only ambiguous answers call the chat model.
+- Add Ark/Volcengine MiniMax-M3 vision compatibility for handwriting image feedback by omitting unsupported `response_format=json_object`, adding an Ark example to `.env.example`, and verifying `modeUsed: "ai+stroke"` locally.
 - Speed up skill scoring by adding `AI_SCORE_TIMEOUT_MS` for scoring/vision calls and `AI_CHAT_TIMEOUT_MS` for normal chat calls.
 - Make speaking `audio` mode return immediate local acoustic scoring instead of waiting for STT before scoring.
 - Make Writing default to local stroke-order scoring; AI handwriting mode still runs vision scoring and falls back to `stroke-fallback` within the scoring timeout.
