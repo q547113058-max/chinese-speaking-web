@@ -50,6 +50,8 @@ const aiScoreTimeoutMs = Number(process.env.AI_SCORE_TIMEOUT_MS || 3500);
 const aiChatTimeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS || 30000);
 const isQwenChat = /qwen|dashscope|aliyuncs/i.test(`${chatModel} ${chatBaseUrl}`);
 const isQwenVision = /qwen|dashscope|aliyuncs/i.test(`${visionModel} ${visionBaseUrl}`);
+const isArkVision = /ark\.cn|volces/i.test(`${visionBaseUrl}`);
+const isMiniMaxVision = /minimax/i.test(`${visionModel} ${visionBaseUrl}`);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -1319,8 +1321,9 @@ async function scoreWritingWithVision({ imageData = "", targetText = "", mode = 
       body: JSON.stringify({
         model: visionModel,
         temperature: 0.1,
-        max_tokens: 260,
-        response_format: { type: "json_object" },
+        max_tokens: 180,
+        ...(!isArkVision && !isMiniMaxVision ? { response_format: { type: "json_object" } } : {}),
+        ...(isArkVision ? { thinking: { type: "disabled" } } : {}),
         ...(isQwenVision ? { enable_thinking: false } : {}),
         messages: [
           {
@@ -1343,7 +1346,7 @@ async function scoreWritingWithVision({ imageData = "", targetText = "", mode = 
           }
         ]
       })
-    });
+    }, Math.max(aiScoreTimeoutMs, 8000));
 
     if (!response.ok) return fallbackWritingScore({ mode, targetText, fallbackReason: "vision-request-failed" });
 
