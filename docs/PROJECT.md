@@ -126,7 +126,7 @@ The frontend records 16 kHz mono PCM for compatibility with Qwen realtime audio 
 The scoring APIs are still present for experiments and compatibility, but the normal frontend no longer calls them.
 
 - Fast skill feedback is the default. `AI_SCORE_TIMEOUT_MS` limits legacy scoring and vision calls; default: `3500`.
-- Normal chat remains more tolerant. `AI_CHAT_TIMEOUT_MS` limits chat/persona generation; default: `12000`.
+- Normal chat remains more tolerant. `AI_CHAT_TIMEOUT_MS` limits chat/persona generation; default: `30000`, because Qwen3.6-Flash can exceed 12 seconds on structured JSON coaching prompts.
 - `/api/speaking/evaluate` and `/api/writing/evaluate` are retained only as legacy/experimental paths.
 - The Writing UI uses self-check completion feedback so handwriting practice does not block on remote vision calls.
 
