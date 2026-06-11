@@ -616,6 +616,17 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = aiScoreTimeoutMs)
   }
 }
 
+function publicErrorMessage(error) {
+  const message = String(error?.message || "");
+  if (error?.name === "AbortError" || /aborted|abort|timeout|timed out/i.test(message)) {
+    return "请求超时，已切换到本地练习内容。";
+  }
+  if (/fetch failed|network|ECONN|ENOTFOUND|ETIMEDOUT/i.test(message)) {
+    return "网络连接不稳定，请稍后重试。";
+  }
+  return message || "Server error";
+}
+
 async function readRequestBody(req, maxBytes = jsonBodyLimitBytes) {
   const chunks = [];
   let totalBytes = 0;
@@ -1486,46 +1497,48 @@ function summarizeContext(context = {}) {
 async function generatePracticeReply(text, settings, context = {}) {
   if (!chatApiKey) return fallbackLesson(text, settings);
 
-  const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${chatApiKey}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      model: chatModel,
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are Luming, a Mandarin listening, speaking, reading, and writing scenario coach. The learner may speak English, but you should guide them toward useful Chinese for real scenarios. Respond naturally in one or two short spoken Mandarin sentences, not as a direct translation. Also provide pinyin with tone marks such as ni3 -> nǐ and hao3 -> hǎo, a concise English explanation, and one short practice suggestion. Return strict JSON with keys: chinese, pinyin, explanation, suggestion."
-        },
-        {
-          role: "user",
-          content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)}
+  try {
+    const response = await fetchWithTimeout(`${chatBaseUrl}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${chatApiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: chatModel,
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are Luming, a Mandarin listening, speaking, reading, and writing scenario coach. The learner may speak English, but you should guide them toward useful Chinese for real scenarios. Respond naturally in one or two short spoken Mandarin sentences, not as a direct translation. Also provide pinyin with tone marks such as ni3 -> nǐ and hao3 -> hǎo, a concise English explanation, and one short practice suggestion. Return strict JSON with keys: chinese, pinyin, explanation, suggestion."
+          },
+          {
+            role: "user",
+            content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)}
 ${summarizeContext(context)}
 Learner just said: ${text}`
-        }
-      ]
-    })
-  }, aiChatTimeoutMs);
+          }
+        ]
+      })
+    }, aiChatTimeoutMs);
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Chat model response failed: ${error}`);
+    if (!response.ok) return { ...fallbackLesson(text, settings), modeUsed: "fallback", fallbackReason: "chat-request-failed" };
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
+    const parsed = extractJson(content || "");
+    return withExercise({
+      transcript: text,
+      chinese: parsed.chinese || "",
+      pinyin: parsed.pinyin || "",
+      explanation: parsed.explanation || "",
+      suggestion: parsed.suggestion || "",
+      exercise: parsed.exercise,
+      modeUsed: "ai"
+    });
+  } catch (error) {
+    return { ...fallbackLesson(text, settings), modeUsed: "fallback", fallbackReason: publicErrorMessage(error) };
   }
-
-  const data = await response.json();
-  const content = data.choices?.[0]?.message?.content || data.output_text || data.output?.flatMap((item) => item.content || []).map((item) => item.text || "").join("\n");
-  const parsed = extractJson(content || "");
-  return withExercise({
-    transcript: text,
-    chinese: parsed.chinese || "",
-    pinyin: parsed.pinyin || "",
-    explanation: parsed.explanation || "",
-    suggestion: parsed.suggestion || "",
-    exercise: parsed.exercise
-  });
 }
 
 async function transcribeAudio(req) {
@@ -1860,7 +1873,7 @@ const server = http.createServer(async (req, res) => {
 
     sendJson(res, 405, { error: "Method not allowed" });
   } catch (error) {
-    sendJson(res, 500, { error: error.message || "Server error" });
+    sendJson(res, 500, { error: publicErrorMessage(error) });
   }
 });
 
