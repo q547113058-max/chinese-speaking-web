@@ -53,6 +53,7 @@ chinese-speaking-web/
 - `POST /api/writing/evaluate`：legacy/experimental API，接收 Canvas 图片、目标字词、模式和 `strokes` 轨迹；正常前端不再调用或展示自动书写分数。
 - API 路由使用精确路径匹配，避免 `/api/health-check` 这类前缀路径误命中。
 - JSON 请求体默认限制为 256 KB，音频上传请求体限制为 8 MB。
+- `/api/practice` catches chat-model timeout/abort failures and returns local fallback practice content so the chat flow remains usable during unstable network or model latency.
 - 静态资源：所有 `GET` 静态页面和资源从 `public/` 目录读取。
 
 ## 前端结构
