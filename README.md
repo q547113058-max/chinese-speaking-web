@@ -189,6 +189,8 @@ The scoring APIs are still present for experiments and compatibility, but the no
 
 The frontend no longer shows automatic numeric scores or radar charts. Speaking, handwriting, sentence practice, and scene practice now show completion/self-check feedback only. Reading/listening games may still show immediate correct/incorrect guidance where the answer is explicit, but they do not display a percentage score.
 
+If the configured chat model times out, `/api/practice` falls back to local practice content instead of surfacing raw abort errors to the learner.
+
 Listening opens on `场景辨别` by default. `声调辨别` supports both button choice and voice answer: play the character audio, then choose or say the tone. Voice answers use STT plus Qwen3.6-Flash/chat-model judgment with a local fallback.
 
 Listening scene courses use dialogues of at least 50 Chinese characters. The transcript and pinyin are hidden at first and only appear after the learner clicks `查看文本和拼音`.
