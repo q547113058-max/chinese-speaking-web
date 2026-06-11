@@ -181,7 +181,7 @@ Each reply includes:
 The scoring APIs are still present for experiments and compatibility, but the normal frontend no longer calls them. If they are used directly, they follow this latency policy:
 
 - `AI_SCORE_TIMEOUT_MS` controls scoring-model and vision-model calls. The default is `3500`.
-- `AI_CHAT_TIMEOUT_MS` controls normal chat/persona calls. The default is `12000`.
+- `AI_CHAT_TIMEOUT_MS` controls normal chat/persona calls. The default is `30000`, because Qwen3.6-Flash can take longer than 12 seconds on structured JSON coaching prompts.
 - Speaking `audio` mode now returns an immediate acoustic score from the uploaded PCM recording instead of waiting for STT. Speaking `transcript` mode still uses STT and the configured chat model when configured.
 - Writing handwriting defaults to `stroke` mode for local stroke-order scoring. `ai` mode still calls the configured vision model, but falls back to the stroke score when the model is unavailable or too slow.
 
