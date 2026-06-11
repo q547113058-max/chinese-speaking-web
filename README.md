@@ -204,3 +204,7 @@ Speaking voice responses now include content correctness judgment. Shadowing che
 Reading now includes a seven-layer character lesson: shape story with local real stroke-order data, pinyin spelling such as `j ing 敬`, word matching, idiom background/explanation playback, three example-sentence shadowing prompts, sentence feedback through Qwen3.6-Flash/chat-model feedback without numeric scores, and a shortcut into Speaking scene dialogue. Pinyin playback uses Mandarin-friendly syllable prompts instead of reading Latin letters as English. If local real stroke data is missing, the app shows a static character instead of playing simplified fake strokes. Scene reading has manual `基础 / 高阶` switching; high-level passages use 5-8 sentences and clickable Hanzi that play the character plus its meaning.
 
 Writing handwriting now uses a single `临摹` mode with the target character shown as a trace guide. The handwriting toolbar keeps only useful direct actions: undo and clear.
+
+## 2026-06-11 latency note
+
+Tone voice answers use a fast local parse before calling AI. If STT returns a clear tone phrase such as `一声`, `二声`, `三声`, `四声`, or `轻声`, `/api/listening/evaluate` responds locally; the chat model is only used for ambiguous transcripts.
