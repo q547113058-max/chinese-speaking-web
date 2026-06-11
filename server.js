@@ -48,6 +48,7 @@ const audioBodyLimitBytes = 8 * 1024 * 1024;
 const writingImageLimitBytes = 1024 * 1024;
 const aiScoreTimeoutMs = Number(process.env.AI_SCORE_TIMEOUT_MS || 3500);
 const aiChatTimeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS || 30000);
+const isQwenChat = /qwen|dashscope|aliyuncs/i.test(`${chatModel} ${chatBaseUrl}`);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -625,6 +626,17 @@ function publicErrorMessage(error) {
     return "网络连接不稳定，请稍后重试。";
   }
   return message || "Server error";
+}
+
+function chatRequestOptions({ messages, maxTokens = 320, temperature = 0.2, responseFormat = true } = {}) {
+  return {
+    model: chatModel,
+    temperature,
+    max_tokens: maxTokens,
+    ...(responseFormat ? { response_format: { type: "json_object" } } : {}),
+    ...(isQwenChat ? { enable_thinking: false } : {}),
+    messages
+  };
 }
 
 async function readRequestBody(req, maxBytes = jsonBodyLimitBytes) {
@@ -1478,10 +1490,6 @@ async function generatePersona(settings = {}) {
 }
 
 function summarizeContext(context = {}) {
-  const persona = context.persona;
-  const personaText = persona
-    ? `Persona: name=${persona.name}; role=${persona.role}; personality=${persona.personality}; speakingStyle=${persona.speakingStyle}; scenario=${persona.scenario}.`
-    : "Persona: friendly Mandarin conversation partner.";
   const turns = Array.isArray(context.turns) ? context.turns.slice(-8) : [];
   const history = turns
     .map((turn) => {
@@ -1491,7 +1499,7 @@ function summarizeContext(context = {}) {
     .filter(Boolean)
     .join("\n");
 
-  return `${personaText}\nRecent conversation:\n${history || "(none yet)"}`;
+  return history || "(none yet)";
 }
 
 async function generatePracticeReply(text, settings, context = {}) {
@@ -1504,22 +1512,21 @@ async function generatePracticeReply(text, settings, context = {}) {
         Authorization: `Bearer ${chatApiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: chatModel,
+      body: JSON.stringify(chatRequestOptions({
+        maxTokens: 260,
+        temperature: 0.1,
         messages: [
           {
             role: "system",
             content:
-              "You are Luming, a Mandarin listening, speaking, reading, and writing scenario coach. The learner may speak English, but you should guide them toward useful Chinese for real scenarios. Respond naturally in one or two short spoken Mandarin sentences, not as a direct translation. Also provide pinyin with tone marks such as ni3 -> nǐ and hao3 -> hǎo, a concise English explanation, and one short practice suggestion. Return strict JSON with keys: chinese, pinyin, explanation, suggestion."
+              "You are Luming, a Mandarin coach. Reply fast. Return only JSON with keys chinese, pinyin, explanation, suggestion. Chinese must be 1 short natural sentence. Explanation and suggestion must each be under 18 English words."
           },
           {
             role: "user",
-            content: `Learner level: ${settings.level || "beginner"}. ${levelGuide(settings.level)}
-${summarizeContext(context)}
-Learner just said: ${text}`
+            content: `Level: ${settings.level || "beginner"}\nRecent:\n${summarizeContext(context)}\nLearner: ${text}`
           }
         ]
-      })
+      }))
     }, aiChatTimeoutMs);
 
     if (!response.ok) return { ...fallbackLesson(text, settings), modeUsed: "fallback", fallbackReason: "chat-request-failed" };
