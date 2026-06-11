@@ -49,6 +49,7 @@ const writingImageLimitBytes = 1024 * 1024;
 const aiScoreTimeoutMs = Number(process.env.AI_SCORE_TIMEOUT_MS || 3500);
 const aiChatTimeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS || 30000);
 const isQwenChat = /qwen|dashscope|aliyuncs/i.test(`${chatModel} ${chatBaseUrl}`);
+const isQwenVision = /qwen|dashscope|aliyuncs/i.test(`${visionModel} ${visionBaseUrl}`);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
@@ -419,10 +420,9 @@ async function judgeToneAnswerWithAi({ targetText, expectedTone, answerText }) {
       Authorization: `Bearer ${chatApiKey}`,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      model: chatModel,
+    body: JSON.stringify(chatRequestOptions({
+      maxTokens: 90,
       temperature: 0,
-      max_tokens: 120,
       messages: [
         {
           role: "system",
@@ -434,8 +434,8 @@ async function judgeToneAnswerWithAi({ targetText, expectedTone, answerText }) {
           content: `Target character: ${targetText}\nExpected tone: ${expectedTone}\nLearner transcript: ${answerText}`
         }
       ]
-    })
-  }, Math.max(aiScoreTimeoutMs, 8000));
+    }))
+  }, aiScoreTimeoutMs);
   if (!response.ok) throw new Error("tone model failed");
   const data = await response.json();
   const parsed = extractJson(data.choices?.[0]?.message?.content || "");
@@ -471,14 +471,20 @@ async function evaluateListening(req) {
   let aiFeedback = [];
 
   if (answerText) {
-    try {
-      const aiResult = await judgeToneAnswerWithAi({ targetText: body.text || item?.text || "", expectedTone, answerText });
-      answerTone = aiResult.answerTone;
-      modeUsed = aiResult.modeUsed;
-      aiFeedback = aiResult.feedback;
-    } catch {
-      answerTone = parseToneAnswerText(answerText);
-      modeUsed = "local-fallback";
+    const parsedTone = parseToneAnswerText(answerText);
+    if (parsedTone) {
+      answerTone = parsedTone;
+      modeUsed = "local";
+    } else {
+      try {
+        const aiResult = await judgeToneAnswerWithAi({ targetText: body.text || item?.text || "", expectedTone, answerText });
+        answerTone = aiResult.answerTone;
+        modeUsed = aiResult.modeUsed;
+        aiFeedback = aiResult.feedback;
+      } catch {
+        answerTone = 0;
+        modeUsed = "local-fallback";
+      }
     }
   }
 
@@ -528,16 +534,15 @@ async function evaluateReading(req) {
         Authorization: `Bearer ${chatApiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: chatModel,
-        temperature: 0.2,
-        max_tokens: 700,
+      body: JSON.stringify(chatRequestOptions({
+        maxTokens: 220,
+        temperature: 0.1,
         messages: [
-          { role: "system", content: "You are Luming, a Mandarin reading coach. Give sentence-practice feedback without numeric scores. Return strict JSON only with keys: completed boolean, feedback array of 2 concise Chinese suggestions, suggestedRevision string." },
+          { role: "system", content: "You are Luming, a Mandarin reading coach. Return only JSON: completed boolean, feedback array with 2 short Chinese suggestions, suggestedRevision string. No scores." },
           { role: "user", content: `Scene: ${course.scene}\nTarget character: ${targetCharacter}\nPrompt: ${prompt}\nLearner sentence: ${text}` }
         ]
-      })
-    }, Math.max(aiChatTimeoutMs, 12000));
+      }))
+    }, Math.max(aiScoreTimeoutMs, 5000));
     if (!response.ok) throw new Error("reading model failed");
     const data = await response.json();
     const parsed = extractJson(data.choices?.[0]?.message?.content || "");
@@ -576,14 +581,15 @@ async function speakingDialogue(req) {
         Authorization: `Bearer ${chatApiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: chatModel,
+      body: JSON.stringify(chatRequestOptions({
+        maxTokens: 240,
+        temperature: 0.1,
         messages: [
-          { role: "system", content: "You are Luming, a Mandarin scenario coach. Judge whether the learner's reply correctly completes the current scene task, then continue a 4-5 round roleplay. Return strict JSON with roleReply, toneFeedback, nextTask, correctness. correctness must contain status correct|partial|incorrect, correct boolean, feedback, suggestedRevision. Keep Chinese concise and practical." },
+          { role: "system", content: "You are Luming, a Mandarin scenario coach. Return only JSON with roleReply, toneFeedback, nextTask, correctness. correctness has status correct|partial|incorrect, correct boolean, feedback, suggestedRevision. Keep every field concise." },
           { role: "user", content: `Scene: ${course.scene}\nLearner role: ${course.speaking?.role}\nSuggested replies: ${JSON.stringify(course.speaking?.choices || [])}\nHistory: ${JSON.stringify(turns)}\nLearner says: ${userText}` }
         ]
-      })
-    }, aiScoreTimeoutMs);
+      }))
+    }, Math.max(aiScoreTimeoutMs, 5000));
     if (!response.ok) return fallback();
     const data = await response.json();
     const parsed = extractJson(data.choices?.[0]?.message?.content || "");
@@ -1165,8 +1171,9 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
         Authorization: `Bearer ${chatApiKey}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        model: chatModel,
+      body: JSON.stringify(chatRequestOptions({
+        maxTokens: 260,
+        temperature: 0.1,
         messages: [
           {
             role: "system",
@@ -1184,7 +1191,7 @@ async function scoreSpeakingWithModel({ targetText, targetPinyin, transcript, mo
             }`
           }
         ]
-      })
+      }))
     }, aiScoreTimeoutMs);
     if (!response.ok) return fallback();
     const data = await response.json();
@@ -1311,6 +1318,10 @@ async function scoreWritingWithVision({ imageData = "", targetText = "", mode = 
       },
       body: JSON.stringify({
         model: visionModel,
+        temperature: 0.1,
+        max_tokens: 260,
+        response_format: { type: "json_object" },
+        ...(isQwenVision ? { enable_thinking: false } : {}),
         messages: [
           {
             role: "system",
