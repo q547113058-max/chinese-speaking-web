@@ -47,7 +47,7 @@ const jsonBodyLimitBytes = 256 * 1024;
 const audioBodyLimitBytes = 8 * 1024 * 1024;
 const writingImageLimitBytes = 1024 * 1024;
 const aiScoreTimeoutMs = Number(process.env.AI_SCORE_TIMEOUT_MS || 3500);
-const aiChatTimeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS || 12000);
+const aiChatTimeoutMs = Number(process.env.AI_CHAT_TIMEOUT_MS || 30000);
 
 const mimeTypes = {
   ".html": "text/html; charset=utf-8",
