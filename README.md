@@ -191,6 +191,8 @@ The frontend no longer shows automatic numeric scores or radar charts. Speaking,
 
 If the configured chat model times out, `/api/practice` falls back to local practice content instead of surfacing raw abort errors to the learner.
 
+Realtime chat uses a short JSON prompt, low output budget, and Qwen `enable_thinking=false` when the DashScope/Qwen provider is detected, keeping normal replies around one second instead of waiting for long reasoning output.
+
 Listening opens on `场景辨别` by default. `声调辨别` supports both button choice and voice answer: play the character audio, then choose or say the tone. Voice answers use STT plus Qwen3.6-Flash/chat-model judgment with a local fallback.
 
 Listening scene courses use dialogues of at least 50 Chinese characters. The transcript and pinyin are hidden at first and only appear after the learner clicks `查看文本和拼音`.
