@@ -146,3 +146,9 @@ Speaking voice responses include content correctness judgment. Shadowing checks 
 Reading `七层汉字` contains shape story with local real stroke-order data, pinyin spelling playback, word matching, idiom background/explanation playback, three example sentences for shadowing, Qwen3.6-Flash/chat-model sentence feedback without numeric scores, and a shortcut into Speaking scene dialogue. Pinyin playback uses Mandarin-friendly syllable prompts instead of asking TTS to read Latin letters. The app uses local stroke data in `public/hanzi-data/`; if real data is missing, it shows a static character and does not play simplified fake strokes. Reading `场景阅读` supports manual `基础 / 高阶` switching; high-level passages contain 5-8 sentences, and clicking a Hanzi plays the character plus its meaning.
 
 Writing handwriting has one learner-facing mode: `临摹`, with the target character visible as a trace guide. The handwriting toolbar intentionally keeps only undo and clear. There is no save, completion, or check button because the app no longer performs automatic handwriting evaluation in normal use.
+
+## 2026-06-11 model latency notes
+
+- Normal chat and reading sentence feedback use the compact Qwen/DashScope request path.
+- Listening tone voice answers first parse clear STT transcripts locally, so answers like `四声` do not wait for the model. Ambiguous transcripts still fall through to the configured chat model.
+- Vision handwriting remains an experimental API path and falls back when the configured vision endpoint is unavailable.
