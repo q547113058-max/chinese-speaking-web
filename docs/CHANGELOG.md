@@ -50,3 +50,4 @@
 - Replace the simplified Reading shape-layer stroke sketch with local real stroke-order data for the current course characters; missing data now falls back to a static character instead of fake stroke animation.
 - Fix Reading pinyin playback so `播放拼读` uses Mandarin syllable prompts instead of Latin-letter text, and make idiom playback include both background story and explanation.
 - Fix chat timeout handling so aborted chat-model requests return local fallback practice instead of showing raw `This operation was aborted` errors.
+- Increase the default chat timeout to 30 seconds so Qwen3.6-Flash has enough time to answer structured coaching prompts before fallback is used.
