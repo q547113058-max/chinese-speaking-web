@@ -51,3 +51,4 @@
 - Fix Reading pinyin playback so `播放拼读` uses Mandarin syllable prompts instead of Latin-letter text, and make idiom playback include both background story and explanation.
 - Fix chat timeout handling so aborted chat-model requests return local fallback practice instead of showing raw `This operation was aborted` errors.
 - Increase the default chat timeout to 30 seconds so Qwen3.6-Flash has enough time to answer structured coaching prompts before fallback is used.
+- Add a realtime chat fast path for Qwen/DashScope: compact prompt, lower output budget, JSON response format, and `enable_thinking=false`, reducing `/api/practice` latency to about one second in smoke tests.
